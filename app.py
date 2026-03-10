@@ -267,7 +267,7 @@ def render_preview(people, is_pm):
         # Row 2: Time
         fill_cell(sc, 2, '#FFFFFF', colspan=SLOTS)
         # Time row: "Time: " black + time value red
-        time_parts = room['time_raw'].strip().split(': ', 1)
+        time_parts = room['time_raw'].split(': ', 1)  # keep leading spaces
         time_prefix = time_parts[0] + ': ' if len(time_parts) > 1 else room['time_raw'].strip()
         time_val = time_parts[1] if len(time_parts) > 1 else ''
         x1,y1,x2,y2 = cell_rect(sc, 2, SLOTS, 1)
@@ -284,16 +284,16 @@ def render_preview(people, is_pm):
         # Row 3: B: / S:
         half = SLOTS // 2
         fill_cell(sc, 3, '#FFFFFF', colspan=half)
-        draw_text(sc, 3, 'B:', font_bd, colspan=half)
+        draw_text(sc, 3, '  B:', font_bd, colspan=half)
         border(sc, 3, colspan=half, left='medium', top='thin', bottom='thin')
         fill_cell(sc+half, 3, '#FFFFFF', colspan=half)
-        draw_text(sc+half, 3, 'S:', font_bd, colspan=half)
+        draw_text(sc+half, 3, '  S:', font_bd, colspan=half)
         border(sc+half, 3, colspan=half, top='thin', bottom='thin',
                right='medium' if last else 'thin')
 
         # Row 4: Off:
         fill_cell(sc, 4, '#FFFFFF', colspan=SLOTS)
-        draw_text(sc, 4, 'Off:', font_bd, colspan=SLOTS)
+        draw_text(sc, 4, '  Off:', font_bd, colspan=SLOTS)
         border(sc, 4, colspan=SLOTS, left='medium', top='thin', bottom='double',
                right='medium' if last else 'thin')
 
