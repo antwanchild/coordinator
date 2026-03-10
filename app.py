@@ -247,13 +247,13 @@ def render_preview(people, is_pm):
 
         # Row 1: Room label
         fill_cell(sc, 1, '#FFFFFF', colspan=SLOTS)
-        draw_text(sc, 1, room['label'], font_bd14, align='center', colspan=SLOTS)
+        draw_text(sc, 1, room['label'], font_bd14, color='#FF0000', align='center', colspan=SLOTS)
         border(sc, 1, colspan=SLOTS, left='medium', top='double', bottom='thin',
                right='medium' if last else 'thin')
 
         # Row 2: Time
         fill_cell(sc, 2, '#FFFFFF', colspan=SLOTS)
-        draw_text(sc, 2, room['time_raw'].strip(), font_bd, colspan=SLOTS)
+        draw_text(sc, 2, room['time_raw'].strip(), font_bd, color='#FF0000', colspan=SLOTS)
         border(sc, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                right='medium' if last else 'thin')
 
