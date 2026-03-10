@@ -12,9 +12,11 @@ TEMPLATE_PATH = "V-COORDINATE--Scheduled.xlsx"
 APP_VERSION = os.environ.get('APP_VERSION', 'dev')
 
 # ── Layout constants (Excel units → pixels at 96dpi) ──────────────────────────
-# Excel col width in chars → pixels: px = (chars * 7) + 5  (approx for Calibri 11)
+# Excel col width in chars → pixels scaled for compact preview display
+# Full formula (chars*7+5) produces 96px per slot which is too wide
+# Scale factor of 0.25 gives ~24px per slot — compact and readable
 def col_px(chars):
-    return max(4, int(chars * 7 + 5))
+    return max(4, int((chars * 7 + 5) * 0.25))
 
 def row_px(pts):
     # Excel row height in points → pixels at 96dpi: px = pts * 96/72
