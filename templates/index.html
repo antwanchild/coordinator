@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>V-Coordinate Schedule Builder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f11;--surf:#17171a;--bdr:#2a2a30;--acc:#e8ff47;--acc2:#ff6b35;--txt:#f0f0f0;--mut:#666}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bdr);background:var(--surf);position:sticky;top:0;z-index:100}
+header h1{font-size:1rem;font-weight:700;color:var(--acc)}
+header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mut)}
+.app{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 49px)}
+.sidebar{background:var(--surf);border-right:1px solid var(--bdr);padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.slbl{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
+.card{background:#1e1e22;border:1px solid var(--bdr);border-radius:8px;padding:12px}
+.stabs,.tabs{display:flex;gap:4px;margin-bottom:10px}
+.stab,.tab{flex:1;padding:5px;text-align:center;font-size:.68rem;font-weight:600;border-radius:5px;cursor:pointer;border:1px solid var(--bdr);color:var(--mut);transition:all .15s}
+.stab.active,.tab.active{background:var(--acc);color:#000;border-color:var(--acc)}
+.ar{display:flex;gap:5px;margin-bottom:6px}
+.ar input{flex:1;background:#111113;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-size:.74rem;padding:5px 8px;outline:none}
+.ar input:focus{border-color:var(--acc)}
+.ar button{background:var(--acc);color:#000;border:none;border-radius:5px;padding:5px 10px;font-weight:700;cursor:pointer}
+.tr2{display:flex;gap:5px;margin-bottom:8px;align-items:center}
+.tr2 select{flex:1;background:#111113;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-size:.68rem;padding:5px;outline:none}
+.tr2 select:focus{border-color:var(--acc)}
+.tr2 span{color:var(--mut);font-size:.7rem}
+.nl{max-height:260px;overflow-y:auto}
+.ne{background:#111113;border:1px solid var(--bdr);border-radius:5px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;margin-bottom:4px}
+.ne-top{display:flex;align-items:center;gap:5px}
+.ne-top span{font-size:.73rem;flex:1}
+.ne-range{display:flex;align-items:center;gap:4px;padding-left:4px}
+.ne-range span{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--acc);flex:1}
+.dl{background:none;border:none;color:var(--mut);cursor:pointer;font-size:.82rem;padding:1px 3px}
+.dl:hover{color:#f55}
+.btn{width:100%;padding:8px 12px;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.bp{background:var(--acc);color:#000}.bp:hover{opacity:.9}
+.be{background:var(--acc2);color:#fff;margin-top:5px}.be:hover{opacity:.9}
+.bs{background:transparent;color:var(--txt);border:1px solid var(--bdr)}.bs:hover{border-color:#555}
+.bsm{width:auto;padding:4px 9px;font-size:.68rem}
+textarea{width:100%;background:#111113;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-family:'DM Mono',monospace;font-size:.68rem;padding:7px;resize:vertical;outline:none;line-height:1.6;min-height:90px}
+textarea:focus{border-color:var(--acc)}
+.csvz{border:2px dashed var(--bdr);border-radius:6px;padding:10px;text-align:center;cursor:pointer;position:relative;margin-bottom:6px}
+.csvz:hover{border-color:var(--acc)}
+.csvz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.csvz p{font-size:.7rem;color:var(--mut)}
+.main{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.phdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.phdr h2{font-size:.9rem;font-weight:700}
+.leg{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:4px;font-size:.65rem;color:var(--mut)}
+.ls{width:12px;height:12px;border-radius:2px;border:1px solid #555}
+.preview-wrap{background:#fff;border-radius:8px;overflow:auto;display:inline-block;min-height:200px}
+.preview-wrap img{display:block}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:8px;color:var(--mut);text-align:center;background:#1e1e22;border-radius:8px}
+.empty .ico{font-size:2.2rem;opacity:.2}
+.spinner{display:none;align-items:center;justify-content:center;min-height:200px;background:#1e1e22;border-radius:8px}
+.spinner.show{display:flex}
+.spin{width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:14px;right:14px;background:var(--acc);color:#000;padding:7px 14px;border-radius:6px;font-weight:600;font-size:.75rem;transform:translateY(60px);transition:transform .3s;z-index:999}
+.toast.show{transform:translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#x2B21; V-COORDINATE SCHEDULE BUILDER</h1>
+  <span id="hst">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
+</header>
+<div class="app">
+  <div class="sidebar">
+    <div>
+      <div class="slbl">01 &mdash; Sheet</div>
+      <div class="card">
+        <div class="stabs">
+          <div class="stab active" id="st-AM" onclick="selSheet(false)">AM1</div>
+          <div class="stab" id="st-PM" onclick="selSheet(true)">PM1</div>
+        </div>
+        <p style="font-size:.68rem;color:var(--mut)">Select AM or PM sheet to preview.</p>
+      </div>
+    </div>
+    <div>
+      <div class="slbl">02 &mdash; Names &amp; Times</div>
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" id="tab-m" onclick="swTab('m')">Manual</div>
+          <div class="tab" id="tab-c" onclick="swTab('c')">CSV</div>
+          <div class="tab" id="tab-p" onclick="swTab('p')">Paste</div>
+        </div>
+        <div id="pan-m">
+          <div class="ar">
+            <input type="text" id="nn" placeholder="Last First" onkeydown="if(event.key==='Enter')addN()">
+            <button onclick="addN()">+</button>
+          </div>
+          <div class="tr2">
+            <select id="ns"></select><span>&#8594;</span><select id="ne"></select>
+          </div>
+          <div class="nl" id="nl"><p style="font-size:.7rem;color:var(--mut);text-align:center;padding:8px 0">No names yet</p></div>
+          <div style="display:flex;gap:5px;margin-top:7px">
+            <button class="btn bs bsm" onclick="clrN()">Clear All</button>
+            <button class="btn bs bsm" onclick="srtN()">A&ndash;Z</button>
+          </div>
+        </div>
+        <div id="pan-c" style="display:none">
+          <div class="csvz"><input type="file" accept=".csv" onchange="hdCSV(this)"><p>&#128194; Upload CSV</p><p style="font-size:.6rem;margin-top:2px">Name, start1, end1, start2, end2, ...</p></div>
+          <code style="font-size:.6rem;color:#aaa;line-height:1.9">Smith J, 11:00, 11:30, 14:00, 15:00<br>Doe A, 11:00, 13:00</code>
+        </div>
+        <div id="pan-p" style="display:none">
+          <textarea id="pa" placeholder="Smith J, 11:00, 12:30&#10;Doe A, 11:00, 11:30, 14:00, 15:00"></textarea>
+          <button class="btn bp" style="margin-top:6px" onclick="prPaste()">Import</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="slbl">03 &mdash; Generate</div>
+      <button class="btn bp" onclick="build()">&#9889; Build Schedule</button>
+      <button class="btn be" id="expbothbtn" onclick="doExport()" style="background:#9b59b6;margin-top:5px">&#8595; Export Both Sheets (.xlsx)</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="phdr">
+      <h2 id="ptitle">Schedule Preview</h2>
+      <div class="leg">
+        <div class="li"><div class="ls" style="background:#B4C6E7"></div>Blue</div>
+        <div class="li"><div class="ls" style="background:#fff"></div>White</div>
+        <div class="li"><div class="ls" style="background:#FFE598"></div>Gold</div>
+        <div class="li"><div class="ls" style="background:#C5DEB5"></div>Green</div>
+        <div class="li"><div class="ls" style="background:#FFFF00"></div>Unavailable</div>
+      </div>
+    </div>
+    <div id="spinner" class="spinner"><div class="spin"></div></div>
+    <div id="parea" class="empty"><div class="ico">&#128203;</div><p>Add names then click Build Schedule.</p></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const ALL_TIMES=['11:00','11:30','12:00','12:30','13:00','14:00','14:30','15:00','15:30','16:00'];
+const ALL_LBLS =['11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM'];
+let people=[], isPM=false;
+
+// Init time dropdowns
+['ns','ne'].forEach(id=>{
+  const s=document.getElementById(id);
+  s.innerHTML=ALL_TIMES.map((t,i)=>`<option value="${t}">${ALL_LBLS[i]}</option>`).join('');
+});
+document.getElementById('ne').value='11:30';
+
+function selSheet(pm){
+  isPM=pm;
+  ['AM','PM'].forEach(x=>document.getElementById('st-'+x).classList.toggle('active',pm?(x==='PM'):(x==='AM')));
+  document.getElementById('hst').textContent=pm?'PM Sheet':'AM Sheet';
+  document.getElementById('ptitle').textContent=(pm?'P.M.':'A.M.')+' — '+(pm?'PM1':'AM1');
+}
+
+function f12(t){if(!t)return'';const[h,m]=t.split(':').map(Number);const ap=h>=12?'PM':'AM',h12=h>12?h-12:(h===0?12:h);return h12+':'+(m<10?'0'+m:m)+' '+ap;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function swTab(t){['m','c','p'].forEach(x=>{document.getElementById('tab-'+x).classList.toggle('active',x===t);document.getElementById('pan-'+x).style.display=x===t?'block':'none';});}
+
+function addN(){
+  const n=document.getElementById('nn').value.trim(),s=document.getElementById('ns').value,e=document.getElementById('ne').value;
+  if(!n){toast('Enter a name');return;}
+  if(s>=e){toast('End must be after start');return;}
+  const ex=people.find(p=>p.name.toLowerCase()===n.toLowerCase());
+  if(ex)ex.ranges.push({start:s,end:e}); else people.push({name:n,ranges:[{start:s,end:e}]});
+  document.getElementById('nn').value='';
+  rndr();
+}
+
+function rndr(){
+  const c=document.getElementById('nl');
+  if(!people.length){c.innerHTML='<p style="font-size:.7rem;color:var(--mut);text-align:center;padding:8px 0">No names yet</p>';return;}
+  c.innerHTML=people.map((p,pi)=>
+    `<div class="ne">
+      <div class="ne-top"><span>${esc(p.name)}</span><button class="dl" onclick="rmPerson(${pi})">&times;</button></div>
+      ${p.ranges.map((r,ri)=>`<div class="ne-range"><span>${f12(r.start)}&ndash;${f12(r.end)}</span><button class="dl" onclick="rmRange(${pi},${ri})">&times;</button></div>`).join('')}
+    </div>`
+  ).join('');
+}
+
+function rmRange(pi,ri){people[pi].ranges.splice(ri,1);if(!people[pi].ranges.length)people.splice(pi,1);rndr();}
+function rmPerson(pi){people.splice(pi,1);rndr();}
+function clrN(){people=[];rndr();document.getElementById('parea').className='empty';document.getElementById('parea').innerHTML='<div class="ico">&#128203;</div><p>Add names then click Build Schedule.</p>';toast('Cleared');}
+function srtN(){people.sort((a,b)=>a.name.localeCompare(b.name));rndr();toast('Sorted A–Z');}
+
+function nt(t){t=t.trim().replace(/[aApP][mM]/g,'').trim();if(!t.includes(':'))t+=':00';const p=t.split(':');const h=parseInt(p[0]);const m=p[1]||'00';return (h<10?'0'+h:h)+':'+m;}
+function hdCSV(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{pData(e.target.result);toast('CSV imported');};r.readAsText(f);}
+function prPaste(){pData(document.getElementById('pa').value);toast('Imported');}
+function pData(text){
+  text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.toLowerCase().startsWith('name')).forEach(line=>{
+    const p=line.split(',').map(x=>x.trim());
+    if(p.length<3)return;
+    const ranges=[];
+    for(let i=1;i+1<p.length;i+=2)if(p[i]&&p[i+1])ranges.push({start:nt(p[i]),end:nt(p[i+1])});
+    if(!ranges.length)return;
+    const ex=people.find(x=>x.name.toLowerCase()===p[0].toLowerCase());
+    if(ex)ex.ranges.push(...ranges); else people.push({name:p[0],ranges});
+  });
+  rndr();
+}
+
+async function build(){
+  const spinner=document.getElementById('spinner');
+  const parea=document.getElementById('parea');
+  spinner.className='spinner show';
+  parea.style.display='none';
+  try{
+    const res=await fetch('/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({people,is_pm:isPM})});
+    if(!res.ok)throw new Error(await res.text());
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    spinner.className='spinner';
+    parea.style.display='';
+    parea.className='preview-wrap';
+    parea.innerHTML=`<img src="${url}" alt="Schedule Preview">`;
+    toast('Built!');
+  }catch(e){
+    spinner.className='spinner';
+    parea.style.display='';
+    toast('Error: '+e.message);
+  }
+}
+
+async function doExport(){
+  try{
+    const res=await fetch('/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({people})});
+    if(!res.ok)throw new Error(await res.text());
+    const blob=await res.blob();
+    const name=prompt('Save as:','schedule-output.xlsx')||'schedule-output.xlsx';
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=name;a.click();
+    URL.revokeObjectURL(url);
+    toast('Exported!');
+  }catch(e){toast('Export failed: '+e.message);}
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+</script>
+</body>
+</html>
