@@ -16,7 +16,7 @@ APP_VERSION = os.environ.get('APP_VERSION', 'dev')
 # Full formula (chars*7+5) produces 96px per slot which is too wide
 # Scale factor of 0.25 gives ~24px per slot — compact and readable
 def col_px(chars):
-    return max(4, int((chars * 7 + 5) * 0.25))
+    return max(4, int(chars * 7 + 5))
 
 def row_px(pts):
     # Excel row height in points → pixels at 96dpi: px = pts * 96/72
@@ -43,8 +43,13 @@ for r in range(24, 31):
     ROW_HEIGHTS_PT[r] = 15.0
 ROW_HEIGHTS_PT[30] = 15.75
 
-# Pre-compute pixel widths and heights
-COL_PX = {c: col_px(w) for c, w in COL_WIDTHS_CHARS.items()}
+# Pre-compute pixel widths — matched to original xlsx proportions
+COL_PX = {}
+COL_PX[1] = 10   # A spacer (narrow)
+COL_PX[2] = 31   # B row numbers — exact from file (3.85 chars)
+COL_PX[3] = 83   # C names — exact from file (11.28 chars)
+for c in range(4, 66):
+    COL_PX[c] = 24  # all slot columns uniform — including narrow slot 1
 ROW_PX = {r: row_px(h) for r, h in ROW_HEIGHTS_PT.items()}
 
 # Room structure
@@ -393,4 +398,4 @@ def export():
                      as_attachment=True, download_name='schedule-output.xlsx')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)
