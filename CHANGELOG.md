@@ -3,7 +3,7 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.0.4] - 2026-03-10
+## [1.0.5] - 2026-03-10
 
 ### 🐛 Bug Fixes
 
@@ -11,6 +11,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Uniform slot column widths matching original spreadsheet proportions.​​​​​​​​​​​​​​​​
 - Uniform slot column widths matching original spreadsheet proportions
 - Widen name column for readability.​​​​​​​​​​​​​​​​
+- Room labels and time rows now render in red
 
 ### 🔧 Chores
 
