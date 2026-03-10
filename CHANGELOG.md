@@ -3,7 +3,7 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.0.6] - 2026-03-10
+## [1.0.7] - 2026-03-10
 
 ### 🐛 Bug Fixes
 
@@ -13,6 +13,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Widen name column for readability.​​​​​​​​​​​​​​​​
 - Room labels and time rows now render in red
 - Room number and time value render in red, labels in black.​​​​​​​​​​​​​​​​
+- Add leading indent to Time, B:, S:, and Off: rows.​​​​​​​​​​​​​​​​
 
 ### 🔧 Chores
 
