@@ -47,7 +47,7 @@ ROW_HEIGHTS_PT[30] = 15.75
 COL_PX = {}
 COL_PX[1] = 10   # A spacer (narrow)
 COL_PX[2] = 31   # B row numbers — exact from file (3.85 chars)
-COL_PX[3] = 83   # C names — exact from file (11.28 chars)
+COL_PX[3] = 100   # C names — exact from file (11.28 chars). (Was 83)
 for c in range(4, 66):
     COL_PX[c] = 24  # all slot columns uniform — including narrow slot 1
 
