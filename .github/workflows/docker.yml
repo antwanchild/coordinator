@@ -1,0 +1,121 @@
+name: Build & Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      bumped: ${{ steps.bump.outputs.bumped }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version from commit message
+        id: bump
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          CURRENT=$(cat VERSION | tr -d '[:space:]')
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          if echo "$COMMIT_MSG" | grep -qE '^feat!:|^.+!:'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+            BUMPED=true
+          elif echo "$COMMIT_MSG" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+            BUMPED=true
+          elif echo "$COMMIT_MSG" | grep -qE '^fix(\(.+\))?:'; then
+            PATCH=$((PATCH + 1))
+            BUMPED=true
+          else
+            BUMPED=false
+          fi
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "bumped=$BUMPED" >> $GITHUB_OUTPUT
+          echo "Commit: $COMMIT_MSG"
+          echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
+
+      - name: Generate CHANGELOG with git-cliff
+        if: steps.bump.outputs.bumped == 'true'
+        uses: orhun/git-cliff-action@v3
+        with:
+          config: cliff.toml
+          args: --tag v${{ steps.bump.outputs.version }}
+        env:
+          OUTPUT: CHANGELOG.md
+
+      - name: Commit VERSION and CHANGELOG
+        if: steps.bump.outputs.bumped == 'true'
+        run: |
+          echo "${{ steps.bump.outputs.version }}" > VERSION
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION CHANGELOG.md
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+          git tag "v${{ steps.bump.outputs.version }}"
+          git push origin main --follow-tags
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: bump-version
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Read VERSION file
+        id: version
+        run: echo "value=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.value }}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.title=V-Coordinate Schedule Builder
+            org.opencontainers.image.description=Browser-based schedule builder with Excel export
+            org.opencontainers.image.vendor=antwanchild
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.value }}
