@@ -50,6 +50,7 @@ COL_PX[2] = 31   # B row numbers — exact from file (3.85 chars)
 COL_PX[3] = 83   # C names — exact from file (11.28 chars)
 for c in range(4, 66):
     COL_PX[c] = 24  # all slot columns uniform — including narrow slot 1
+
 ROW_PX = {r: row_px(h) for r, h in ROW_HEIGHTS_PT.items()}
 
 # Room structure
