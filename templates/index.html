@@ -153,6 +153,7 @@ function selSheet(pm){
   ['AM','PM'].forEach(x=>document.getElementById('st-'+x).classList.toggle('active',pm?(x==='PM'):(x==='AM')));
   document.getElementById('hst').textContent=pm?'PM Sheet':'AM Sheet';
   document.getElementById('ptitle').textContent=(pm?'P.M.':'A.M.')+' — '+(pm?'PM1':'AM1');
+  if(document.getElementById('parea').className!=='empty') build();
 }
 
 function f12(t){if(!t)return'';const[h,m]=t.split(':').map(Number);const ap=h>=12?'PM':'AM',h12=h>12?h-12:(h===0?12:h);return h12+':'+(m<10?'0'+m:m)+' '+ap;}
