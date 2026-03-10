@@ -3,7 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.0.9] - 2026-03-10
+## [1.1.0] - 2026-03-10
+
+### Chore
+
+- Delete app.py
+
+### ✨ Features
+
+- Switch to weekly rotating logs with .log extension
 
 ### 🐛 Bug Fixes
 
