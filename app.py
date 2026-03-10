@@ -247,13 +247,37 @@ def render_preview(people, is_pm):
 
         # Row 1: Room label
         fill_cell(sc, 1, '#FFFFFF', colspan=SLOTS)
-        draw_text(sc, 1, room['label'], font_bd14, color='#FF0000', align='center', colspan=SLOTS)
+        # Room label: "Room: " black + number red, centered together
+        room_prefix = room['label'].split(':')[0] + ': '
+        room_num = room['label'].split(': ')[1] if ': ' in room['label'] else ''
+        x1,y1,x2,y2 = cell_rect(sc, 1, SLOTS, 1)
+        total_w_cell = x2 - x1
+        prefix_w = draw.textlength(room_prefix, font=font_bd14)
+        num_w = draw.textlength(room_num, font=font_bd14)
+        total_text_w = prefix_w + num_w
+        tx = x1 + (total_w_cell - total_text_w) // 2
+        fh = font_bd14.getbbox('A')[3]
+        ty = y1 + (y2 - y1 - fh) // 2
+        draw.text((tx, ty), room_prefix, fill=hex_to_rgb('#000000'), font=font_bd14)
+        draw.text((tx + int(prefix_w), ty), room_num, fill=hex_to_rgb('#FF0000'), font=font_bd14)
+
         border(sc, 1, colspan=SLOTS, left='medium', top='double', bottom='thin',
                right='medium' if last else 'thin')
 
         # Row 2: Time
         fill_cell(sc, 2, '#FFFFFF', colspan=SLOTS)
-        draw_text(sc, 2, room['time_raw'].strip(), font_bd, color='#FF0000', colspan=SLOTS)
+        # Time row: "Time: " black + time value red
+        time_parts = room['time_raw'].strip().split(': ', 1)
+        time_prefix = time_parts[0] + ': ' if len(time_parts) > 1 else room['time_raw'].strip()
+        time_val = time_parts[1] if len(time_parts) > 1 else ''
+        x1,y1,x2,y2 = cell_rect(sc, 2, SLOTS, 1)
+        pad = 5
+        tx = x1 + pad
+        fh = font_bd.getbbox('A')[3]
+        ty = y1 + (y2 - y1 - fh) // 2
+        draw.text((tx, ty), time_prefix, fill=hex_to_rgb('#000000'), font=font_bd)
+        draw.text((tx + int(draw.textlength(time_prefix, font=font_bd)), ty), time_val, fill=hex_to_rgb('#FF0000'), font=font_bd)
+
         border(sc, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                right='medium' if last else 'thin')
 
