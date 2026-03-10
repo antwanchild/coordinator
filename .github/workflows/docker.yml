@@ -106,7 +106,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-,format=short
           labels: |
-            org.opencontainers.image.title=V-Coordinate Schedule Builder
+            org.opencontainers.image.title=V-Coordinator Schedule Builder
             org.opencontainers.image.description=Browser-based schedule builder with Excel export
             org.opencontainers.image.vendor=antwanchild
 

@@ -6,14 +6,14 @@ Browser-based schedule builder with pixel-perfect Excel preview and export.
 
 ```bash
 # Pull and run the latest image
-docker run -p 5000:5000 ghcr.io/antwanchild/vcord-scheduler:latest
+docker run -p 8080:8080 ghcr.io/antwanchild/coordinator:latest
 
 # Or build locally
 docker build -t vcord-scheduler .
-docker run -p 5000:5000 vcord-scheduler
+docker run -p 8080:8080 vcord-scheduler
 ```
 
-Then open http://localhost:5000 in your browser.
+Then open http://localhost:8080 in your browser.
 
 ## 🚀 Usage
 

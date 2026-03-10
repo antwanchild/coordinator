@@ -20,6 +20,6 @@ COPY templates/ templates/
 ARG APP_VERSION=dev
 ENV APP_VERSION=${APP_VERSION}
 
-EXPOSE 5000
+EXPOSE 8080
 
 CMD ["python", "app.py"]
