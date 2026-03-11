@@ -7,7 +7,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0f0f11;--surf:#17171a;--bdr:#2a2a30;--acc:#e8ff47;--acc2:#ff6b35;--txt:#f0f0f0;--mut:#666;--card:#1e1e22;--input:#111113}
+:root{--bg:#0f0f11;--surf:#17171a;--bdr:#2a2a30;--acc:#e8ff47;--acc2:#ff6b35;--txt:#f0f0f0;--mut:#999;--card:#1e1e22;--input:#111113}
 body.light{--bg:#f0f0f2;--surf:#ffffff;--bdr:#d0d0d8;--acc:#e8ff47;--acc2:#ff6b35;--txt:#111113;--mut:#888;--card:#e8e8ee;--input:#ffffff;--acc-title:#1a1a2e;--acc-btn:#b8cc00}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .2s,color .2s}
 header{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bdr);background:var(--surf);position:sticky;top:0;z-index:100}
@@ -179,7 +179,7 @@ function toggleSidebar(){
 function selSheet(pm){
   isPM=pm;
   ['AM','PM'].forEach(x=>document.getElementById('st-'+x).classList.toggle('active',pm?(x==='PM'):(x==='AM')));
-  document.getElementById('hst').textContent=pm?'PM Sheet':'AM Sheet';
+  document.getElementById('hst').innerHTML=(pm?'PM Sheet':'AM Sheet')+'&nbsp;&middot;&nbsp; v{{ version }}';
   document.getElementById('ptitle').textContent=(pm?'P.M.':'A.M.')+' — '+(pm?'PM1':'AM1');
   if(document.getElementById('parea').className!=='empty') build();
 }
