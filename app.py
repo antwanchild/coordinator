@@ -124,10 +124,10 @@ def to_minutes(time_str):
     return int(hours) * 60 + int(minutes)
 
 def covers_slot(time_ranges, room_time):
-    """Return True if any of the person's time ranges covers the given room time slot."""
+    """Return True if any of the person's time ranges covers the entire 30-minute slot."""
     room_minutes = to_minutes(room_time)
     return any(
-        to_minutes(time_range['start']) <= room_minutes < to_minutes(time_range['end'])
+        to_minutes(time_range['start']) <= room_minutes and to_minutes(time_range['end']) >= room_minutes + 30
         for time_range in time_ranges
     )
 
