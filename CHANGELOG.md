@@ -3,6 +3,20 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.4] - 2026-03-11
+
+### ♻️ Refactoring
+
+- Rename variables, functions, and classes for readability
+- Rename variables and add docstrings to app.py
+
+### 🐛 Bug Fixes
+
+- Require full 30-minute coverage for slot availability
+
+### 📖 Documentation
+
+- Add credits footer
 ## [1.4.3] - 2026-03-11
 
 ### 🐛 Bug Fixes
