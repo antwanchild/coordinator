@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [1.1.2] - 2026-03-11
 
+### Chore
+
+- Delete app.py
+
 ### ✨ Features
 
 - Switch to weekly rotating logs with .log extension
@@ -12,6 +16,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 ### 🐛 Bug Fixes
 
 - Scale down slot column widths in preview
+- Uniform slot column widths matching original spreadsheet proportions.​​​​​​​​​​​​​​​​
 - Uniform slot column widths matching original spreadsheet proportions
 - Widen name column for readability.​​​​​​​​​​​​​​​​
 - Room labels and time rows now render in red
@@ -24,5 +29,28 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### 📖 Documentation
 
+- Update README with port 8080 and /config volume docs.​​​​​​​​​​​​​​​​
 - Update README with port 8080 and /config volume docs
 - Clean chore entries from changelog
+
+### 🔧 Chores
+
+- Initial release
+- Update .gitignore
+- Update repo name and port to 8080
+- Setting no cache to build
+- Git cliff v4
+- Add xlsx template
+- Correct port on app
+- Add dependabot
+- Dependabot assignees
+- Exclude all chore commits from changelog
+- Exclude all chore commits from changelog
+- Regenerate changelog on every push.​​​​​​​​​​​​​​​​
+- Update changelog [skip ci]
+- Fix formatting
+- Update changelog [skip ci]
+- Update changelog
+- Update changelog [skip ci]
+- Changelog fixes
+
