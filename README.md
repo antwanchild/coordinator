@@ -8,25 +8,12 @@ Browser-based schedule builder with pixel-perfect Excel preview and export.
 # Pull and run the latest image
 docker run -p 8080:8080 ghcr.io/antwanchild/coordinator:latest
 
-# With persistent logs (recommended)
-docker run -p 8080:8080 -v /path/to/config:/config ghcr.io/antwanchild/coordinator:latest
-
 # Or build locally
-docker build -t coordinator .
-docker run -p 8080:8080 coordinator
+docker build -t vcord-scheduler .
+docker run -p 8080:8080 vcord-scheduler
 ```
 
 Then open http://localhost:8080 in your browser.
-
-## 📁 Volume Mapping
-
-| Path | Purpose |
-|---|---|
-| `/config` | Optional — maps a folder for persistent log storage |
-| `/config/logs/coordinator.log` | Current week's log file |
-| `/config/logs/coordinator.YYYY-MM-DD.log` | Rotated weekly logs (4 weeks kept) |
-
-If `/config` is not mapped the app runs normally and logs to the container console only, accessible via `docker logs`.
 
 ## 🚀 Usage
 
