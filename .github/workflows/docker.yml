@@ -57,8 +57,6 @@ jobs:
         with:
           config: cliff.toml
           args: --latest --prepend CHANGELOG.md
-        env:
-          OUTPUT: CHANGELOG.md
   
       - name: Commit VERSION and CHANGELOG
         env:
