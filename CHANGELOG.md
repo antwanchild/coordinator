@@ -3,6 +3,12 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-03-11
+
+### ✨ Features
+
+- Add TZ, PUID, PGID support
+
 ## [1.1.6] - 2026-03-11
 
 ### 🐛 Bug Fixes
