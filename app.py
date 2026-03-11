@@ -1,7 +1,6 @@
 import io, os, logging
 from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, request, jsonify, send_file, render_template
-import openpyxl
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from PIL import Image, ImageDraw, ImageFont
