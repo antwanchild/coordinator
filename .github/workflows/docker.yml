@@ -29,8 +29,19 @@ jobs:
       - name: Bump version from commit message
         id: bump
         run: |
+          if [ ! -f VERSION ]; then
+            echo "ERROR: VERSION file not found" >&2
+            exit 1
+          fi
+
           COMMIT_MSG=$(git log -1 --pretty=%s)
           CURRENT=$(cat VERSION | tr -d '[:space:]')
+
+          if ! echo "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: VERSION file contains invalid version: $CURRENT" >&2
+            exit 1
+          fi
+
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
 
           if echo "$COMMIT_MSG" | grep -qE '^feat!:|^.+!:'; then
@@ -51,31 +62,36 @@ jobs:
           echo "bumped=$BUMPED" >> $GITHUB_OUTPUT
           echo "Commit: $COMMIT_MSG"
           echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
-
+  
       - name: Generate CHANGELOG with git-cliff
         if: steps.bump.outputs.bumped == 'true'
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
           args: --latest --prepend CHANGELOG.md
-  
+
       - name: Commit VERSION and CHANGELOG
+        if: steps.bump.outputs.bumped == 'true'
         env:
-          BUMPED: ${{ steps.bump.outputs.bumped }}
           NEW_VERSION: ${{ steps.bump.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          if [ "$BUMPED" = "true" ]; then
-            echo "$NEW_VERSION" > VERSION
-            git add VERSION
-            git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-            git tag "v$NEW_VERSION"
-          else
-            git diff --cached --quiet || git commit -m "chore: update changelog [skip ci]"
-          fi
-          git push origin main --follow-tags
+          echo "$NEW_VERSION" > VERSION
+          git add VERSION CHANGELOG.md
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]" || {
+            echo "ERROR: Failed to commit VERSION and CHANGELOG" >&2
+            exit 1
+          }
+          git tag "v$NEW_VERSION" || {
+            echo "ERROR: Failed to create tag v$NEW_VERSION — tag may already exist" >&2
+            exit 1
+          }
+          git push origin main --follow-tags || {
+            echo "ERROR: Failed to push — branch may be out of sync" >&2
+            exit 1
+          }
+  
 
   build-and-push:
     runs-on: ubuntu-latest
