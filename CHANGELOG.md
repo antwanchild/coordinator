@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.1] - 2026-03-11
+
+### 🐛 Bug Fixes
+
+- Detect CSV format in manual name input and reroute to parser
 ## [1.5.0] - 2026-03-11
 
 ### ✨ Features
