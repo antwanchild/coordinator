@@ -1,0 +1,147 @@
+name: Build & Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  TZ: America/Denver
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      bumped: ${{ steps.bump.outputs.bumped }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version from commit message
+        id: bump
+        run: |
+          if [ ! -f VERSION ]; then
+            echo "ERROR: VERSION file not found" >&2
+            exit 1
+          fi
+
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          CURRENT=$(cat VERSION | tr -d '[:space:]')
+
+          if ! echo "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: VERSION file contains invalid version: $CURRENT" >&2
+            exit 1
+          fi
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          if echo "$COMMIT_MSG" | grep -qE '^feat!:|^.+!:'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+            BUMPED=true
+          elif echo "$COMMIT_MSG" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+            BUMPED=true
+          elif echo "$COMMIT_MSG" | grep -qE '^fix(\(.+\))?:'; then
+            PATCH=$((PATCH + 1))
+            BUMPED=true
+          else
+            BUMPED=false
+          fi
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "bumped=$BUMPED" >> $GITHUB_OUTPUT
+          echo "Commit: $COMMIT_MSG"
+          echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
+  
+      - name: Generate CHANGELOG with git-cliff
+        if: steps.bump.outputs.bumped == 'true'
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --unreleased --tag ${{ steps.bump.outputs.version }} --prepend CHANGELOG.md
+
+      - name: Commit VERSION and CHANGELOG
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "$NEW_VERSION" > VERSION
+          git add VERSION CHANGELOG.md
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]" || {
+            echo "ERROR: Failed to commit VERSION and CHANGELOG" >&2
+            exit 1
+          }
+          git tag "v$NEW_VERSION" || {
+            echo "ERROR: Failed to create tag v$NEW_VERSION — tag may already exist" >&2
+            exit 1
+          }
+          git push origin main --follow-tags || {
+            echo "ERROR: Failed to push — branch may be out of sync" >&2
+            exit 1
+          }
+          git push origin "v$NEW_VERSION" || {
+            echo "ERROR: Failed to push tag v$NEW_VERSION" >&2
+            exit 1
+          }
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: bump-version
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Read VERSION file
+        id: version
+        run: echo "value=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.value }}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+          labels: |
+            org.opencontainers.image.title=V-Coordinator Schedule Builder
+            org.opencontainers.image.description=Browser-based schedule builder with Excel export
+            org.opencontainers.image.vendor=antwanchild
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          no-cache: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.value }}
