@@ -52,29 +52,31 @@ jobs:
           echo "Commit: $COMMIT_MSG"
           echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
 
-          - name: Generate CHANGELOG with git-cliff
-          uses: orhun/git-cliff-action@v4
-          with:
-            config: cliff.toml
-            args: --tag v${{ steps.bump.outputs.version }}
-          env:
-            OUTPUT: CHANGELOG.md
+      - name: Generate CHANGELOG with git-cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag v${{ steps.bump.outputs.version }}
+        env:
+          OUTPUT: CHANGELOG.md
   
       - name: Commit VERSION and CHANGELOG
+        env:
+          BUMPED: ${{ steps.bump.outputs.bumped }}
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          if [ "${{ steps.bump.outputs.bumped }}" == "true" ]; then
-            echo "${{ steps.bump.outputs.version }}" > VERSION
+          if [ "$BUMPED" = "true" ]; then
+            echo "$NEW_VERSION" > VERSION
             git add VERSION
-            git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
-            git tag "v${{ steps.bump.outputs.version }}"
+            git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+            git tag "v$NEW_VERSION"
           else
             git diff --cached --quiet || git commit -m "chore: update changelog [skip ci]"
           fi
           git push origin main --follow-tags
-  
 
   build-and-push:
     runs-on: ubuntu-latest
