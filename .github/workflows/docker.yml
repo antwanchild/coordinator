@@ -65,7 +65,6 @@ jobs:
   
       - name: Generate CHANGELOG with git-cliff
         if: false
-        # if: steps.bump.outputs.bumped == 'true'
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
