@@ -609,7 +609,7 @@
         <!-- Manual panel -->
         <div id="panel-manual">
           <div class="add-row">
-            <input type="text" id="nameInput" placeholder="Last First" onkeydown="if(event.key==='Enter') addName()">
+            <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30" onkeydown="if(event.key==='Enter') addName()">
             <button onclick="addName()">+</button>
           </div>
           <div class="time-row">
@@ -798,21 +798,34 @@
 
   // ── Add name ───────────────────────────────────────────────────────────────
   function addName() {
-    const name  = document.getElementById('nameInput').value.trim();
-    const start = document.getElementById('timeStart').value;
-    const end   = document.getElementById('timeEnd').value;
-    if (!name) { toast('Enter a name'); return; }
-    if (start >= end) { toast('End must be after start'); return; }
-    const existing = people.find(p => p.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-      existing.ranges.push({ start, end });
-    } else {
-      people.push({ name, ranges: [{ start, end }] });
-    }
+  const rawInput = document.getElementById('nameInput').value.trim();
+  if (!rawInput) { toast('Enter a name'); return; }
+
+  // If input looks like CSV format, parse it through parseData instead
+  if (rawInput.includes(',')) {
+    const { imported, skipped } = parseData(rawInput);
     document.getElementById('nameInput').value = '';
-    people.sort((a, b) => a.name.localeCompare(b.name));  // auto-sort after add
-    renderNameList();
+    showSkippedWarning('skipped-csv', skipped);
+    if (imported) toast(`Added ${imported} ${imported === 1 ? 'person' : 'people'}`);
+    else toast('Could not parse — check format');
+    return;
   }
+
+  const name  = rawInput;
+  const start = document.getElementById('timeStart').value;
+  const end   = document.getElementById('timeEnd').value;
+  if (start >= end) { toast('End must be after start'); return; }
+  const existing = people.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.ranges.push({ start, end });
+  } else {
+    people.push({ name, ranges: [{ start, end }] });
+  }
+  document.getElementById('nameInput').value = '';
+  people.sort((a, b) => a.name.localeCompare(b.name));
+  renderNameList();
+}
+
 
   // ── Render name list ───────────────────────────────────────────────────────
   function renderNameList() {
