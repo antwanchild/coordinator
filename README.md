@@ -5,15 +5,60 @@ Browser-based schedule builder with pixel-perfect Excel preview and export.
 ## 🐳 Run with Docker
 
 ```bash
-# Pull and run the latest image
+# Minimal
 docker run -p 8080:8080 ghcr.io/antwanchild/coordinator:latest
 
+# With persistent logs, timezone, and user mapping (recommended)
+docker run -p 8080:8080 \
+  -e TZ=America/Denver \
+  -e PUID=1000 \
+  -e PGID=1000 \
+  -v /path/to/config:/config \
+  ghcr.io/antwanchild/coordinator:latest
+
 # Or build locally
-docker build -t vcord-scheduler .
-docker run -p 8080:8080 vcord-scheduler
+docker build -t coordinator .
+docker run -p 8080:8080 coordinator
+```
+
+### Docker Compose
+
+```yaml
+services:
+  coordinator:
+    image: ghcr.io/antwanchild/coordinator:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=America/Denver
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /path/to/config:/config
+    restart: unless-stopped
 ```
 
 Then open http://localhost:8080 in your browser.
+
+## ⚙️ Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `TZ` | `UTC` | Container timezone — affects log timestamps |
+| `PUID` | `0` (root) | User ID to run the process as |
+| `PGID` | `0` (root) | Group ID to run the process as |
+
+To find your PUID/PGID on Linux/Synology: `id your_username`
+
+## 📁 Volume Mapping
+
+| Path | Purpose |
+|---|---|
+| `/config` | Optional — maps a folder for persistent log storage |
+| `/config/logs/coordinator.log` | Current week's log file |
+| `/config/logs/coordinator.YYYY-MM-DD.log` | Rotated weekly logs (4 weeks kept) |
+
+If `/config` is not mapped the app runs normally and logs to the container console only, accessible via `docker logs`. If PUID/PGID are set, the `/config` folder will be `chown`'d to that user on startup.
 
 ## 🚀 Usage
 
