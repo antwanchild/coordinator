@@ -69,7 +69,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --unreleased --prepend CHANGELOG.md  
+          args: --unreleased --tag ${{ steps.bump.outputs.version }} --prepend CHANGELOG.md
 
       - name: Commit VERSION and CHANGELOG
         if: steps.bump.outputs.bumped == 'true'
