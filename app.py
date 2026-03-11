@@ -1,5 +1,8 @@
-import io, os, logging
+import io
+import os
+import logging
 from logging.handlers import TimedRotatingFileHandler
+
 from flask import Flask, request, jsonify, send_file, render_template
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
@@ -7,22 +10,29 @@ from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max request size
+
 TEMPLATE_PATH = "V-COORDINATE--Scheduled.xlsx"
-APP_VERSION = os.environ.get('APP_VERSION', 'dev')
+APP_VERSION   = os.environ.get('APP_VERSION', 'dev')
 
 # ── Logging ───────────────────────────────────────────────────────────────────
-log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+log_formatter = logging.Formatter(
+    '%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger('coordinator')
 logger.setLevel(logging.INFO)
 
-# File logging — only if /config is mounted, otherwise console only
+# Write to /config/logs if the volume is mounted, otherwise console only
 LOG_DIR = '/config/logs' if os.path.isdir('/config') else None
+
 if LOG_DIR:
     os.makedirs(LOG_DIR, exist_ok=True)
 
     class WeeklyLogHandler(TimedRotatingFileHandler):
+        """Rotate logs weekly, keeping .log extension on rotated files."""
         def rotation_filename(self, default_name):
-            base = os.path.join(LOG_DIR, 'coordinator')
+            base   = os.path.join(LOG_DIR, 'coordinator')
             suffix = default_name.split('.')[-1]
             return f"{base}.{suffix}.log"
 
@@ -38,344 +48,419 @@ stream_handler.setFormatter(log_formatter)
 logger.addHandler(stream_handler)
 
 # ── Layout constants ──────────────────────────────────────────────────────────
-def col_px(chars):
-    return max(4, int(chars * 7 + 5))
 
-def row_px(pts):
-    return max(4, int(pts * 96 / 72))
+def chars_to_pixels(char_width):
+    """Convert Excel character-width units to pixels (approximate)."""
+    return max(4, int(char_width * 7 + 5))
 
+def points_to_pixels(point_height):
+    """Convert Excel point height to pixels at 96 DPI."""
+    return max(4, int(point_height * 96 / 72))
+
+# Column widths in Excel character units (used only as fallback reference)
 COL_WIDTHS_CHARS = {1: 5.28, 2: 3.85, 3: 11.28, 4: 1.85}
-for c in range(5, 66):
-    COL_WIDTHS_CHARS[c] = 13.0
+for col in range(5, 66):
+    COL_WIDTHS_CHARS[col] = 13.0
 
+# Row heights in Excel point units
 ROW_HEIGHTS_PT = {1: 17.25, 2: 15.0, 3: 15.0, 4: 15.75, 5: 20.25}
-for r in range(6, 24):
-    ROW_HEIGHTS_PT[r] = 18.0
-for r in range(24, 31):
-    ROW_HEIGHTS_PT[r] = 15.0
+for row in range(6, 24):
+    ROW_HEIGHTS_PT[row] = 18.0
+for row in range(24, 31):
+    ROW_HEIGHTS_PT[row] = 15.0
 ROW_HEIGHTS_PT[30] = 15.75
 
+# Pixel widths per column — overridden for key columns to match spreadsheet layout
 COL_PX = {}
-COL_PX[1] = 10   # A spacer
-COL_PX[2] = 31   # B row numbers
-COL_PX[3] = 100  # C names
-for c in range(4, 66):
-    COL_PX[c] = 24  # all slot columns uniform
-ROW_PX = {r: row_px(h) for r, h in ROW_HEIGHTS_PT.items()}
+COL_PX[1] = 10   # A: spacer
+COL_PX[2] = 31   # B: row numbers
+COL_PX[3] = 100  # C: names
+for col in range(4, 66):
+    COL_PX[col] = 24  # D onward: uniform slot columns
 
-SLOTS = 12
-ROWS = 18
-ROOM_START_COLS = [4, 16, 28, 40, 52]
+# Pixel heights per row, derived from point heights
+ROW_PX = {row: points_to_pixels(height) for row, height in ROW_HEIGHTS_PT.items()}
+
+SLOTS           = 12                      # number of slot columns per room block
+ROWS            = 18                      # number of data rows (row 0 = Off, rows 1-17 = people)
+ROOM_START_COLS = [4, 16, 28, 40, 52]    # first column of each room block
+
+# ── Room definitions ──────────────────────────────────────────────────────────
 
 AM_ROOMS = [
-    {'label':'Room: 1','time':'11:00','time_raw':'  Time: 11:00+','n24':'#5--tight fit to Cel Room','n25':'','red':True,'letter':'B','wlkr':'(#2/#3)'},
-    {'label':'Room: 2','time':'11:30','time_raw':'  Time: 11:30+','n24':'','n25':'','red':False,'letter':'','wlkr':''},
-    {'label':'Room: 3','time':'12:00','time_raw':'  Time: 12:00+','n24':'','n25':'','red':False,'letter':'','wlkr':''},
-    {'label':'Room: 4','time':'12:30','time_raw':'  Time: 12:30+','n24':'#4--tight fit to Cel Room','n25':'Use thin rec. for #1-#4','red':True,'letter':'S','wlkr':'(#6/#7)'},
-    {'label':'Room: 1','time':'13:00','time_raw':'  Time: 1:00+', 'n24':'#5--tight fit to Cel Room','n25':'','red':True,'letter':'B','wlkr':'(#2/#3)'},
-]
-PM_ROOMS = [
-    {'label':'Room: 3','time':'14:00','time_raw':'  Time: 2:00+','n24':'','n25':'','red':False,'letter':'','wlkr':''},
-    {'label':'Room: 4','time':'14:30','time_raw':'  Time: 2:30+','n24':'#4--tight fit to Cel Room','n25':'Use thin rec. for #1-#4','red':True,'letter':'S','wlkr':'(#6/#7)'},
-    {'label':'Room: 1','time':'15:00','time_raw':'  Time: 3:00+','n24':'#5--tight fit to Cel Room','n25':'','red':True,'letter':'B','wlkr':'(#2/#3)'},
-    {'label':'Room: 2','time':'15:30','time_raw':'  Time: 3:30+','n24':'','n25':'','red':False,'letter':'','wlkr':''},
-    {'label':'Room: 3','time':'16:00','time_raw':'  Time: 4:00+','n24':'','n25':'','red':False,'letter':'','wlkr':''},
+    {'label': 'Room: 1', 'time': '11:00', 'time_raw': '  Time: 11:00+', 'n24': '#5--tight fit to Cel Room', 'n25': '',                        'red': True,  'letter': 'B', 'wlkr': '(#2/#3)'},
+    {'label': 'Room: 2', 'time': '11:30', 'time_raw': '  Time: 11:30+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
+    {'label': 'Room: 3', 'time': '12:00', 'time_raw': '  Time: 12:00+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
+    {'label': 'Room: 4', 'time': '12:30', 'time_raw': '  Time: 12:30+', 'n24': '#4--tight fit to Cel Room', 'n25': 'Use thin rec. for #1-#4', 'red': True,  'letter': 'S', 'wlkr': '(#6/#7)'},
+    {'label': 'Room: 1', 'time': '13:00', 'time_raw': '  Time: 1:00+',  'n24': '#5--tight fit to Cel Room', 'n25': '',                        'red': True,  'letter': 'B', 'wlkr': '(#2/#3)'},
 ]
 
-SLOT_COLORS = [
-    '#B4C6E7','#FFFFFF','#FFE598','#C5DEB5',
-    '#B4C6E7','#B4C6E7',
-    '#FFFFFF','#FFFFFF',
-    '#FFE598','#FFE598',
-    '#C5DEB5','#C5DEB5',
+PM_ROOMS = [
+    {'label': 'Room: 3', 'time': '14:00', 'time_raw': '  Time: 2:00+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
+    {'label': 'Room: 4', 'time': '14:30', 'time_raw': '  Time: 2:30+', 'n24': '#4--tight fit to Cel Room', 'n25': 'Use thin rec. for #1-#4', 'red': True,  'letter': 'S', 'wlkr': '(#6/#7)'},
+    {'label': 'Room: 1', 'time': '15:00', 'time_raw': '  Time: 3:00+', 'n24': '#5--tight fit to Cel Room', 'n25': '',                        'red': True,  'letter': 'B', 'wlkr': '(#2/#3)'},
+    {'label': 'Room: 2', 'time': '15:30', 'time_raw': '  Time: 3:30+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
+    {'label': 'Room: 3', 'time': '16:00', 'time_raw': '  Time: 4:00+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
 ]
-SLOT_LABELS = ['1','2','3','4','5P','5','6P','6','7P','7','8P','8']
-YELLOW = '#FFFF00'
+
+# Slot colors and labels cycle across the 12 slot columns in each room block
+SLOT_COLORS = [
+    '#B4C6E7', '#FFFFFF', '#FFE598', '#C5DEB5',
+    '#B4C6E7', '#B4C6E7',
+    '#FFFFFF', '#FFFFFF',
+    '#FFE598', '#FFE598',
+    '#C5DEB5', '#C5DEB5',
+]
+SLOT_LABELS       = ['1', '2', '3', '4', '5P', '5', '6P', '6', '7P', '7', '8P', '8']
+UNAVAILABLE_COLOR = '#FFFF00'  # yellow fill for slots where person is unavailable
 
 # ── Time helpers ──────────────────────────────────────────────────────────────
-def to_min(t):
-    if not t: return 0
-    h, m = t.split(':')
-    return int(h)*60 + int(m)
 
-def covers(ranges, room_time):
-    rt = to_min(room_time)
-    return any(to_min(r['start']) <= rt < to_min(r['end']) for r in ranges)
+def to_minutes(time_str):
+    """Convert a 'HH:MM' string to total minutes since midnight."""
+    if not time_str:
+        return 0
+    hours, minutes = time_str.split(':')
+    return int(hours) * 60 + int(minutes)
+
+def covers_slot(time_ranges, room_time):
+    """Return True if any of the person's time ranges covers the given room time slot."""
+    room_minutes = to_minutes(room_time)
+    return any(
+        to_minutes(time_range['start']) <= room_minutes < to_minutes(time_range['end'])
+        for time_range in time_ranges
+    )
 
 def person_on_sheet(person, is_pm):
-    domain = ['14:00','14:30','15:00','15:30','16:00'] if is_pm else ['11:00','11:30','12:00','12:30','13:00']
-    d_min = to_min(domain[0])
-    d_max = to_min(domain[-1]) + 30
-    return any(to_min(r['start']) < d_max and to_min(r['end']) > d_min for r in person['ranges'])
+    """Return True if the person has any availability overlapping the given sheet's time domain."""
+    domain_times = ['14:00', '14:30', '15:00', '15:30', '16:00'] if is_pm else ['11:00', '11:30', '12:00', '12:30', '13:00']
+    domain_start = to_minutes(domain_times[0])
+    domain_end   = to_minutes(domain_times[-1]) + 30
+    return any(
+        to_minutes(time_range['start']) < domain_end and to_minutes(time_range['end']) > domain_start
+        for time_range in person['ranges']
+    )
 
 # ── Build xlsx from template ──────────────────────────────────────────────────
+
 def build_xlsx(people):
+    """Fill the Excel template with people data and return a BytesIO buffer."""
     if not os.path.exists(TEMPLATE_PATH):
         raise FileNotFoundError(f"Template file not found: {TEMPLATE_PATH}")
-    wb = load_workbook(TEMPLATE_PATH)
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
-        is_pm = 'PM' in sheet_name.upper()
-        rooms = PM_ROOMS if is_pm else AM_ROOMS
-        visible = [p for p in people if person_on_sheet(p, is_pm)]
-        sorted_people = sorted(visible, key=lambda p: p['name'])
 
-        for i in range(ROWS):
-            is_off = (i == 0)
-            p = None if is_off else (sorted_people[i-1] if i-1 < len(sorted_people) else None)
-            row = 6 + i
-            ws.cell(row=row, column=2).value = i + 1
-            ws.cell(row=row, column=3).value = 'Off.' if is_off else (p['name'] if p else '')
-            if p:
-                for ri, room in enumerate(rooms):
-                    avail = covers(p['ranges'], room['time'])
-                    if not avail:
-                        start_col = ROOM_START_COLS[ri]
-                        fill = PatternFill(patternType='solid', fgColor='FFFF00')
-                        for s in range(SLOTS):
-                            ws.cell(row=row, column=start_col + s).fill = fill
+    workbook = load_workbook(TEMPLATE_PATH)
 
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return buf
+    for sheet_name in workbook.sheetnames:
+        worksheet      = workbook[sheet_name]
+        is_pm          = 'PM' in sheet_name.upper()
+        rooms          = PM_ROOMS if is_pm else AM_ROOMS
+        visible_people = [person for person in people if person_on_sheet(person, is_pm)]
+        sorted_people  = sorted(visible_people, key=lambda person: person['name'])
+
+        for row_index in range(ROWS):
+            is_off_row = (row_index == 0)
+            person     = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
+            sheet_row  = 6 + row_index
+
+            worksheet.cell(row=sheet_row, column=2).value = row_index + 1
+            worksheet.cell(row=sheet_row, column=3).value = 'Off.' if is_off_row else (person['name'] if person else '')
+
+            if person:
+                for room_index, room in enumerate(rooms):
+                    is_available = covers_slot(person['ranges'], room['time'])
+                    if not is_available:
+                        start_col   = ROOM_START_COLS[room_index]
+                        yellow_fill = PatternFill(patternType='solid', fgColor='FFFF00')
+                        for slot_index in range(SLOTS):
+                            worksheet.cell(row=sheet_row, column=start_col + slot_index).fill = yellow_fill
+
+    xlsx_buffer = io.BytesIO()
+    workbook.save(xlsx_buffer)
+    xlsx_buffer.seek(0)
+    return xlsx_buffer
 
 # ── Render preview image ──────────────────────────────────────────────────────
-def hex_to_rgb(h):
-    h = h.lstrip('#')
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+def hex_to_rgb(hex_color):
+    """Convert a hex color string like '#RRGGBB' to an (R, G, B) tuple."""
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
 def render_preview(people, is_pm):
-    rooms = PM_ROOMS if is_pm else AM_ROOMS
-    visible = [p for p in people if person_on_sheet(p, is_pm)]
-    sorted_people = sorted(visible, key=lambda p: p['name'])
+    """Render the schedule as a PNG image and return a BytesIO buffer."""
+    rooms          = PM_ROOMS if is_pm else AM_ROOMS
+    visible_people = [person for person in people if person_on_sheet(person, is_pm)]
+    sorted_people  = sorted(visible_people, key=lambda person: person['name'])
 
-    x_pos = {}
+    # Build cumulative x positions for each column
+    x_positions = {}
     x = 0
-    for c in range(1, 66):
-        x_pos[c] = x
-        x += COL_PX.get(c, col_px(13.0))
-    total_w = x
+    for col in range(1, 66):
+        x_positions[col] = x
+        x += COL_PX.get(col, chars_to_pixels(13.0))
+    total_width = x
 
-    y_pos = {}
+    # Build cumulative y positions for each row
+    y_positions = {}
     y = 0
-    for r in range(1, 31):
-        y_pos[r] = y
-        y += ROW_PX.get(r, row_px(15.0))
-    total_h = y
+    for row in range(1, 31):
+        y_positions[row] = y
+        y += ROW_PX.get(row, points_to_pixels(15.0))
+    total_height = y
 
-    img = Image.new('RGB', (total_w, total_h), 'white')
-    draw = ImageDraw.Draw(img)
+    image = Image.new('RGB', (total_width, total_height), 'white')
+    draw  = ImageDraw.Draw(image)
 
+    # Load fonts — fall back to default if DejaVu is not available
     try:
-        font_sm  = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
-        font_md  = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 11)
-        font_bd  = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 11)
-        font_bd14 = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 14)
-        font_red = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 18)
-    except:
-        font_sm = font_md = font_bd = font_bd14 = font_red = ImageFont.load_default()
+        font_small  = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
+        font_medium = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 11)
+        font_bold   = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 11)
+        font_bold14 = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 14)
+        font_bold18 = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 18)
+    except Exception:
+        font_small = font_medium = font_bold = font_bold14 = font_bold18 = ImageFont.load_default()
+
+    # ── Drawing helpers ───────────────────────────────────────────────────────
 
     def cell_rect(col, row, colspan=1, rowspan=1):
-        x1 = x_pos[col]
-        y1 = y_pos[row]
-        x2 = x_pos[col + colspan] if (col + colspan) in x_pos else total_w
-        y2 = y_pos[row + rowspan] if (row + rowspan) in y_pos else total_h
+        """Return the (x1, y1, x2, y2) pixel bounds of a cell or merged range."""
+        x1 = x_positions[col]
+        y1 = y_positions[row]
+        x2 = x_positions[col + colspan] if (col + colspan) in x_positions else total_width
+        y2 = y_positions[row + rowspan] if (row + rowspan) in y_positions else total_height
         return x1, y1, x2, y2
 
     def fill_cell(col, row, color, colspan=1, rowspan=1):
-        x1,y1,x2,y2 = cell_rect(col, row, colspan, rowspan)
-        draw.rectangle([x1,y1,x2-1,y2-1], fill=hex_to_rgb(color))
+        """Fill a cell or merged range with a solid color."""
+        x1, y1, x2, y2 = cell_rect(col, row, colspan, rowspan)
+        draw.rectangle([x1, y1, x2 - 1, y2 - 1], fill=hex_to_rgb(color))
 
     def draw_text(col, row, text, font, color='#000000', align='left', colspan=1, rowspan=1):
-        x1,y1,x2,y2 = cell_rect(col, row, colspan, rowspan)
-        rgb = hex_to_rgb(color)
-        pad = 3
-        tw = x2 - x1 - pad*2
-        th = y2 - y1
-        while text and draw.textlength(text, font=font) > tw:
+        """Draw text inside a cell, truncating if it overflows."""
+        x1, y1, x2, y2 = cell_rect(col, row, colspan, rowspan)
+        rgb     = hex_to_rgb(color)
+        padding = 3
+
+        # Truncate text to fit within cell width
+        while text and draw.textlength(text, font=font) > (x2 - x1 - padding * 2):
             text = text[:-1]
-        tl = draw.textlength(text, font=font)
+
+        text_width  = draw.textlength(text, font=font)
+        cell_height = y2 - y1
+
         if align == 'center':
-            tx = x1 + (x2-x1-tl)//2
+            tx = x1 + (x2 - x1 - text_width) // 2
         elif align == 'right':
-            tx = x2 - tl - pad
+            tx = x2 - text_width - padding
         else:
-            tx = x1 + pad
-        bbox = font.getbbox(text)
-        fh = bbox[3] - bbox[1] if text else 10
-        ty = y1 + (th - fh)//2
+            tx = x1 + padding
+
+        font_height = (font.getbbox(text)[3] - font.getbbox(text)[1]) if text else 10
+        ty = y1 + (cell_height - font_height) // 2
         draw.text((tx, ty), text, fill=rgb, font=font)
 
-    def border(col, row, colspan=1, rowspan=1, left=None, right=None, top=None, bottom=None):
-        x1,y1,x2,y2 = cell_rect(col, row, colspan, rowspan)
-        x2-=1; y2-=1
-        def bstyle(s):
-            if s in ('double','medium'): return (hex_to_rgb('#595959'), 2)
-            if s == 'thin': return (hex_to_rgb('#aaaaaa'), 1)
+    def draw_border(col, row, colspan=1, rowspan=1, left=None, right=None, top=None, bottom=None):
+        """Draw borders on one or more sides of a cell range.
+
+        Border style options: 'double', 'medium', 'thin'
+        """
+        x1, y1, x2, y2 = cell_rect(col, row, colspan, rowspan)
+        x2 -= 1
+        y2 -= 1
+
+        def border_style(style):
+            """Map a border style name to (color_rgb, line_width)."""
+            if style in ('double', 'medium'):
+                return hex_to_rgb('#595959'), 2
+            if style == 'thin':
+                return hex_to_rgb('#aaaaaa'), 1
             return None
+
         if left:
-            c,w = bstyle(left); draw.line([(x1,y1),(x1,y2)], fill=c, width=w)
+            color, width = border_style(left)
+            draw.line([(x1, y1), (x1, y2)], fill=color, width=width)
         if right:
-            c,w = bstyle(right); draw.line([(x2,y1),(x2,y2)], fill=c, width=w)
+            color, width = border_style(right)
+            draw.line([(x2, y1), (x2, y2)], fill=color, width=width)
         if top:
-            c,w = bstyle(top); draw.line([(x1,y1),(x2,y1)], fill=c, width=w)
+            color, width = border_style(top)
+            draw.line([(x1, y1), (x2, y1)], fill=color, width=width)
         if bottom:
-            c,w = bstyle(bottom); draw.line([(x1,y2),(x2,y2)], fill=c, width=w)
+            color, width = border_style(bottom)
+            draw.line([(x1, y2), (x2, y2)], fill=color, width=width)
 
-    # ── Header rows 1-5 ──────────────────────────────────────────────────────
-    label = 'P.M.' if is_pm else 'A.M.'
+    # ── Header rows 1–5 ───────────────────────────────────────────────────────
+
+    sheet_label = 'P.M.' if is_pm else 'A.M.'
     fill_cell(3, 1, '#FFFFFF', colspan=1, rowspan=4)
-    draw_text(3, 1, label, font_red, color='#FF0000', align='center', colspan=1, rowspan=4)
-    border(3, 1, colspan=1, rowspan=4, left='medium', right='medium', top='double', bottom='double')
+    draw_text(3, 1, sheet_label, font_bold18, color='#FF0000', align='center', colspan=1, rowspan=4)
+    draw_border(3, 1, colspan=1, rowspan=4, left='medium', right='medium', top='double', bottom='double')
 
-    for ri, room in enumerate(rooms):
-        sc = ROOM_START_COLS[ri]
-        last = (ri == len(rooms)-1)
+    for room_index, room in enumerate(rooms):
+        start_col    = ROOM_START_COLS[room_index]
+        is_last_room = (room_index == len(rooms) - 1)
 
-        # Row 1: Room label — "Room: " black + number red
-        fill_cell(sc, 1, '#FFFFFF', colspan=SLOTS)
-        room_prefix = room['label'].split(':')[0] + ': '
-        room_num = room['label'].split(': ')[1] if ': ' in room['label'] else ''
-        x1,y1,x2,y2 = cell_rect(sc, 1, SLOTS, 1)
-        total_w_cell = x2 - x1
-        prefix_w = draw.textlength(room_prefix, font=font_bd14)
-        total_text_w = prefix_w + draw.textlength(room_num, font=font_bd14)
-        tx = x1 + (total_w_cell - total_text_w) // 2
-        fh = font_bd14.getbbox('A')[3]
-        ty = y1 + (y2 - y1 - fh) // 2
-        draw.text((tx, ty), room_prefix, fill=hex_to_rgb('#000000'), font=font_bd14)
-        draw.text((tx + int(prefix_w), ty), room_num, fill=hex_to_rgb('#FF0000'), font=font_bd14)
-        border(sc, 1, colspan=SLOTS, left='medium', top='double', bottom='thin',
-               right='medium' if last else 'thin')
+        # Row 1: Room label — "Room: " in black, number in red
+        fill_cell(start_col, 1, '#FFFFFF', colspan=SLOTS)
+        room_prefix      = room['label'].split(':')[0] + ': '
+        room_number      = room['label'].split(': ')[1] if ': ' in room['label'] else ''
+        x1, y1, x2, y2  = cell_rect(start_col, 1, SLOTS, 1)
+        prefix_width     = draw.textlength(room_prefix, font=font_bold14)
+        total_text_width = prefix_width + draw.textlength(room_number, font=font_bold14)
+        tx = x1 + (x2 - x1 - total_text_width) // 2
+        ty = y1 + (y2 - y1 - font_bold14.getbbox('A')[3]) // 2
+        draw.text((tx, ty), room_prefix, fill=hex_to_rgb('#000000'), font=font_bold14)
+        draw.text((tx + int(prefix_width), ty), room_number, fill=hex_to_rgb('#FF0000'), font=font_bold14)
+        draw_border(start_col, 1, colspan=SLOTS, left='medium', top='double', bottom='thin',
+                    right='medium' if is_last_room else 'thin')
 
-        # Row 2: Time — "Time: " black + time value red
-        fill_cell(sc, 2, '#FFFFFF', colspan=SLOTS)
-        time_parts = room['time_raw'].strip().split(': ', 1)
+        # Row 2: Time label — "Time: " in black, time value in red
+        fill_cell(start_col, 2, '#FFFFFF', colspan=SLOTS)
+        time_parts  = room['time_raw'].strip().split(': ', 1)
         time_prefix = time_parts[0] + ': ' if len(time_parts) > 1 else room['time_raw'].strip()
-        time_val = time_parts[1] if len(time_parts) > 1 else ''
-        x1,y1,x2,y2 = cell_rect(sc+1, 2, SLOTS-1, 1)
+        time_value  = time_parts[1] if len(time_parts) > 1 else ''
+        x1, y1, x2, y2 = cell_rect(start_col + 1, 2, SLOTS - 1, 1)
         tx = x1 + 5
-        fh = font_bd.getbbox('A')[3]
-        ty = y1 + (y2 - y1 - fh) // 2
-        draw.text((tx, ty), time_prefix, fill=hex_to_rgb('#000000'), font=font_bd)
-        draw.text((tx + int(draw.textlength(time_prefix, font=font_bd)), ty), time_val, fill=hex_to_rgb('#FF0000'), font=font_bd)
-        border(sc, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
-               right='medium' if last else 'thin')
+        ty = y1 + (y2 - y1 - font_bold.getbbox('A')[3]) // 2
+        draw.text((tx, ty), time_prefix, fill=hex_to_rgb('#000000'), font=font_bold)
+        draw.text((tx + int(draw.textlength(time_prefix, font=font_bold)), ty), time_value, fill=hex_to_rgb('#FF0000'), font=font_bold)
+        draw_border(start_col, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
+                    right='medium' if is_last_room else 'thin')
 
-        # Row 3: B: / S:
-        half = SLOTS // 2
-        fill_cell(sc, 3, '#FFFFFF', colspan=half)
-        draw_text(sc+1, 3, 'B:', font_bd, colspan=half-1)
-        border(sc, 3, colspan=half, left='medium', top='thin', bottom='thin')
-        fill_cell(sc+half, 3, '#FFFFFF', colspan=half)
-        draw_text(sc+half+1, 3, 'S:', font_bd, colspan=half-1)
-        border(sc+half, 3, colspan=half, top='thin', bottom='thin',
-               right='medium' if last else 'thin')
+        # Row 3: B: / S: labels in left and right halves
+        half_slots = SLOTS // 2
+        fill_cell(start_col, 3, '#FFFFFF', colspan=half_slots)
+        draw_text(start_col + 1, 3, 'B:', font_bold, colspan=half_slots - 1)
+        draw_border(start_col, 3, colspan=half_slots, left='medium', top='thin', bottom='thin')
+        fill_cell(start_col + half_slots, 3, '#FFFFFF', colspan=half_slots)
+        draw_text(start_col + half_slots + 1, 3, 'S:', font_bold, colspan=half_slots - 1)
+        draw_border(start_col + half_slots, 3, colspan=half_slots, top='thin', bottom='thin',
+                    right='medium' if is_last_room else 'thin')
 
-        # Row 4: Off:
-        fill_cell(sc, 4, '#FFFFFF', colspan=SLOTS)
-        draw_text(sc+1, 4, 'Off:', font_bd, colspan=SLOTS-1)
-        border(sc, 4, colspan=SLOTS, left='medium', top='thin', bottom='double',
-               right='medium' if last else 'thin')
+        # Row 4: Off: label
+        fill_cell(start_col, 4, '#FFFFFF', colspan=SLOTS)
+        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=SLOTS - 1)
+        draw_border(start_col, 4, colspan=SLOTS, left='medium', top='thin', bottom='double',
+                    right='medium' if is_last_room else 'thin')
 
-        # Row 5: Slot numbers
-        for si, slbl in enumerate(SLOT_LABELS):
-            col = sc + si
+        # Row 5: Slot number labels
+        for slot_index, slot_label in enumerate(SLOT_LABELS):
+            col          = start_col + slot_index
+            is_last_slot = (slot_index == SLOTS - 1)
             fill_cell(col, 5, '#FFFFFF')
-            draw_text(col, 5, slbl, font_sm, align='center')
-            border(col, 5, left='medium' if si==0 else 'thin', top='double', bottom='thin',
-                   right='medium' if (last and si==SLOTS-1) else ('thin' if si==SLOTS-1 else None))
+            draw_text(col, 5, slot_label, font_small, align='center')
+            draw_border(col, 5,
+                        left='medium' if slot_index == 0 else 'thin',
+                        top='double',
+                        bottom='thin',
+                        right='medium' if (is_last_room and is_last_slot) else ('thin' if is_last_slot else None))
 
-    border(2, 5, left='thin', right='double', top='double', bottom='thin')
-    border(3, 5, left='double', top='double', bottom='thin')
+    draw_border(2, 5, left='thin', right='double', top='double', bottom='thin')
+    draw_border(3, 5, left='double', top='double', bottom='thin')
 
-    # ── Data rows 6-23 ───────────────────────────────────────────────────────
-    for i in range(ROWS):
-        row = 6 + i
-        is_off = (i == 0)
-        p = None if is_off else (sorted_people[i-1] if i-1 < len(sorted_people) else None)
-        last_row = (i == ROWS-1)
-        name_val = 'Off.' if is_off else (p['name'] if p else '')
+    # ── Data rows 6–23 ────────────────────────────────────────────────────────
 
-        fill_cell(2, row, '#FFFFFF')
-        draw_text(2, row, str(i+1), font_md, align='right')
-        border(2, row, left='thin', right='double', top='thin',
-               bottom='thin' if last_row else None)
+    for row_index in range(ROWS):
+        sheet_row    = 6 + row_index
+        is_off_row   = (row_index == 0)
+        is_last_row  = (row_index == ROWS - 1)
+        person       = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
+        name_value   = 'Off.' if is_off_row else (person['name'] if person else '')
 
-        fill_cell(3, row, '#FFFFFF')
-        draw_text(3, row, name_val, font_md, align='center')
-        border(3, row, left='double', right='medium', top='thin',
-               bottom='thin' if last_row else None)
+        # Column B: row number
+        fill_cell(2, sheet_row, '#FFFFFF')
+        draw_text(2, sheet_row, str(row_index + 1), font_medium, align='right')
+        draw_border(2, sheet_row, left='thin', right='double', top='thin',
+                    bottom='thin' if is_last_row else None)
 
-        for ri, room in enumerate(rooms):
-            sc = ROOM_START_COLS[ri]
-            last_r = (ri == len(rooms)-1)
-            avail = p and covers(p['ranges'], room['time'])
-            for si in range(SLOTS):
-                col = sc + si
-                color = SLOT_COLORS[si] if (is_off or not p or avail) else YELLOW
-                fill_cell(col, row, color)
-                border(col, row,
-                       left='medium' if si==0 else 'thin',
-                       top='thin',
-                       bottom='thin' if last_row else None,
-                       right='medium' if (last_r and si==SLOTS-1) else ('thin' if si==SLOTS-1 else None))
+        # Column C: person name
+        fill_cell(3, sheet_row, '#FFFFFF')
+        draw_text(3, sheet_row, name_value, font_medium, align='center')
+        draw_border(3, sheet_row, left='double', right='medium', top='thin',
+                    bottom='thin' if is_last_row else None)
 
-    # ── Footer rows 24-30 ────────────────────────────────────────────────────
+        # Slot columns: fill with slot color or yellow if unavailable
+        for room_index, room in enumerate(rooms):
+            start_col    = ROOM_START_COLS[room_index]
+            is_last_room = (room_index == len(rooms) - 1)
+            is_available = person and covers_slot(person['ranges'], room['time'])
+
+            for slot_index in range(SLOTS):
+                col          = start_col + slot_index
+                is_last_slot = (slot_index == SLOTS - 1)
+                slot_color   = SLOT_COLORS[slot_index] if (is_off_row or not person or is_available) else UNAVAILABLE_COLOR
+                fill_cell(col, sheet_row, slot_color)
+                draw_border(col, sheet_row,
+                            left='medium' if slot_index == 0 else 'thin',
+                            top='thin',
+                            bottom='thin' if is_last_row else None,
+                            right='medium' if (is_last_room and is_last_slot) else ('thin' if is_last_slot else None))
+
+    # ── Footer rows 24–30 ─────────────────────────────────────────────────────
+
     FOOTER_LABELS = ['', '', 'Narrow Side?', 'Live?', 'Wchr/Wlkr?', 'Language?', 'Other?']
-    for fi, flbl in enumerate(FOOTER_LABELS):
-        row = 24 + fi
-        is_last_f = (fi == len(FOOTER_LABELS)-1)
 
-        fill_cell(3, row, '#FFFFFF')
-        if flbl:
-            draw_text(3, row, flbl, font_sm, align='center')
-        border(3, row, left='double', bottom='double' if is_last_f else None)
+    for footer_index, footer_label in enumerate(FOOTER_LABELS):
+        sheet_row      = 24 + footer_index
+        is_last_footer = (footer_index == len(FOOTER_LABELS) - 1)
 
-        for ri, room in enumerate(rooms):
-            sc = ROOM_START_COLS[ri]
-            last_r = (ri == len(rooms)-1)
+        fill_cell(3, sheet_row, '#FFFFFF')
+        if footer_label:
+            draw_text(3, sheet_row, footer_label, font_small, align='center')
+        draw_border(3, sheet_row, left='double', bottom='double' if is_last_footer else None)
 
-            if fi == 0:
-                fill_cell(sc, row, '#FFFFFF', colspan=SLOTS)
+        for room_index, room in enumerate(rooms):
+            start_col    = ROOM_START_COLS[room_index]
+            is_last_room = (room_index == len(rooms) - 1)
+
+            if footer_index == 0:
+                # First footer row: room note text
+                fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
                 if room['n24']:
-                    draw_text(sc, row, room['n24'], font_sm, colspan=SLOTS)
-                border(sc, row, colspan=SLOTS, left='medium', top='thin',
-                       right='medium' if last_r else 'thin')
-            elif fi == 1:
-                fill_cell(sc, row, '#FFFFFF', colspan=SLOTS)
+                    draw_text(start_col, sheet_row, room['n24'], font_small, colspan=SLOTS)
+                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium', top='thin',
+                            right='medium' if is_last_room else 'thin')
+
+            elif footer_index == 1:
+                # Second footer row: secondary note text
+                fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
                 if room['n25']:
-                    draw_text(sc, row, room['n25'], font_bd, colspan=SLOTS)
-                border(sc, row, colspan=SLOTS, left='medium',
-                       right='medium' if last_r else 'thin')
+                    draw_text(start_col, sheet_row, room['n25'], font_bold, colspan=SLOTS)
+                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium',
+                            right='medium' if is_last_room else 'thin')
+
             else:
-                box_color = '#FF0000' if (room['red'] and fi == 2) else '#FFFFFF'
-                fill_cell(sc, row, box_color)
-                border(sc, row, left='medium', right='thin', top='thin',
-                       bottom='thin' if not is_last_f else 'double')
-                fill_cell(sc+1, row, '#FFFFFF', colspan=SLOTS-1)
-                if fi == 2 and room['letter']:
-                    draw_text(sc+1, row, room['letter'], font_bd, colspan=SLOTS-1)
-                elif fi == 4 and room['wlkr']:
-                    draw_text(sc+1, row, room['wlkr'], font_bd, colspan=SLOTS-1)
-                border(sc+1, row, colspan=SLOTS-1, left='thin',
-                       right='medium' if last_r else 'thin',
-                       bottom='double' if is_last_f else None)
+                # Remaining footer rows: checkbox column + label column
+                checkbox_color = '#FF0000' if (room['red'] and footer_index == 2) else '#FFFFFF'
+                fill_cell(start_col, sheet_row, checkbox_color)
+                draw_border(start_col, sheet_row, left='medium', right='thin', top='thin',
+                            bottom='thin' if not is_last_footer else 'double')
 
-    # ── Col B borders ─────────────────────────────────────────────────────────
-    for i in range(ROWS):
-        border(2, 6 + i, left='thin', right='double', top='thin')
+                fill_cell(start_col + 1, sheet_row, '#FFFFFF', colspan=SLOTS - 1)
+                if footer_index == 2 and room['letter']:
+                    draw_text(start_col + 1, sheet_row, room['letter'], font_bold, colspan=SLOTS - 1)
+                elif footer_index == 4 and room['wlkr']:
+                    draw_text(start_col + 1, sheet_row, room['wlkr'], font_bold, colspan=SLOTS - 1)
+                draw_border(start_col + 1, sheet_row, colspan=SLOTS - 1, left='thin',
+                            right='medium' if is_last_room else 'thin',
+                            bottom='double' if is_last_footer else None)
 
-    buf = io.BytesIO()
-    img.save(buf, format='PNG', optimize=True)
-    buf.seek(0)
-    return buf
+    # ── Column B borders (data rows) ──────────────────────────────────────────
+    for row_index in range(ROWS):
+        draw_border(2, 6 + row_index, left='thin', right='double', top='thin')
+
+    image_buffer = io.BytesIO()
+    image.save(image_buffer, format='PNG', optimize=True)
+    image_buffer.seek(0)
+    return image_buffer
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
 @app.route('/')
 def index():
     return render_template('index.html', version=APP_VERSION)
+
 
 @app.route('/preview', methods=['POST'])
 def preview():
@@ -383,21 +468,25 @@ def preview():
     if not data or not isinstance(data, dict):
         logger.warning("Preview request — invalid or missing JSON body")
         return jsonify({'error': 'Invalid request body'}), 400
+
     people = data.get('people', [])
     if not isinstance(people, list):
         return jsonify({'error': 'people must be a list'}), 400
-    is_pm = bool(data.get('is_pm', False))
-    sheet = 'PM' if is_pm else 'AM'
+
+    is_pm      = bool(data.get('is_pm', False))
+    sheet_name = 'PM' if is_pm else 'AM'
+
     try:
-        img_buf = render_preview(people, is_pm)
-        logger.info(f"Preview generated — sheet={sheet}, people={len(people)}")
-        return send_file(img_buf, mimetype='image/png')
+        image_buffer = render_preview(people, is_pm)
+        logger.info(f"Preview generated — sheet={sheet_name}, people={len(people)}")
+        return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
         return jsonify({'error': str(e)}), 500
     except Exception as e:
-        logger.error(f"Preview failed — sheet={sheet}, people={len(people)}, error={e}")
+        logger.error(f"Preview failed — sheet={sheet_name}, people={len(people)}, error={e}")
         return jsonify({'error': 'Preview generation failed'}), 500
+
 
 @app.route('/export', methods=['POST'])
 def export():
@@ -405,20 +494,27 @@ def export():
     if not data or not isinstance(data, dict):
         logger.warning("Export request — invalid or missing JSON body")
         return jsonify({'error': 'Invalid request body'}), 400
+
     people = data.get('people', [])
     if not isinstance(people, list):
         return jsonify({'error': 'people must be a list'}), 400
+
     try:
-        buf = build_xlsx(people)
+        xlsx_buffer = build_xlsx(people)
         logger.info(f"Export generated — people={len(people)}")
-        return send_file(buf, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                         as_attachment=True, download_name='schedule-output.xlsx')
+        return send_file(
+            xlsx_buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='schedule-output.xlsx'
+        )
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
         return jsonify({'error': str(e)}), 500
     except Exception as e:
         logger.error(f"Export failed — people={len(people)}, error={e}")
         return jsonify({'error': 'Export generation failed'}), 500
+
 
 if __name__ == '__main__':
     logger.info(f"Coordinator v{APP_VERSION} starting on port 8080")
