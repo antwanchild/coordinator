@@ -12,8 +12,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-he
 header{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bdr);background:var(--surf);position:sticky;top:0;z-index:100}
 header h1{font-size:1rem;font-weight:700;color:var(--acc)}
 header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mut)}
-.app{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 49px)}
-.sidebar{background:var(--surf);border-right:1px solid var(--bdr);padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.app{display:grid;grid-template-columns:300px 0px 1fr;min-height:calc(100vh - 49px);transition:grid-template-columns .25s ease}
+.app.collapsed{grid-template-columns:0px 0px 1fr}
+.sidebar{background:var(--surf);border-right:1px solid var(--bdr);padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;overflow-x:hidden;transition:padding .25s ease}
+.app.collapsed .sidebar{padding:0;overflow:hidden}
+.toggle-col{width:0px;position:relative;z-index:10}
+.toggle-btn{position:absolute;top:50%;left:-13px;transform:translateY(-50%);width:26px;height:42px;background:var(--surf);border:1px solid var(--bdr);border-radius:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:.75rem;transition:color .15s,border-color .15s;user-select:none}
+.toggle-btn:hover{color:var(--acc);border-color:var(--acc)}
 .slbl{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
 .card{background:#1e1e22;border:1px solid var(--bdr);border-radius:8px;padding:12px}
 .stabs,.tabs{display:flex;gap:4px;margin-bottom:10px}
@@ -69,8 +74,8 @@ textarea:focus{border-color:var(--acc)}
   <h1>&#x2B21; V-COORDINATE SCHEDULE BUILDER</h1>
   <span id="hst">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
 </header>
-<div class="app">
-  <div class="sidebar">
+<div class="app" id="app">
+  <div class="sidebar" id="sidebar">
     <div>
       <div class="slbl">01 &mdash; Sheet</div>
       <div class="card">
@@ -119,6 +124,9 @@ textarea:focus{border-color:var(--acc)}
       <button class="btn be" id="expbothbtn" onclick="doExport()" style="background:#9b59b6;margin-top:5px">&#8595; Export Both Sheets (.xlsx)</button>
     </div>
   </div>
+  <div class="toggle-col">
+    <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Toggle sidebar">&#8249;</div>
+  </div>
   <div class="main">
     <div class="phdr">
       <h2 id="ptitle">Schedule Preview</h2>
@@ -139,14 +147,20 @@ textarea:focus{border-color:var(--acc)}
 <script>
 const ALL_TIMES=['11:00','11:30','12:00','12:30','13:00','14:00','14:30','15:00','15:30','16:00'];
 const ALL_LBLS =['11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM'];
-let people=[], isPM=false;
+let people=[], isPM=false, sidebarOpen=true;
 
-// Init time dropdowns
 ['ns','ne'].forEach(id=>{
   const s=document.getElementById(id);
   s.innerHTML=ALL_TIMES.map((t,i)=>`<option value="${t}">${ALL_LBLS[i]}</option>`).join('');
 });
 document.getElementById('ne').value='11:30';
+
+function toggleSidebar(){
+  sidebarOpen=!sidebarOpen;
+  document.getElementById('app').classList.toggle('collapsed',!sidebarOpen);
+  document.getElementById('toggleBtn').innerHTML=sidebarOpen?'&#8249;':'&#8250;';
+  document.getElementById('toggleBtn').title=sidebarOpen?'Collapse sidebar':'Expand sidebar';
+}
 
 function selSheet(pm){
   isPM=pm;
