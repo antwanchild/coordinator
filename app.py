@@ -15,28 +15,33 @@ APP_VERSION = os.environ.get('APP_VERSION', 'dev')
 # ── Logging ───────────────────────────────────────────────────────────────────
 from logging.handlers import TimedRotatingFileHandler
 
-LOG_DIR = '/config/logs'
-os.makedirs(LOG_DIR, exist_ok=True)
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-
-class WeeklyLogHandler(TimedRotatingFileHandler):
-    def rotation_filename(self, default_name):
-        # Rename rotated files from coordinator.log.YYYY-MM-DD to coordinator.YYYY-MM-DD.log
-        base = os.path.join(LOG_DIR, 'coordinator')
-        suffix = default_name.split('.')[-1]
-        return f"{base}.{suffix}.log"
-
-file_handler = WeeklyLogHandler(
-    os.path.join(LOG_DIR, 'coordinator.log'),
-    when='W0', interval=1, backupCount=4, utc=False
-)
-file_handler.setFormatter(log_formatter)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(log_formatter)
 logger = logging.getLogger('coordinator')
 logger.setLevel(logging.INFO)
-logger.addHandler(file_handler)
-logger.addHandler(stream_handler)
+
+# File logging — only if /config is mounted, otherwise console only
+LOG_DIR = '/config/logs' if os.path.isdir('/config') else None
+if LOG_DIR:
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+    class WeeklyLogHandler(TimedRotatingFileHandler):
+        def rotation_filename(self, default_name):
+            # Rename rotated files from coordinator.log.YYYY-MM-DD to coordinator.YYYY-MM-DD.log
+            base = os.path.join(LOG_DIR, 'coordinator')
+            suffix = default_name.split('.')[-1]
+            return f"{base}.{suffix}.log"
+
+    file_handler = WeeklyLogHandler(
+        os.path.join(LOG_DIR, 'coordinator.log'),
+        when='W0', interval=1, backupCount=4, utc=False
+    )
+    file_handler.setFormatter(log_formatter)
+    logger.addHandler(file_handler)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(log_formatter)
+logger.addHandler(​​​​​​​​​​​​​​​​
+
 
 # ── Layout constants (Excel units → pixels at 96dpi) ──────────────────────────
 # Excel col width in chars → pixels scaled for compact preview display
