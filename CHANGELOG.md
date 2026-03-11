@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.6] - 2026-03-11
+
+### 🐛 Bug Fixes
+
+- Input validation, template check, remove unused imports
 ## [1.1.5] - 2026-03-11
 
 ### ✨ Features
