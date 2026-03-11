@@ -3,6 +3,12 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.3] - 2026-03-11
+
+### 🐛 Bug Fixes
+
+- Improve dark mode muted text contrast and preserve version in header
+- Increase muted text brightness in dark mode
 ## [1.4.2] - 2026-03-11
 
 ### 🐛 Bug Fixes
