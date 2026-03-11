@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 import math
 
 app = Flask(__name__)
-TEMPLATE_PATH = "V-COORD-INATE--Scheduled.xlsx"
+TEMPLATE_PATH = "V-COORDINATE--Scheduled.xlsx"
 APP_VERSION = os.environ.get('APP_VERSION', 'dev')
 
 # ── Logging ───────────────────────────────────────────────────────────────────

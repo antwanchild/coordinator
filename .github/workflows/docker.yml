@@ -91,6 +91,11 @@ jobs:
             echo "ERROR: Failed to push — branch may be out of sync" >&2
             exit 1
           }
+          git push origin "v$NEW_VERSION" || {
+            echo "ERROR: Failed to push tag v$NEW_VERSION" >&2
+            exit 1
+          }
+
   
 
   build-and-push:
