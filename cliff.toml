@@ -33,8 +33,7 @@ commit_parsers = [
   { message = "^perf",            group = "⚡ Performance" },
   { message = "^refactor",        group = "♻️ Refactoring" },
   { message = "^docs",            group = "📖 Documentation" },
-  { message = "^chore: bump",     skip = true },
-  { message = "^chore",           group = "🔧 Chores" },
+  { message = "^chore",           skip = true },
   { body = ".*security",          group = "🔒 Security" },
 ]
 filter_commits = false
