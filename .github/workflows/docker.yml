@@ -64,10 +64,11 @@ jobs:
           echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
   
       - name: Generate CHANGELOG with git-cliff
+        if: steps.bump.outputs.bumped == 'true'
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --latest --prepend CHANGELOG.md
+          args: --unreleased --prepend CHANGELOG.md  
 
       - name: Commit VERSION and CHANGELOG
         if: steps.bump.outputs.bumped == 'true'
@@ -94,8 +95,6 @@ jobs:
             echo "ERROR: Failed to push tag v$NEW_VERSION" >&2
             exit 1
           }
-
-  
 
   build-and-push:
     runs-on: ubuntu-latest
