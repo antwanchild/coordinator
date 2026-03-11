@@ -3,7 +3,7 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.1.1] - 2026-03-11
+## [1.1.2] - 2026-03-11
 
 ### Chore
 
@@ -25,6 +25,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Indent Time, B:, S:, Off: by one real column.​​​​​​​​​​​​​​​​
 - Refresh preview when switching AM/PM sheet
 - Fall back to console logging if /config not mounted
+- Use env vars in bash if block for changelog commit
+
+### 📖 Documentation
+
+- Update README with port 8080 and /config volume docs.​​​​​​​​​​​​​​​​
+- Update README with port 8080 and /config volume docs
 
 ### 🔧 Chores
 
@@ -37,4 +43,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Correct port on app
 - Add dependabot
 - Dependabot assignees
+- Exclude all chore commits from changelog
+- Exclude all chore commits from changelog
+- Regenerate changelog on every push.​​​​​​​​​​​​​​​​
 
