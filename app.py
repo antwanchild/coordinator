@@ -141,6 +141,19 @@ def person_on_sheet(person, is_pm):
         for time_range in person['ranges']
     )
 
+def count_brothers_in_room(sorted_people, room_time):
+    """Count brothers assigned to a room slot, including the Off row.
+
+    A brother counts if they fully cover the room's 30-minute slot.
+    The Off row always counts as 1.
+    """
+    brothers_from_people = sum(1 for person in sorted_people if covers_slot(person['ranges'], room_time))
+    return brothers_from_people + 1  # +1 for the Off row
+
+def brothers_label(count):
+    """Return a formatted string like '4 Brothers' or '1 Brother'."""
+    return f"{count} {'Brother' if count == 1 else 'Brothers'}"
+
 # ── Build xlsx from template ──────────────────────────────────────────────────
 
 def build_xlsx(people):
@@ -157,6 +170,7 @@ def build_xlsx(people):
         visible_people = [person for person in people if person_on_sheet(person, is_pm)]
         sorted_people  = sorted(visible_people, key=lambda person: person['name'])
 
+        # Write people data into rows 6-23
         for row_index in range(ROWS):
             is_off_row = (row_index == 0)
             person     = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
@@ -173,6 +187,13 @@ def build_xlsx(people):
                         yellow_fill = PatternFill(patternType='solid', fgColor='FFFF00')
                         for slot_index in range(SLOTS):
                             worksheet.cell(row=sheet_row, column=start_col + slot_index).fill = yellow_fill
+
+        # Write brothers count into row 4 right half for each room
+        for room_index, room in enumerate(rooms):
+            start_col  = ROOM_START_COLS[room_index]
+            half_slots = SLOTS // 2
+            count      = count_brothers_in_room(sorted_people, room['time'])
+            worksheet.cell(row=4, column=start_col + half_slots).value = brothers_label(count)
 
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)
@@ -300,6 +321,9 @@ def render_preview(people, is_pm):
     for room_index, room in enumerate(rooms):
         start_col    = ROOM_START_COLS[room_index]
         is_last_room = (room_index == len(rooms) - 1)
+        half_slots   = SLOTS // 2
+        room_count   = count_brothers_in_room(sorted_people, room['time'])
+        room_brothers_label = brothers_label(room_count)
 
         # Row 1: Room label — "Room: " in black, number in red
         fill_cell(start_col, 1, '#FFFFFF', colspan=SLOTS)
@@ -329,7 +353,6 @@ def render_preview(people, is_pm):
                     right='medium' if is_last_room else 'thin')
 
         # Row 3: B: / S: labels in left and right halves
-        half_slots = SLOTS // 2
         fill_cell(start_col, 3, '#FFFFFF', colspan=half_slots)
         draw_text(start_col + 1, 3, 'B:', font_bold, colspan=half_slots - 1)
         draw_border(start_col, 3, colspan=half_slots, left='medium', top='thin', bottom='thin')
@@ -338,10 +361,13 @@ def render_preview(people, is_pm):
         draw_border(start_col + half_slots, 3, colspan=half_slots, top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 4: Off: label
-        fill_cell(start_col, 4, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=SLOTS - 1)
-        draw_border(start_col, 4, colspan=SLOTS, left='medium', top='thin', bottom='double',
+        # Row 4: Left half = "Off:", right half = "X Brothers"
+        fill_cell(start_col, 4, '#FFFFFF', colspan=half_slots)
+        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=half_slots - 1)
+        draw_border(start_col, 4, colspan=half_slots, left='medium', top='thin', bottom='double')
+        fill_cell(start_col + half_slots, 4, '#FFFFFF', colspan=half_slots)
+        draw_text(start_col + half_slots + 1, 4, room_brothers_label, font_bold, colspan=half_slots - 1)
+        draw_border(start_col + half_slots, 4, colspan=half_slots, top='thin', bottom='double',
                     right='medium' if is_last_room else 'thin')
 
         # Row 5: Slot number labels
@@ -362,11 +388,11 @@ def render_preview(people, is_pm):
     # ── Data rows 6–23 ────────────────────────────────────────────────────────
 
     for row_index in range(ROWS):
-        sheet_row    = 6 + row_index
-        is_off_row   = (row_index == 0)
-        is_last_row  = (row_index == ROWS - 1)
-        person       = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
-        name_value   = 'Off.' if is_off_row else (person['name'] if person else '')
+        sheet_row   = 6 + row_index
+        is_off_row  = (row_index == 0)
+        is_last_row = (row_index == ROWS - 1)
+        person      = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
+        name_value  = 'Off.' if is_off_row else (person['name'] if person else '')
 
         # Column B: row number
         fill_cell(2, sheet_row, '#FFFFFF')

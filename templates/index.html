@@ -191,12 +191,32 @@
       border: 1px solid var(--bdr);
       color: var(--mut);
       transition: all .15s;
+      position: relative;
     }
 
     .sheet-tab.active, .input-tab.active {
       background: var(--acc);
       color: #000;
       border-color: var(--acc);
+    }
+
+    /* Badge on sheet tabs showing people count */
+    .tab-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--acc2);
+      color: #fff;
+      font-size: .5rem;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 1px 4px;
+      line-height: 1.4;
+      display: none;
+    }
+
+    .tab-badge.visible {
+      display: block;
     }
 
     .add-row {
@@ -257,6 +277,13 @@
       font-size: .7rem;
     }
 
+    .people-count {
+      font-size: .63rem;
+      color: var(--mut);
+      text-align: right;
+      margin-bottom: 4px;
+    }
+
     .name-list {
       max-height: 260px;
       overflow-y: auto;
@@ -271,6 +298,11 @@
       flex-direction: column;
       gap: 3px;
       margin-bottom: 4px;
+      transition: border-color .15s;
+    }
+
+    .name-entry:hover {
+      border-color: var(--mut);
     }
 
     .name-entry-top {
@@ -326,7 +358,7 @@
     .btn-primary { background: var(--acc); color: #000; }
     .btn-primary:hover { opacity: .9; }
 
-    .btn-export { background: var(--acc2); color: #fff; margin-top: 5px; }
+    .btn-export { background: #9b59b6; color: #fff; margin-top: 5px; }
     .btn-export:hover { opacity: .9; }
 
     .btn-secondary { background: transparent; color: var(--txt); border: 1px solid var(--bdr); }
@@ -381,6 +413,27 @@
       color: var(--mut);
     }
 
+    /* ── Skipped lines warning ── */
+    .skipped-warning {
+      background: #3a2000;
+      border: 1px solid #ff9900;
+      border-radius: 5px;
+      padding: 7px 9px;
+      font-size: .65rem;
+      color: #ffb84d;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .skipped-warning.visible {
+      display: block;
+    }
+
+    .skipped-warning strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
     /* ── Main / Preview area ── */
     .main {
       padding: 16px;
@@ -433,8 +486,15 @@
       min-height: 200px;
     }
 
+    /* Fade in preview image when it loads */
     .preview-wrap img {
       display: block;
+      animation: fadeIn .3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
     .preview-empty {
@@ -523,8 +583,14 @@
       <div class="section-label">01 &mdash; Sheet</div>
       <div class="card">
         <div class="sheet-tabs">
-          <div class="sheet-tab active" id="tab-sheet-AM" onclick="selectSheet(false)">AM1</div>
-          <div class="sheet-tab" id="tab-sheet-PM" onclick="selectSheet(true)">PM1</div>
+          <div class="sheet-tab active" id="tab-sheet-AM" onclick="selectSheet(false)">
+            AM1
+            <span class="tab-badge" id="badge-AM"></span>
+          </div>
+          <div class="sheet-tab" id="tab-sheet-PM" onclick="selectSheet(true)">
+            PM1
+            <span class="tab-badge" id="badge-PM"></span>
+          </div>
         </div>
         <p style="font-size: .68rem; color: var(--mut)">Select AM or PM sheet to preview.</p>
       </div>
@@ -551,12 +617,13 @@
             <span>&#8594;</span>
             <select id="timeEnd"></select>
           </div>
+          <div class="people-count" id="peopleCount"></div>
           <div class="name-list" id="nameList">
             <p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>
           </div>
           <div style="display: flex; gap: 5px; margin-top: 7px">
             <button class="btn btn-secondary btn-small" onclick="clearNames()">Clear All</button>
-            <button class="btn btn-secondary btn-small" onclick="sortNames()">A&ndash;Z</button>
+            <button class="btn btn-secondary btn-small" onclick="copyNamesAsCSV()">Copy CSV</button>
           </div>
         </div>
 
@@ -571,12 +638,14 @@
             Smith J, 11:00, 11:30, 14:00, 15:00<br>
             Doe A, 11:00, 13:00
           </code>
+          <div class="skipped-warning" id="skipped-csv"></div>
         </div>
 
         <!-- Paste panel -->
         <div id="panel-paste" style="display: none">
           <textarea id="pasteInput" placeholder="Smith J, 11:00, 12:30&#10;Doe A, 11:00, 11:30, 14:00, 15:00"></textarea>
           <button class="btn btn-primary" style="margin-top: 6px" onclick="importPaste()">Import</button>
+          <div class="skipped-warning" id="skipped-paste"></div>
         </div>
       </div>
     </div>
@@ -585,7 +654,7 @@
     <div>
       <div class="section-label">03 &mdash; Generate</div>
       <button class="btn btn-primary" onclick="build()">&#9889; Build Schedule</button>
-      <button class="btn btn-export" id="exportBtn" onclick="doExport()" style="background: #9b59b6; margin-top: 5px">
+      <button class="btn btn-export" id="exportBtn" onclick="doExport()">
         &#8595; Export Both Sheets (.xlsx)
       </button>
     </div>
@@ -627,6 +696,9 @@
   const TIME_VALUES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
   const TIME_LABELS = ['11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '1:00 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM', '4:00 PM'];
 
+  const AM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00'];
+  const PM_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00'];
+
   let people = [], isPM = false, sidebarOpen = true, isLightMode = false;
 
   // Init time dropdowns
@@ -635,6 +707,14 @@
     select.innerHTML = TIME_VALUES.map((t, i) => `<option value="${t}">${TIME_LABELS[i]}</option>`).join('');
   });
   document.getElementById('timeEnd').value = '11:30';
+
+  // Keyboard shortcut: Ctrl+B or Cmd+B to build
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      build();
+    }
+  });
 
   // ── Theme ──────────────────────────────────────────────────────────────────
   function toggleTheme() {
@@ -664,6 +744,30 @@
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+  function toMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function personOnSheet(person, amTimes, pmTimes) {
+    /**Return true if the person has any range overlapping the given sheet's domain. */
+    const domainTimes = isPM ? pmTimes : amTimes;
+    const domainStart = toMinutes(domainTimes[0]);
+    const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
+    return person.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart);
+  }
+
+  function countOnSheet(sheetIsPM) {
+    /**Count how many people have any availability on the given sheet. */
+    const domainTimes = sheetIsPM ? PM_TIMES : AM_TIMES;
+    const domainStart = toMinutes(domainTimes[0]);
+    const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
+    return people.filter(person =>
+      person.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart)
+    ).length;
+  }
+
   function formatTime12(t) {
     if (!t) return '';
     const [h, m] = t.split(':').map(Number);
@@ -674,6 +778,14 @@
 
   function escapeHTML(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function todayFilename() {
+    const now = new Date();
+    const y   = now.getFullYear();
+    const mo  = String(now.getMonth() + 1).padStart(2, '0');
+    const d   = String(now.getDate()).padStart(2, '0');
+    return `schedule-${y}-${mo}-${d}.xlsx`;
   }
 
   // ── Tab switching ──────────────────────────────────────────────────────────
@@ -698,16 +810,37 @@
       people.push({ name, ranges: [{ start, end }] });
     }
     document.getElementById('nameInput').value = '';
+    people.sort((a, b) => a.name.localeCompare(b.name));  // auto-sort after add
     renderNameList();
   }
 
   // ── Render name list ───────────────────────────────────────────────────────
   function renderNameList() {
-    const container = document.getElementById('nameList');
+    const container   = document.getElementById('nameList');
+    const countEl     = document.getElementById('peopleCount');
+    const amCount     = countOnSheet(false);
+    const pmCount     = countOnSheet(true);
+
+    // Update people count display
+    if (people.length) {
+      countEl.textContent = `${people.length} total · ${amCount} AM · ${pmCount} PM`;
+    } else {
+      countEl.textContent = '';
+    }
+
+    // Update sheet tab badges
+    const amBadge = document.getElementById('badge-AM');
+    const pmBadge = document.getElementById('badge-PM');
+    amBadge.textContent = amCount;
+    pmBadge.textContent = pmCount;
+    amBadge.classList.toggle('visible', amCount > 0);
+    pmBadge.classList.toggle('visible', pmCount > 0);
+
     if (!people.length) {
       container.innerHTML = '<p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>';
       return;
     }
+
     container.innerHTML = people.map((person, pi) => `
       <div class="name-entry">
         <div class="name-entry-top">
@@ -736,6 +869,8 @@
   }
 
   function clearNames() {
+    if (!people.length) return;
+    if (!confirm('Clear all names? This cannot be undone.')) return;
     people = [];
     renderNameList();
     document.getElementById('previewArea').className = 'preview-empty';
@@ -743,10 +878,12 @@
     toast('Cleared');
   }
 
-  function sortNames() {
-    people.sort((a, b) => a.name.localeCompare(b.name));
-    renderNameList();
-    toast('Sorted A–Z');
+  function copyNamesAsCSV() {
+    if (!people.length) { toast('No names to copy'); return; }
+    const csv = people.map(person =>
+      [person.name, ...person.ranges.flatMap(r => [r.start, r.end])].join(', ')
+    ).join('\n');
+    navigator.clipboard.writeText(csv).then(() => toast('Copied to clipboard'));
   }
 
   // ── CSV / Paste import ─────────────────────────────────────────────────────
@@ -759,40 +896,95 @@
     return (h < 10 ? '0' + h : h) + ':' + m;
   }
 
+  function isValidTime(t) {
+    /**Return true if the normalized time is a valid HH:MM in the schedule range. */
+    if (!t || !t.match(/^\d{2}:\d{2}$/)) return false;
+    const minutes = toMinutes(t);
+    return minutes >= toMinutes('11:00') && minutes <= toMinutes('16:30');
+  }
+
   function handleCSV(input) {
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => { parseData(e.target.result); toast('CSV imported'); };
+    reader.onload = e => {
+      const { imported, skipped } = parseData(e.target.result);
+      showSkippedWarning('skipped-csv', skipped);
+      toast(`CSV imported — ${imported} added`);
+    };
     reader.readAsText(file);
   }
 
   function importPaste() {
-    parseData(document.getElementById('pasteInput').value);
-    toast('Imported');
+    const { imported, skipped } = parseData(document.getElementById('pasteInput').value);
+    document.getElementById('pasteInput').value = '';  // clear after import
+    showSkippedWarning('skipped-paste', skipped);
+    toast(`Imported — ${imported} added`);
+  }
+
+  function showSkippedWarning(elementId, skippedLines) {
+    const warningEl = document.getElementById(elementId);
+    if (!skippedLines.length) {
+      warningEl.classList.remove('visible');
+      return;
+    }
+    warningEl.innerHTML = `<strong>⚠ ${skippedLines.length} line(s) skipped:</strong>` +
+      skippedLines.map(l => `<div style="font-family:monospace;margin-top:2px">${escapeHTML(l)}</div>`).join('');
+    warningEl.classList.add('visible');
   }
 
   function parseData(text) {
+    /**Parse CSV/paste text into people, returning counts of imported and skipped lines. */
+    let imported = 0;
+    const skipped = [];
+
     text.split('\n').map(l => l.trim()).filter(l => l && !l.toLowerCase().startsWith('name')).forEach(line => {
       const parts = line.split(',').map(x => x.trim());
-      if (parts.length < 3) return;
+      if (parts.length < 3) { skipped.push(line); return; }
+
       const ranges = [];
       for (let i = 1; i + 1 < parts.length; i += 2) {
-        if (parts[i] && parts[i + 1]) ranges.push({ start: normalizeTime(parts[i]), end: normalizeTime(parts[i + 1]) });
+        if (!parts[i] || !parts[i + 1]) continue;
+        const start = normalizeTime(parts[i]);
+        const end   = normalizeTime(parts[i + 1]);
+        if (!isValidTime(start) || !isValidTime(end) || start >= end) {
+          skipped.push(line);
+          return;
+        }
+        ranges.push({ start, end });
       }
-      if (!ranges.length) return;
+
+      if (!ranges.length) { skipped.push(line); return; }
+
       const existing = people.find(x => x.name.toLowerCase() === parts[0].toLowerCase());
-      if (existing) existing.ranges.push(...ranges); else people.push({ name: parts[0], ranges });
+      if (existing) {
+        existing.ranges.push(...ranges);
+      } else {
+        people.push({ name: parts[0], ranges });
+      }
+      imported++;
     });
+
+    people.sort((a, b) => a.name.localeCompare(b.name));  // auto-sort after import
     renderNameList();
+    return { imported, skipped };
   }
 
   // ── Build preview ──────────────────────────────────────────────────────────
   async function build() {
     const spinner     = document.getElementById('spinner');
     const previewArea = document.getElementById('previewArea');
+
+    if (!people.length) {
+      const sheetName = isPM ? 'PM' : 'AM';
+      previewArea.className = 'preview-empty';
+      previewArea.innerHTML = `<div class="icon">&#128203;</div><p>No people on ${sheetName} sheet.</p>`;
+      return;
+    }
+
     spinner.className = 'spinner show';
     previewArea.style.display = 'none';
+
     try {
       const res = await fetch('/preview', {
         method: 'POST',
@@ -816,6 +1008,11 @@
 
   // ── Export ─────────────────────────────────────────────────────────────────
   async function doExport() {
+    if (!people.length) {
+      toast('No people to export');
+      return;
+    }
+
     try {
       const res = await fetch('/export', {
         method: 'POST',
@@ -824,7 +1021,7 @@
       });
       if (!res.ok) throw new Error(await res.text());
       const blob     = await res.blob();
-      const filename = prompt('Save as:', 'schedule-output.xlsx') || 'schedule-output.xlsx';
+      const filename = prompt('Save as:', todayFilename()) || todayFilename();
       const url      = URL.createObjectURL(blob);
       const a        = document.createElement('a');
       a.href         = url;
