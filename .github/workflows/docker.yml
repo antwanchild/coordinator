@@ -64,7 +64,8 @@ jobs:
           echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
   
       - name: Generate CHANGELOG with git-cliff
-        if: steps.bump.outputs.bumped == 'true'
+        if: false
+        # if: steps.bump.outputs.bumped == 'true'
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
