@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0] - 2026-03-11
+
+### ✨ Features
+
+- Brothers count per room, sheet badges, export improvements, import validation​​​​​​​​​​​​​​​
 ## [1.4.4] - 2026-03-11
 
 ### ♻️ Refactoring
