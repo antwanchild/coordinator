@@ -3,7 +3,7 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.1.0] - 2026-03-10
+## [1.1.1] - 2026-03-11
 
 ### Chore
 
@@ -24,6 +24,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Add leading indent to Time, B:, S:, and Off: rows.​​​​​​​​​​​​​​​​
 - Indent Time, B:, S:, Off: by one real column.​​​​​​​​​​​​​​​​
 - Refresh preview when switching AM/PM sheet
+- Fall back to console logging if /config not mounted
 
 ### 🔧 Chores
 
