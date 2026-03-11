@@ -7,33 +7,37 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0f0f11;--surf:#17171a;--bdr:#2a2a30;--acc:#e8ff47;--acc2:#ff6b35;--txt:#f0f0f0;--mut:#666}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+:root{--bg:#0f0f11;--surf:#17171a;--bdr:#2a2a30;--acc:#e8ff47;--acc2:#ff6b35;--txt:#f0f0f0;--mut:#666;--card:#1e1e22;--input:#111113}
+body.light{--bg:#f0f0f2;--surf:#ffffff;--bdr:#d0d0d8;--acc:#e8ff47;--acc2:#ff6b35;--txt:#111113;--mut:#888;--card:#e8e8ee;--input:#ffffff}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .2s,color .2s}
 header{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bdr);background:var(--surf);position:sticky;top:0;z-index:100}
 header h1{font-size:1rem;font-weight:700;color:var(--acc)}
+.hright{display:flex;align-items:center;gap:12px}
 header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mut)}
+.theme-btn{background:none;border:1px solid var(--bdr);border-radius:6px;color:var(--mut);cursor:pointer;font-size:.85rem;padding:3px 7px;line-height:1;transition:border-color .15s,color .15s}
+.theme-btn:hover{border-color:var(--acc);color:var(--acc)}
 .app{display:grid;grid-template-columns:300px 0px 1fr;min-height:calc(100vh - 49px);transition:grid-template-columns .25s ease}
 .app.collapsed{grid-template-columns:0px 0px 1fr}
 .sidebar{background:var(--surf);border-right:1px solid var(--bdr);padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;overflow-x:hidden;transition:padding .25s ease}
 .app.collapsed .sidebar{padding:0;overflow:hidden}
 .toggle-col{width:0px;position:relative;z-index:10}
-.toggle-btn{position:absolute;top:50%;left:-13px;transform:translateY(-50%);width:26px;height:42px;background:var(--surf);border:1px solid var(--acc);border-radius:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--acc);font-size:.75rem;transition:color .15s,border-color .15s;user-select:none}
+.toggle-btn{position:absolute;top:50%;left:-13px;transform:translateY(-50%);width:26px;height:42px;background:var(--surf);border:1px solid var(--acc);border-radius:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--acc);font-size:.75rem;transition:color .15s,border-color .15s,background .15s;user-select:none}
 .toggle-btn:hover{background:var(--acc);color:#000}
 .slbl{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
-.card{background:#1e1e22;border:1px solid var(--bdr);border-radius:8px;padding:12px}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:12px}
 .stabs,.tabs{display:flex;gap:4px;margin-bottom:10px}
 .stab,.tab{flex:1;padding:5px;text-align:center;font-size:.68rem;font-weight:600;border-radius:5px;cursor:pointer;border:1px solid var(--bdr);color:var(--mut);transition:all .15s}
 .stab.active,.tab.active{background:var(--acc);color:#000;border-color:var(--acc)}
 .ar{display:flex;gap:5px;margin-bottom:6px}
-.ar input{flex:1;background:#111113;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-size:.74rem;padding:5px 8px;outline:none}
+.ar input{flex:1;background:var(--input);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-size:.74rem;padding:5px 8px;outline:none}
 .ar input:focus{border-color:var(--acc)}
 .ar button{background:var(--acc);color:#000;border:none;border-radius:5px;padding:5px 10px;font-weight:700;cursor:pointer}
 .tr2{display:flex;gap:5px;margin-bottom:8px;align-items:center}
-.tr2 select{flex:1;background:#111113;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-size:.68rem;padding:5px;outline:none}
+.tr2 select{flex:1;background:var(--input);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-size:.68rem;padding:5px;outline:none}
 .tr2 select:focus{border-color:var(--acc)}
 .tr2 span{color:var(--mut);font-size:.7rem}
 .nl{max-height:260px;overflow-y:auto}
-.ne{background:#111113;border:1px solid var(--bdr);border-radius:5px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;margin-bottom:4px}
+.ne{background:var(--input);border:1px solid var(--bdr);border-radius:5px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;margin-bottom:4px}
 .ne-top{display:flex;align-items:center;gap:5px}
 .ne-top span{font-size:.73rem;flex:1}
 .ne-range{display:flex;align-items:center;gap:4px;padding-left:4px}
@@ -45,7 +49,7 @@ header span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mut)}
 .be{background:var(--acc2);color:#fff;margin-top:5px}.be:hover{opacity:.9}
 .bs{background:transparent;color:var(--txt);border:1px solid var(--bdr)}.bs:hover{border-color:#555}
 .bsm{width:auto;padding:4px 9px;font-size:.68rem}
-textarea{width:100%;background:#111113;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-family:'DM Mono',monospace;font-size:.68rem;padding:7px;resize:vertical;outline:none;line-height:1.6;min-height:90px}
+textarea{width:100%;background:var(--input);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-family:'DM Mono',monospace;font-size:.68rem;padding:7px;resize:vertical;outline:none;line-height:1.6;min-height:90px}
 textarea:focus{border-color:var(--acc)}
 .csvz{border:2px dashed var(--bdr);border-radius:6px;padding:10px;text-align:center;cursor:pointer;position:relative;margin-bottom:6px}
 .csvz:hover{border-color:var(--acc)}
@@ -59,9 +63,9 @@ textarea:focus{border-color:var(--acc)}
 .ls{width:12px;height:12px;border-radius:2px;border:1px solid #555}
 .preview-wrap{background:#fff;border-radius:8px;overflow:auto;display:inline-block;min-height:200px}
 .preview-wrap img{display:block}
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:8px;color:var(--mut);text-align:center;background:#1e1e22;border-radius:8px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:8px;color:var(--mut);text-align:center;background:var(--card);border-radius:8px}
 .empty .ico{font-size:2.2rem;opacity:.2}
-.spinner{display:none;align-items:center;justify-content:center;min-height:200px;background:#1e1e22;border-radius:8px}
+.spinner{display:none;align-items:center;justify-content:center;min-height:200px;background:var(--card);border-radius:8px}
 .spinner.show{display:flex}
 .spin{width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -71,8 +75,11 @@ textarea:focus{border-color:var(--acc)}
 </head>
 <body>
 <header>
-  <h1>&#x2B21; V-COORDINATE SCHEDULE BUILDER</h1>
-  <span id="hst">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
+  <h1>&#x2B21; V-COORDINATOR SCHEDULE BUILDER</h1>
+  <div class="hright">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
+    <span id="hst">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
+  </div>
 </header>
 <div class="app" id="app">
   <div class="sidebar" id="sidebar">
@@ -125,7 +132,7 @@ textarea:focus{border-color:var(--acc)}
     </div>
   </div>
   <div class="toggle-col">
-    <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Toggle sidebar">&#8249;</div>
+    <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Collapse sidebar">&#8249;</div>
   </div>
   <div class="main">
     <div class="phdr">
@@ -147,13 +154,20 @@ textarea:focus{border-color:var(--acc)}
 <script>
 const ALL_TIMES=['11:00','11:30','12:00','12:30','13:00','14:00','14:30','15:00','15:30','16:00'];
 const ALL_LBLS =['11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM'];
-let people=[], isPM=false, sidebarOpen=true;
+let people=[], isPM=false, sidebarOpen=true, isLight=false;
 
 ['ns','ne'].forEach(id=>{
   const s=document.getElementById(id);
   s.innerHTML=ALL_TIMES.map((t,i)=>`<option value="${t}">${ALL_LBLS[i]}</option>`).join('');
 });
 document.getElementById('ne').value='11:30';
+
+function toggleTheme(){
+  isLight=!isLight;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('themeBtn').textContent=isLight?'🌙':'☀️';
+  document.getElementById('themeBtn').title=isLight?'Switch to dark mode':'Switch to light mode';
+}
 
 function toggleSidebar(){
   sidebarOpen=!sidebarOpen;
