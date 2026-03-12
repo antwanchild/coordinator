@@ -581,7 +581,8 @@ def export():
 if __name__ == '__main__':
     log_dir_display = LOG_DIR if LOG_DIR else 'console only'
     logger.info("=" * 60)
-    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080 | template={TEMPLATE_PATH}, logs={log_dir_display}, log_level={LOG_LEVEL}")
+    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080")
+    logger.info(f"template={TEMPLATE_PATH} | logs={log_dir_display} | log_level={LOG_LEVEL}")
     logger.info(f"Python {platform.python_version()} | {platform.system()} {platform.release()} | {platform.machine()}")
     app.run(host='0.0.0.0', port=8080, debug=False)
 
