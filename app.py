@@ -24,7 +24,8 @@ log_formatter = logging.Formatter(
     style='{'
 )
 logger = logging.getLogger('coordinator')
-logger.setLevel(logging.INFO)
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
+logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
 # Write to /config/logs if the volume is mounted, otherwise console only
 LOG_DIR = '/config/logs' if os.path.isdir('/config') else None
@@ -581,7 +582,7 @@ def export():
 if __name__ == '__main__':
     log_dir_display = LOG_DIR if LOG_DIR else 'console only'
     logger.info("=" * 60)
-    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080 | template={TEMPLATE_PATH}, logs={log_dir_display}")
+    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080 | template={TEMPLATE_PATH}, logs={log_dir_display}, log_level={LOG_LEVEL}")
     logger.info(f"Python {platform.python_version()} | {platform.system()} {platform.release()} | {platform.machine()}")
     app.run(host='0.0.0.0', port=8080, debug=False)
 
