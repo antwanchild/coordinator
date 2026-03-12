@@ -188,12 +188,11 @@ def build_xlsx(people):
                         for slot_index in range(SLOTS):
                             worksheet.cell(row=sheet_row, column=start_col + slot_index).fill = yellow_fill
 
-        # Write brothers count into row 4 right half for each room
+        # Write brothers count into row 25 (# Bro's Avail) for each room
         for room_index, room in enumerate(rooms):
-            start_col  = ROOM_START_COLS[room_index]
-            half_slots = SLOTS // 2
-            count      = count_brothers_in_room(sorted_people, room['time'])
-            worksheet.cell(row=4, column=start_col + half_slots).value = brothers_label(count)
+            start_col = ROOM_START_COLS[room_index]
+            count     = count_brothers_in_room(sorted_people, room['time'])
+            worksheet.cell(row=25, column=start_col).value = brothers_label(count)
 
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)
@@ -321,9 +320,6 @@ def render_preview(people, is_pm):
     for room_index, room in enumerate(rooms):
         start_col    = ROOM_START_COLS[room_index]
         is_last_room = (room_index == len(rooms) - 1)
-        half_slots   = SLOTS // 2
-        room_count   = count_brothers_in_room(sorted_people, room['time'])
-        room_brothers_label = brothers_label(room_count)
 
         # Row 1: Room label — "Room: " in black, number in red
         fill_cell(start_col, 1, '#FFFFFF', colspan=SLOTS)
@@ -353,6 +349,7 @@ def render_preview(people, is_pm):
                     right='medium' if is_last_room else 'thin')
 
         # Row 3: B: / S: labels in left and right halves
+        half_slots = SLOTS // 2
         fill_cell(start_col, 3, '#FFFFFF', colspan=half_slots)
         draw_text(start_col + 1, 3, 'B:', font_bold, colspan=half_slots - 1)
         draw_border(start_col, 3, colspan=half_slots, left='medium', top='thin', bottom='thin')
@@ -361,13 +358,10 @@ def render_preview(people, is_pm):
         draw_border(start_col + half_slots, 3, colspan=half_slots, top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 4: Left half = "Off:", right half = "X Brothers"
-        fill_cell(start_col, 4, '#FFFFFF', colspan=half_slots)
-        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=half_slots - 1)
-        draw_border(start_col, 4, colspan=half_slots, left='medium', top='thin', bottom='double')
-        fill_cell(start_col + half_slots, 4, '#FFFFFF', colspan=half_slots)
-        draw_text(start_col + half_slots + 1, 4, room_brothers_label, font_bold, colspan=half_slots - 1)
-        draw_border(start_col + half_slots, 4, colspan=half_slots, top='thin', bottom='double',
+        # Row 4: Full width "Off:"
+        fill_cell(start_col, 4, '#FFFFFF', colspan=SLOTS)
+        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=SLOTS - 1)
+        draw_border(start_col, 4, colspan=SLOTS, left='medium', top='thin', bottom='double',
                     right='medium' if is_last_room else 'thin')
 
         # Row 5: Slot number labels
@@ -425,7 +419,7 @@ def render_preview(people, is_pm):
 
     # ── Footer rows 24–30 ─────────────────────────────────────────────────────
 
-    FOOTER_LABELS = ['', '', 'Narrow Side?', 'Live?', 'Wchr/Wlkr?', 'Language?', 'Other?']
+        FOOTER_LABELS = ['', "# Bro's Avail", 'Narrow Side?', 'Live?', 'Wchr/Wlkr?', 'Language?', 'Other?']
 
     for footer_index, footer_label in enumerate(FOOTER_LABELS):
         sheet_row      = 24 + footer_index
@@ -449,10 +443,10 @@ def render_preview(people, is_pm):
                             right='medium' if is_last_room else 'thin')
 
             elif footer_index == 1:
-                # Second footer row: secondary note text
+                # Second footer row: brothers count
+                room_count = count_brothers_in_room(sorted_people, room['time'])
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
-                if room['n25']:
-                    draw_text(start_col, sheet_row, room['n25'], font_bold, colspan=SLOTS)
+                draw_text(start_col + 1, sheet_row, brothers_label(room_count), font_bold, colspan=SLOTS - 1)
                 draw_border(start_col, sheet_row, colspan=SLOTS, left='medium',
                             right='medium' if is_last_room else 'thin')
 
