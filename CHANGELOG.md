@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.11.4] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Uniform log format between entrypoint and app
 ## [1.11.3] - 2026-03-12
 
 ### 🐛 Bug Fixes
