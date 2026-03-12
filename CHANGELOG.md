@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.2] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Move brothers count to footer row 25, fix row 4 full-width Off label
 ## [1.5.1] - 2026-03-11
 
 ### 🐛 Bug Fixes
