@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.8.1] - 2026-03-12
+
+### ♻️ Refactoring
+
+- Remove duplicate timing from route handlers, handled by after_request
+
+### 🐛 Bug Fixes
+
+- Replace em dash in log messages to avoid formatter error​​​​​​​​​​​​​​
 ## [1.8.0] - 2026-03-12
 
 ### ✨ Features
