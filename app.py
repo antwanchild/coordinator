@@ -48,6 +48,28 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(log_formatter)
 logger.addHandler(stream_handler)
 
+# ── Request logging ───────────────────────────────────────────────────────────
+
+# Suppress Werkzeug's default request logger
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+ROUTE_LABELS = {
+    '/':        'App loaded',
+    '/preview': 'Preview requested',
+    '/export':  'Export requested',
+}
+
+@app.before_request
+def before_request():
+    request.start_time = time.monotonic()
+
+@app.after_request
+def after_request(response):
+    duration_ms = int((time.monotonic() - request.start_time) * 1000)
+    label       = ROUTE_LABELS.get(request.path, request.path)
+    logger.info(f"{label} — {response.status_code} ({duration_ms}ms)")
+    return response
+
 # ── Layout constants ──────────────────────────────────────────────────────────
 
 def chars_to_pixels(char_width):
@@ -503,16 +525,14 @@ def preview():
     sheet_name = 'PM' if is_pm else 'AM'
 
     try:
-        start_time   = time.monotonic()
         image_buffer = render_preview(people, is_pm)
-        duration_ms  = int((time.monotonic() - start_time) * 1000)
 
         rooms        = PM_ROOMS if is_pm else AM_ROOMS
         visible      = [p for p in people if person_on_sheet(p, is_pm)]
         sorted_ppl   = sorted(visible, key=lambda p: p['name'])
         brothers     = [count_brothers_in_room(sorted_ppl, room['time']) for room in rooms]
 
-        logger.info(f"Preview generated — sheet={sheet_name}, people={len(visible)}, brothers={brothers}, duration={duration_ms}ms")
+        logger.info(f"Preview generated — sheet={sheet_name}, people={len(visible)}, brothers={brothers}")
         return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
@@ -534,16 +554,14 @@ def export():
         return jsonify({'error': 'people must be a list'}), 400
 
     try:
-        start_time  = time.monotonic()
         xlsx_buffer = build_xlsx(people)
-        duration_ms = int((time.monotonic() - start_time) * 1000)
 
         am_visible  = sorted([p for p in people if person_on_sheet(p, False)], key=lambda p: p['name'])
         pm_visible  = sorted([p for p in people if person_on_sheet(p, True)],  key=lambda p: p['name'])
         am_brothers = [count_brothers_in_room(am_visible, room['time']) for room in AM_ROOMS]
         pm_brothers = [count_brothers_in_room(pm_visible, room['time']) for room in PM_ROOMS]
 
-        logger.info(f"Export generated — people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}, duration={duration_ms}ms")
+        logger.info(f"Export generated — people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}")
         return send_file(
             xlsx_buffer,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
