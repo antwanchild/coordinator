@@ -287,9 +287,13 @@
     .name-list {
       max-height: 260px;
       overflow-y: auto;
-      border: 1px solid var(--acc-btn, var(--acc));
+      border: 1px solid var(--bdr);
       border-radius: 5px;
       padding: 4px;
+    }
+
+    .name-list.has-names {
+      border-color: var(--acc-btn, var(--acc));
     }
 
     .name-entry {
@@ -383,7 +387,7 @@
     textarea {
       width: 100%;
       background: var(--input);
-      border: 1px solid var(--bdr);
+      border: 1px solid var(--acc-btn, var(--acc));
       border-radius: 5px;
       color: var(--txt);
       font-family: 'DM Mono', monospace;
@@ -859,6 +863,7 @@
   // ── Render name list ───────────────────────────────────────────────────────
   function renderNameList() {
     const container   = document.getElementById('nameList');
+    container.classList.toggle('has-names', people.length > 0);
     const countEl     = document.getElementById('peopleCount');
     const amCount     = countOnSheet(false);
     const pmCount     = countOnSheet(true);
