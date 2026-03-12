@@ -5,8 +5,12 @@ set -e
 PUID=${PUID:-0}
 PGID=${PGID:-0}
 
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $1"
+}
+
 if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
-    echo "[entrypoint] Running as PUID=${PUID} PGID=${PGID}"
+    log "Entrypoint | PUID=${PUID} PGID=${PGID}"
 
     # Create group if it doesn't exist
     if ! getent group coordinator > /dev/null 2>&1; then
@@ -26,6 +30,6 @@ if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
     # Re-execute as the specified user
     exec gosu coordinator python app.py
 else
-    echo "[entrypoint] Running as root (no PUID/PGID set)"
+    log "Entrypoint | running as root (no PUID/PGID set)"
     exec python app.py
 fi
