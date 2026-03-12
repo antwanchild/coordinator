@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.11.6] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Split startup log lines for readability
 ## [1.11.5] - 2026-03-12
 
 ### 🐛 Bug Fixes
