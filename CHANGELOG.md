@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.9.0] - 2026-03-12
+
+### ✨ Features
+
+- Add separator line to log on app startup
 ## [1.8.2] - 2026-03-12
 
 ### 🐛 Bug Fixes
