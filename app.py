@@ -66,8 +66,8 @@ def before_request():
 @app.after_request
 def after_request(response):
     duration_ms = int((time.monotonic() - request.start_time) * 1000)
-    label       = ROUTE_LABELS.get(request.path, request.path)
-    logger.info(f"{label} — {response.status_code} ({duration_ms}ms)")
+    label = ROUTE_LABELS.get(request.path, request.path)
+    logger.info(f"{label} | {response.status_code} ({duration_ms}ms)")
     return response
 
 # ── Layout constants ──────────────────────────────────────────────────────────
@@ -514,7 +514,7 @@ def index():
 def preview():
     data = request.get_json(silent=True)
     if not data or not isinstance(data, dict):
-        logger.warning("Preview request — invalid or missing JSON body")
+        logger.warning("Preview request | invalid or missing JSON body")
         return jsonify({'error': 'Invalid request body'}), 400
 
     people = data.get('people', [])
@@ -532,13 +532,13 @@ def preview():
         sorted_ppl   = sorted(visible, key=lambda p: p['name'])
         brothers     = [count_brothers_in_room(sorted_ppl, room['time']) for room in rooms]
 
-        logger.info(f"Preview generated — sheet={sheet_name}, people={len(visible)}, brothers={brothers}")
+        logger.info(f"Preview generated | sheet={sheet_name}, people={len(visible)}, brothers={brothers}")
         return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
         return jsonify({'error': str(e)}), 500
     except Exception as e:
-        logger.error(f"Preview failed — sheet={sheet_name}, people={len(people)}, error={e}")
+        logger.error(f"Preview failed | sheet={sheet_name}, people={len(people)}, error={e}")
         return jsonify({'error': 'Preview generation failed'}), 500
 
 
@@ -546,7 +546,7 @@ def preview():
 def export():
     data = request.get_json(silent=True)
     if not data or not isinstance(data, dict):
-        logger.warning("Export request — invalid or missing JSON body")
+        logger.warning("Export request | invalid or missing JSON body")
         return jsonify({'error': 'Invalid request body'}), 400
 
     people = data.get('people', [])
@@ -561,7 +561,7 @@ def export():
         am_brothers = [count_brothers_in_room(am_visible, room['time']) for room in AM_ROOMS]
         pm_brothers = [count_brothers_in_room(pm_visible, room['time']) for room in PM_ROOMS]
 
-        logger.info(f"Export generated — people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}")
+        logger.info(f"Export generated | people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}")
         return send_file(
             xlsx_buffer,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -572,11 +572,11 @@ def export():
         logger.error(f"Template missing: {e}")
         return jsonify({'error': str(e)}), 500
     except Exception as e:
-        logger.error(f"Export failed — people={len(people)}, error={e}")
+        logger.error(f"Export failed | people={len(people)}, error={e}")
         return jsonify({'error': 'Export generation failed'}), 500
 
 
 if __name__ == '__main__':
     log_dir_display = LOG_DIR if LOG_DIR else 'console only'
-    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080 — template={TEMPLATE_PATH}, logs={log_dir_display}")
+    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080 | template={TEMPLATE_PATH}, logs={log_dir_display}")
     app.run(host='0.0.0.0', port=8080, debug=False)
