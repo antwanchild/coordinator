@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.12.0] - 2026-03-12
+
+### ✨ Features
+
+- Dynamic copyright year in credits footer
 ## [1.11.7] - 2026-03-12
 
 ### 🐛 Bug Fixes
