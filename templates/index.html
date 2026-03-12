@@ -188,7 +188,7 @@
       font-weight: 600;
       border-radius: 5px;
       cursor: pointer;
-      border: 1px solid var(--bdr);
+      border: 1px solid var(--acc-btn, var(--acc));
       color: var(--mut);
       transition: all .15s;
       position: relative;
@@ -357,6 +357,12 @@
 
     #autoRefreshBtn {
       border-color: var(--acc-btn, var(--acc));
+    }
+
+    #autoRefreshBtn.active {
+      background: var(--acc);
+      color: #000;
+      border-color: var(--acc);
     }
 
     .btn-primary { background: var(--acc); color: #000; }
