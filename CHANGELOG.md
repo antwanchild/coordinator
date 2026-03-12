@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.11.2] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Add timezone to entrypoint log timestamps
 ## [1.11.1] - 2026-03-12
 
 ### 🐛 Bug Fixes
