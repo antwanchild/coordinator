@@ -19,9 +19,8 @@ APP_VERSION   = os.environ.get('APP_VERSION', 'dev')
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 log_formatter = logging.Formatter(
-    '%{asctime}s [%{levelname}s] %{message}s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    style='{'
+    '%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S %Z'
 )
 logger = logging.getLogger('coordinator')
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
