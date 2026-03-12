@@ -228,7 +228,7 @@
     .add-row input {
       flex: 1;
       background: var(--input);
-      border: 1px solid var(--bdr);
+      border: 1px solid var(--acc-btn, var(--acc));
       border-radius: 5px;
       color: var(--txt);
       font-size: .74rem;
@@ -287,6 +287,9 @@
     .name-list {
       max-height: 260px;
       overflow-y: auto;
+      border: 1px solid var(--acc-btn, var(--acc));
+      border-radius: 5px;
+      padding: 4px;
     }
 
     .name-entry {
