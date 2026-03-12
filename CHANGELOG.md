@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.8.0] - 2026-03-12
+
+### ✨ Features
+
+- Add auto-refresh toggle with accent border styling
 ## [1.7.0] - 2026-03-12
 
 ### ✨ Features
