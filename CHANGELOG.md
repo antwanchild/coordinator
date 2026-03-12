@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.11.7] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Add 1:30 PM and 4:30 PM as valid end times for full slot coverage
+
+### 📖 Documentation
+
+- Update credits footer
 ## [1.11.6] - 2026-03-12
 
 ### 🐛 Bug Fixes
