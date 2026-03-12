@@ -1,5 +1,6 @@
 import io
 import os
+import time
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
@@ -17,7 +18,7 @@ APP_VERSION   = os.environ.get('APP_VERSION', 'dev')
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 log_formatter = logging.Formatter(
-    '%(asctime)s [%(levelname)s] %(message)s',
+    '%(asctime)s %Z [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger('coordinator')
@@ -502,8 +503,16 @@ def preview():
     sheet_name = 'PM' if is_pm else 'AM'
 
     try:
+        start_time   = time.monotonic()
         image_buffer = render_preview(people, is_pm)
-        logger.info(f"Preview generated — sheet={sheet_name}, people={len(people)}")
+        duration_ms  = int((time.monotonic() - start_time) * 1000)
+
+        rooms        = PM_ROOMS if is_pm else AM_ROOMS
+        visible      = [p for p in people if person_on_sheet(p, is_pm)]
+        sorted_ppl   = sorted(visible, key=lambda p: p['name'])
+        brothers     = [count_brothers_in_room(sorted_ppl, room['time']) for room in rooms]
+
+        logger.info(f"Preview generated — sheet={sheet_name}, people={len(visible)}, brothers={brothers}, duration={duration_ms}ms")
         return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
@@ -525,8 +534,16 @@ def export():
         return jsonify({'error': 'people must be a list'}), 400
 
     try:
+        start_time  = time.monotonic()
         xlsx_buffer = build_xlsx(people)
-        logger.info(f"Export generated — people={len(people)}")
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+
+        am_visible  = sorted([p for p in people if person_on_sheet(p, False)], key=lambda p: p['name'])
+        pm_visible  = sorted([p for p in people if person_on_sheet(p, True)],  key=lambda p: p['name'])
+        am_brothers = [count_brothers_in_room(am_visible, room['time']) for room in AM_ROOMS]
+        pm_brothers = [count_brothers_in_room(pm_visible, room['time']) for room in PM_ROOMS]
+
+        logger.info(f"Export generated — people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}, duration={duration_ms}ms")
         return send_file(
             xlsx_buffer,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -542,5 +559,6 @@ def export():
 
 
 if __name__ == '__main__':
-    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080")
+    log_dir_display = LOG_DIR if LOG_DIR else 'console only'
+    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080 — template={TEMPLATE_PATH}, logs={log_dir_display}")
     app.run(host='0.0.0.0', port=8080, debug=False)
