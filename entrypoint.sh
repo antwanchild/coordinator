@@ -6,7 +6,7 @@ PUID=${PUID:-0}
 PGID=${PGID:-0}
 
 log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $1"
+    echo "$(TZ=${TZ:-UTC} date '+%Y-%m-%d %H:%M:%S %Z') [INFO] $1"
 }
 
 if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
@@ -24,7 +24,7 @@ if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
 
     # Ensure /config is writable by the new user if mounted
     if [ -d "/config" ]; then
-        chown -R coordinator:coordinator /config
+        chown -R "${PUID}:${PGID}" /config
     fi
 
     # Re-execute as the specified user
