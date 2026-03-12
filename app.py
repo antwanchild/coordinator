@@ -4,6 +4,7 @@ import time
 import platform
 import logging
 from logging.handlers import TimedRotatingFileHandler
+from datetime import datetime
 
 from flask import Flask, request, jsonify, send_file, render_template
 from openpyxl import load_workbook
@@ -509,7 +510,7 @@ def render_preview(people, is_pm):
 
 @app.route('/')
 def index():
-    return render_template('index.html', version=APP_VERSION)
+    return render_template('index.html', version=APP_VERSION, now=datetime.now())
 
 
 @app.route('/preview', methods=['POST'])
