@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.6.0] - 2026-03-12
+
+### ✨ Features
+
+- Add request timing, brothers count, and startup info to logs
 ## [1.5.3] - 2026-03-12
 
 ### 🐛 Bug Fixes
