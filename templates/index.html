@@ -355,6 +355,12 @@
       transition: all .15s;
     }
 
+    #autoRefreshBtn.active {
+      background: var(--acc);
+      color: #000;
+      border-color: var(--acc);
+    }
+
     .btn-primary { background: var(--acc); color: #000; }
     .btn-primary:hover { opacity: .9; }
 
@@ -653,7 +659,10 @@
     <!-- 03 Generate -->
     <div>
       <div class="section-label">03 &mdash; Generate</div>
-      <button class="btn btn-primary" onclick="build()">&#9889; Build Schedule</button>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <button class="btn btn-primary" style="flex: 1" onclick="build()">&#9889; Build Schedule</button>
+        <button class="btn btn-secondary btn-small" id="autoRefreshBtn" onclick="toggleAutoRefresh()" title="Auto-refresh preview when names change">Auto</button>
+      </div>
       <button class="btn btn-export" id="exportBtn" onclick="doExport()">
         &#8595; Export Both Sheets (.xlsx)
       </button>
@@ -699,7 +708,7 @@
   const AM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00'];
   const PM_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00'];
 
-  let people = [], isPM = false, sidebarOpen = true, isLightMode = false;
+  let people = [], isPM = false, sidebarOpen = true, isLightMode = false, autoRefresh = false;
 
   // Init time dropdowns
   ['timeStart', 'timeEnd'].forEach(id => {
@@ -730,6 +739,18 @@
     document.getElementById('app').classList.toggle('collapsed', !sidebarOpen);
     document.getElementById('toggleBtn').innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
     document.getElementById('toggleBtn').title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
+  }
+
+  // ── Auto-refresh ───────────────────────────────────────────────────────────
+  function toggleAutoRefresh() {
+    autoRefresh = !autoRefresh;
+    document.getElementById('autoRefreshBtn').classList.toggle('active', autoRefresh);
+    document.getElementById('autoRefreshBtn').title = autoRefresh ? 'Auto-refresh on' : 'Auto-refresh off';
+    toast(autoRefresh ? 'Auto-refresh on' : 'Auto-refresh off');
+  }
+
+  function maybeRefresh() {
+    if (autoRefresh && document.getElementById('previewArea').className !== 'preview-empty') build();
   }
 
   // ── Sheet selection ────────────────────────────────────────────────────────
@@ -823,7 +844,8 @@
   }
   document.getElementById('nameInput').value = '';
   people.sort((a, b) => a.name.localeCompare(b.name));
-  renderNameList();
+    renderNameList();
+    maybeRefresh();
 }
 
 
@@ -874,11 +896,13 @@
     people[personIndex].ranges.splice(rangeIndex, 1);
     if (!people[personIndex].ranges.length) people.splice(personIndex, 1);
     renderNameList();
+    maybeRefresh();
   }
 
   function removePerson(personIndex) {
     people.splice(personIndex, 1);
     renderNameList();
+    maybeRefresh();
   }
 
   function clearNames() {
@@ -978,8 +1002,9 @@
       imported++;
     });
 
-    people.sort((a, b) => a.name.localeCompare(b.name));  // auto-sort after import
+    people.sort((a, b) => a.name.localeCompare(b.name));
     renderNameList();
+    maybeRefresh();
     return { imported, skipped };
   }
 
