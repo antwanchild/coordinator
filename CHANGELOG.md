@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.8.2] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Switch log formatter to brace style to avoid percent interpolation errors
 ## [1.8.1] - 2026-03-12
 
 ### ♻️ Refactoring
