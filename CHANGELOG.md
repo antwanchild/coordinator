@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.3] - 2026-03-12
+
+### 🐛 Bug Fixes
+
+- Brothers count as number in footer row 25, fix header row layout to match template
 ## [1.5.2] - 2026-03-12
 
 ### 🐛 Bug Fixes
