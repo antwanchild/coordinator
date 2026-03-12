@@ -594,11 +594,11 @@
       <div class="card">
         <div class="sheet-tabs">
           <div class="sheet-tab active" id="tab-sheet-AM" onclick="selectSheet(false)">
-            AM1
+            AM
             <span class="tab-badge" id="badge-AM"></span>
           </div>
           <div class="sheet-tab" id="tab-sheet-PM" onclick="selectSheet(true)">
-            PM1
+            PM
             <span class="tab-badge" id="badge-PM"></span>
           </div>
         </div>
@@ -764,7 +764,7 @@
       document.getElementById('tab-sheet-' + x).classList.toggle('active', pm ? (x === 'PM') : (x === 'AM'))
     );
     document.getElementById('headerStatus').innerHTML = (pm ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }}';
-    document.getElementById('previewTitle').textContent = (pm ? 'P.M.' : 'A.M.') + ' — ' + (pm ? 'PM1' : 'AM1');
+    document.getElementById('previewTitle').textContent = (pm ? 'P.M.' : 'A.M.') + ' — ' + (pm ? 'PM' : 'AM');
     if (document.getElementById('previewArea').className !== 'preview-empty') build();
   }
 
