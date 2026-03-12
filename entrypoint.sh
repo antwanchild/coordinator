@@ -25,11 +25,15 @@ if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
     # Ensure /config is writable by the new user if mounted
     if [ -d "/config" ]; then
         chown -R "${PUID}:${PGID}" /config
+        log "Config volume found | chowned to ${PUID}:${PGID}"
+    else
+        log "No config volume mounted | logs will go to console only"
     fi
 
-    # Re-execute as the specified user
+    log "Starting app as PUID=${PUID} PGID=${PGID}"
     exec gosu coordinator python app.py
 else
     log "Entrypoint | running as root (no PUID/PGID set)"
+    log "Starting app as root"
     exec python app.py
 fi
