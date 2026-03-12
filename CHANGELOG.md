@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.10.0] - 2026-03-12
+
+### ✨ Features
+
+- Log Python version, OS, and architecture on startup
 ## [1.9.0] - 2026-03-12
 
 ### ✨ Features
