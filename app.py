@@ -445,11 +445,14 @@ def render_preview(people, is_pm):
                             right='medium' if is_last_room else 'thin')
 
             elif footer_index == 1:
-                # Brothers count row — just the number centered in each room box
+                # Brothers count — single checkbox-sized box, rest of row empty
                 room_count = count_brothers_in_room(sorted_people, room['time'])
-                fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
-                draw_text(start_col, sheet_row, str(room_count), font_bold, align='center', colspan=SLOTS)
-                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium', top='thin', bottom='thin',
+                fill_cell(start_col, sheet_row, '#FFFFFF')
+                draw_text(start_col, sheet_row, str(room_count), font_bold, align='center')
+                draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
+                # Fill remaining cols with empty bordered cells
+                fill_cell(start_col + 1, sheet_row, '#FFFFFF', colspan=SLOTS - 1)
+                draw_border(start_col + 1, sheet_row, colspan=SLOTS - 1, left='thin',
                             right='medium' if is_last_room else 'thin')
 
             else:
