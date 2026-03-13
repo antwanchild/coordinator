@@ -29,8 +29,6 @@
       --bg: #f0f0f2;
       --surf: #ffffff;
       --bdr: #d0d0d8;
-      --acc: #e8ff47;
-      --acc2: #ff6b35;
       --txt: #111113;
       --mut: #888;
       --card: #e8e8ee;
@@ -38,6 +36,19 @@
       --acc-title: #1a1a2e;
       --acc-btn: #b8cc00;
     }
+
+    /* ── Accent themes ── */
+    body.accent-lime   { --acc: #e8ff47; --acc2: #ff6b35; }
+    body.accent-blue   { --acc: #47b8ff; --acc2: #ff6b35; }
+    body.accent-purple { --acc: #b847ff; --acc2: #ff6b35; }
+    body.accent-green  { --acc: #47ff8a; --acc2: #ff6b35; }
+    body.accent-red    { --acc: #ff4747; --acc2: #ff6b35; }
+
+    body.light.accent-lime   { --acc-btn: #b8cc00; --acc-title: #1a1a2e; }
+    body.light.accent-blue   { --acc-btn: #0088cc; --acc-title: #1a1a2e; }
+    body.light.accent-purple { --acc-btn: #8800cc; --acc-title: #1a1a2e; }
+    body.light.accent-green  { --acc-btn: #00cc55; --acc-title: #1a1a2e; }
+    body.light.accent-red    { --acc-btn: #cc0000; --acc-title: #1a1a2e; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -76,6 +87,29 @@
       font-family: 'DM Mono', monospace;
       font-size: .65rem;
       color: var(--mut);
+    }
+
+    .accent-swatches {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .accent-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color .15s, transform .15s;
+    }
+
+    .accent-swatch:hover {
+      transform: scale(1.2);
+    }
+
+    .accent-swatch.active {
+      border-color: var(--txt);
     }
 
     .theme-btn {
@@ -362,16 +396,6 @@
       transition: all .15s;
     }
 
-    #autoRefreshBtn {
-      border-color: var(--acc-btn, var(--acc));
-    }
-
-    #autoRefreshBtn.active {
-      background: var(--acc);
-      color: #000;
-      border-color: var(--acc);
-    }
-
     .btn-primary { background: var(--acc); color: #000; }
     .btn-primary:hover { opacity: .9; }
 
@@ -382,6 +406,16 @@
     .btn-secondary:hover { border-color: var(--acc); }
 
     .btn-small { width: auto; padding: 4px 9px; font-size: .68rem; }
+
+    #autoRefreshBtn {
+      border-color: var(--acc-btn, var(--acc));
+    }
+
+    #autoRefreshBtn.active {
+      background: var(--acc);
+      color: #000;
+      border-color: var(--acc);
+    }
 
     /* ── Inputs ── */
     textarea {
@@ -585,6 +619,13 @@
 <header>
   <h1>&#x2B21; V-COORDINATOR SCHEDULE BUILDER</h1>
   <div class="header-right">
+    <div class="accent-swatches">
+      <div class="accent-swatch" data-accent="lime"   style="background: #e8ff47" title="Lime"></div>
+      <div class="accent-swatch" data-accent="blue"   style="background: #47b8ff" title="Blue"></div>
+      <div class="accent-swatch" data-accent="purple" style="background: #b847ff" title="Purple"></div>
+      <div class="accent-swatch" data-accent="green"  style="background: #47ff8a" title="Green"></div>
+      <div class="accent-swatch" data-accent="red"    style="background: #ff4747" title="Red"></div>
+    </div>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
     <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
   </div>
@@ -678,7 +719,6 @@
         &#8595; Export Both Sheets (.xlsx)
       </button>
       <p style="font-size: .6rem; color: var(--mut); text-align: center; margin-top: 4px">Export to print both sheets</p>
-
     </div>
 
   </div>
@@ -718,6 +758,7 @@
   const PM_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00'];
 
   let people = [], isPM = false, sidebarOpen = true, isLightMode = false, autoRefresh = false;
+  let currentAccent = localStorage.getItem('accent') || 'lime';
 
   // Init time dropdowns
   ['timeStart', 'timeEnd'].forEach(id => {
@@ -734,12 +775,39 @@
     }
   });
 
+  // Restore theme and accent on load
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') {
+    isLightMode = true;
+    document.body.classList.add('light');
+    document.getElementById('themeBtn').textContent = '🌙';
+    document.getElementById('themeBtn').title = 'Switch to dark mode';
+  }
+  setAccent(currentAccent, false);
+
+  // Wire up swatch clicks
+  document.querySelectorAll('.accent-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => setAccent(swatch.dataset.accent));
+  });
+
   // ── Theme ──────────────────────────────────────────────────────────────────
   function toggleTheme() {
     isLightMode = !isLightMode;
     document.body.classList.toggle('light', isLightMode);
     document.getElementById('themeBtn').textContent = isLightMode ? '🌙' : '☀️';
     document.getElementById('themeBtn').title = isLightMode ? 'Switch to dark mode' : 'Switch to light mode';
+    localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+  }
+
+  // ── Accent ─────────────────────────────────────────────────────────────────
+  function setAccent(accent, save = true) {
+    document.body.classList.remove('accent-lime', 'accent-blue', 'accent-purple', 'accent-green', 'accent-red');
+    document.body.classList.add('accent-' + accent);
+    currentAccent = accent;
+    document.querySelectorAll('.accent-swatch').forEach(swatch => {
+      swatch.classList.toggle('active', swatch.dataset.accent === accent);
+    });
+    if (save) localStorage.setItem('accent', accent);
   }
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
@@ -780,16 +848,7 @@
     return h * 60 + m;
   }
 
-  function personOnSheet(person, amTimes, pmTimes) {
-    /**Return true if the person has any range overlapping the given sheet's domain. */
-    const domainTimes = isPM ? pmTimes : amTimes;
-    const domainStart = toMinutes(domainTimes[0]);
-    const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
-    return person.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart);
-  }
-
   function countOnSheet(sheetIsPM) {
-    /**Count how many people have any availability on the given sheet. */
     const domainTimes = sheetIsPM ? PM_TIMES : AM_TIMES;
     const domainStart = toMinutes(domainTimes[0]);
     const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
@@ -828,43 +887,44 @@
 
   // ── Add name ───────────────────────────────────────────────────────────────
   function addName() {
-  const rawInput = document.getElementById('nameInput').value.trim();
-  if (!rawInput) { toast('Enter a name'); return; }
+    const rawInput = document.getElementById('nameInput').value.trim();
+    if (!rawInput) { toast('Enter a name'); return; }
 
-  // If input looks like CSV format, parse it through parseData instead
-  if (rawInput.includes(',')) {
-    const { imported, skipped } = parseData(rawInput);
+    // If input looks like CSV format, parse it through parseData instead
+    if (rawInput.includes(',')) {
+      const { imported, skipped } = parseData(rawInput);
+      document.getElementById('nameInput').value = '';
+      showSkippedWarning('skipped-csv', skipped);
+      if (imported) toast(`Added ${imported} ${imported === 1 ? 'person' : 'people'}`);
+      else toast('Could not parse — check format');
+      maybeRefresh();
+      return;
+    }
+
+    const name  = rawInput;
+    const start = document.getElementById('timeStart').value;
+    const end   = document.getElementById('timeEnd').value;
+    if (start >= end) { toast('End must be after start'); return; }
+    const existing = people.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      existing.ranges.push({ start, end });
+    } else {
+      people.push({ name, ranges: [{ start, end }] });
+    }
     document.getElementById('nameInput').value = '';
-    showSkippedWarning('skipped-csv', skipped);
-    if (imported) toast(`Added ${imported} ${imported === 1 ? 'person' : 'people'}`);
-    else toast('Could not parse — check format');
-    return;
-  }
-
-  const name  = rawInput;
-  const start = document.getElementById('timeStart').value;
-  const end   = document.getElementById('timeEnd').value;
-  if (start >= end) { toast('End must be after start'); return; }
-  const existing = people.find(p => p.name.toLowerCase() === name.toLowerCase());
-  if (existing) {
-    existing.ranges.push({ start, end });
-  } else {
-    people.push({ name, ranges: [{ start, end }] });
-  }
-  document.getElementById('nameInput').value = '';
-  people.sort((a, b) => a.name.localeCompare(b.name));
+    people.sort((a, b) => a.name.localeCompare(b.name));
     renderNameList();
     maybeRefresh();
-}
-
+  }
 
   // ── Render name list ───────────────────────────────────────────────────────
   function renderNameList() {
-    const container   = document.getElementById('nameList');
+    const container = document.getElementById('nameList');
+    const countEl   = document.getElementById('peopleCount');
+    const amCount   = countOnSheet(false);
+    const pmCount   = countOnSheet(true);
+
     container.classList.toggle('has-names', people.length > 0);
-    const countEl     = document.getElementById('peopleCount');
-    const amCount     = countOnSheet(false);
-    const pmCount     = countOnSheet(true);
 
     // Update people count display
     if (people.length) {
@@ -944,7 +1004,6 @@
   }
 
   function isValidTime(t) {
-    /**Return true if the normalized time is a valid HH:MM in the schedule range. */
     if (!t || !t.match(/^\d{2}:\d{2}$/)) return false;
     const minutes = toMinutes(t);
     return minutes >= toMinutes('11:00') && minutes <= toMinutes('16:30');
@@ -958,15 +1017,17 @@
       const { imported, skipped } = parseData(e.target.result);
       showSkippedWarning('skipped-csv', skipped);
       toast(`CSV imported — ${imported} added`);
+      maybeRefresh();
     };
     reader.readAsText(file);
   }
 
   function importPaste() {
     const { imported, skipped } = parseData(document.getElementById('pasteInput').value);
-    document.getElementById('pasteInput').value = '';  // clear after import
+    document.getElementById('pasteInput').value = '';
     showSkippedWarning('skipped-paste', skipped);
     toast(`Imported — ${imported} added`);
+    maybeRefresh();
   }
 
   function showSkippedWarning(elementId, skippedLines) {
@@ -981,7 +1042,6 @@
   }
 
   function parseData(text) {
-    /**Parse CSV/paste text into people, returning counts of imported and skipped lines. */
     let imported = 0;
     const skipped = [];
 
@@ -1014,7 +1074,6 @@
 
     people.sort((a, b) => a.name.localeCompare(b.name));
     renderNameList();
-    maybeRefresh();
     return { imported, skipped };
   }
 
