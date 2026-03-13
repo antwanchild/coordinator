@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.13.0] - 2026-03-13
+
+### ✨ Features
+
+- Accent theme picker with localStorage persistence for theme and accent
+
+### 📖 Documentation
+
+- Add print hint below export button
 ## [1.12.0] - 2026-03-12
 
 ### ✨ Features
