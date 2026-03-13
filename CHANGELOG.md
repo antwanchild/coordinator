@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.14.0] - 2026-03-13
+
+### ✨ Features
+
+- Add health check endpoint and Dockerfile HEALTHCHECK
 ## [1.13.0] - 2026-03-13
 
 ### ✨ Features
