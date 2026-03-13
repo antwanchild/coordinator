@@ -60,6 +60,7 @@ ROUTE_LABELS = {
     '/':        'App loaded',
     '/preview': 'Preview requested',
     '/export':  'Export requested',
+    '/health':  'Health check',
 }
 
 @app.before_request
@@ -507,6 +508,9 @@ def render_preview(people, is_pm):
     return image_buffer
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+@app.route('/health')
+def health():
+    return jsonify({'status': 'ok', 'version': APP_VERSION}), 200
 
 @app.route('/')
 def index():

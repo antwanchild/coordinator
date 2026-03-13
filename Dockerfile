@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     fonts-dejavu-core \
     tzdata \
     gosu \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
@@ -29,5 +30,8 @@ ENV APP_VERSION=${APP_VERSION}
 ENV TZ=UTC
 
 EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
