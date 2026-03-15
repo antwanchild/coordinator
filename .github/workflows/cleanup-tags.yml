@@ -1,0 +1,42 @@
+name: Cleanup Old Tags
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  cleanup-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - name: Delete old tags keeping last 10
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get all tags sorted by version, newest first
+          TAGS=$(git tag --sort=-version:refname | grep '^v')
+          TOTAL=$(echo "$TAGS" | wc -l)
+
+          if [ "$TOTAL" -le 10 ]; then
+            echo "Only $TOTAL tags found, nothing to delete"
+            exit 0
+          fi
+
+          # Get tags to delete (everything after the first 10)
+          TO_DELETE=$(echo "$TAGS" | tail -n +11)
+
+          echo "Total tags: $TOTAL | Keeping 10 | Deleting $((TOTAL - 10))"
+
+          for TAG in $TO_DELETE; do
+            echo "Deleting $TAG"
+            git push origin --delete "$TAG"
+          done
