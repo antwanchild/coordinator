@@ -21,6 +21,7 @@ jobs:
       - name: Delete old tags keeping last 10
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           TAGS=$(git tag --sort=-version:refname | grep '^v')
           TOTAL=$(echo "$TAGS" | wc -l)
@@ -36,5 +37,5 @@ jobs:
 
           for TAG in $TO_DELETE; do
             echo "Deleting $TAG"
-            gh api repos/${{ github.repository }}/git/refs/tags/${TAG} -X DELETE
+            gh api repos/${REPO}/git/refs/tags/${TAG} -X DELETE
           done
