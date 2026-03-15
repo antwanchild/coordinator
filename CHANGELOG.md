@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.15.2] - 2026-03-15
+
+### 🐛 Bug Fixes
+
+- Pass repository as env var for gh api tag deletion
 ## [1.15.1] - 2026-03-15
 
 ### 🐛 Bug Fixes
