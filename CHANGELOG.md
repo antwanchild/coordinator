@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.15.0] - 2026-03-15
+
+### ✨ Features
+
+- Replace accent swatches with named dropdown, add cyan/orange/pink/teal themes
 ## [1.14.0] - 2026-03-13
 
 ### ✨ Features
