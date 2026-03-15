@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.15.1] - 2026-03-15
+
+### 🐛 Bug Fixes
+
+- Use gh api to delete tags in cleanup workflow
 ## [1.15.0] - 2026-03-15
 
 ### ✨ Features
