@@ -43,12 +43,20 @@
     body.accent-purple { --acc: #b847ff; --acc2: #ff6b35; }
     body.accent-green  { --acc: #47ff8a; --acc2: #ff6b35; }
     body.accent-red    { --acc: #ff4747; --acc2: #ff6b35; }
+    body.accent-cyan   { --acc: #00e5ff; --acc2: #ff6b35; }
+    body.accent-orange { --acc: #ffaa00; --acc2: #ff6b35; }
+    body.accent-pink   { --acc: #ff47b8; --acc2: #ff6b35; }
+    body.accent-teal   { --acc: #00ffcc; --acc2: #ff6b35; }
 
     body.light.accent-lime   { --acc-btn: #b8cc00; --acc-title: #1a1a2e; }
     body.light.accent-blue   { --acc-btn: #0088cc; --acc-title: #1a1a2e; }
     body.light.accent-purple { --acc-btn: #8800cc; --acc-title: #1a1a2e; }
     body.light.accent-green  { --acc-btn: #00cc55; --acc-title: #1a1a2e; }
     body.light.accent-red    { --acc-btn: #cc0000; --acc-title: #1a1a2e; }
+    body.light.accent-cyan   { --acc-btn: #0099bb; --acc-title: #1a1a2e; }
+    body.light.accent-orange { --acc-btn: #cc8800; --acc-title: #1a1a2e; }
+    body.light.accent-pink   { --acc-btn: #cc0088; --acc-title: #1a1a2e; }
+    body.light.accent-teal   { --acc-btn: #00aa88; --acc-title: #1a1a2e; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -89,27 +97,36 @@
       color: var(--mut);
     }
 
-    .accent-swatches {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-    }
-
-    .accent-swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
+    .accent-picker select {
+      background: var(--card);
+      border: 1px solid var(--acc-btn, var(--acc));
+      border-radius: 6px;
+      color: var(--txt);
+      font-size: .75rem;
+      padding: 3px 7px;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color .15s, transform .15s;
+      outline: none;
+      transition: border-color .15s;
     }
 
-    .accent-swatch:hover {
-      transform: scale(1.2);
+    .accent-picker select:hover {
+      border-color: var(--acc);
     }
 
-    .accent-swatch.active {
-      border-color: var(--txt);
+    .accent-picker select {
+      background: var(--card);
+      border: 1px solid var(--acc-btn, var(--acc));
+      border-radius: 6px;
+      color: var(--txt);
+      font-size: .75rem;
+      padding: 3px 7px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .accent-picker select:hover {
+      border-color: var(--acc);
     }
 
     .theme-btn {
@@ -619,12 +636,18 @@
 <header>
   <h1>&#x2B21; V-COORDINATOR SCHEDULE BUILDER</h1>
   <div class="header-right">
-    <div class="accent-swatches">
-      <div class="accent-swatch" data-accent="lime"   style="background: #e8ff47" title="Lime"></div>
-      <div class="accent-swatch" data-accent="blue"   style="background: #47b8ff" title="Blue"></div>
-      <div class="accent-swatch" data-accent="purple" style="background: #b847ff" title="Purple"></div>
-      <div class="accent-swatch" data-accent="green"  style="background: #47ff8a" title="Green"></div>
-      <div class="accent-swatch" data-accent="red"    style="background: #ff4747" title="Red"></div>
+    <div class="accent-picker">
+      <select id="accentSelect" onchange="setAccent(this.value)" title="Choose accent color">
+        <option value="lime">🟡 Lime</option>
+        <option value="blue">🔵 Blue</option>
+        <option value="purple">🟣 Purple</option>
+        <option value="green">🟢 Green</option>
+        <option value="red">🔴 Red</option>
+        <option value="cyan">🩵 Cyan</option>
+        <option value="orange">🟠 Orange</option>
+        <option value="pink">🩷 Pink</option>
+        <option value="teal">🫐 Teal</option>
+      </select>
     </div>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
     <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
@@ -785,11 +808,6 @@
   }
   setAccent(currentAccent, false);
 
-  // Wire up swatch clicks
-  document.querySelectorAll('.accent-swatch').forEach(swatch => {
-    swatch.addEventListener('click', () => setAccent(swatch.dataset.accent));
-  });
-
   // ── Theme ──────────────────────────────────────────────────────────────────
   function toggleTheme() {
     isLightMode = !isLightMode;
@@ -801,12 +819,13 @@
 
   // ── Accent ─────────────────────────────────────────────────────────────────
   function setAccent(accent, save = true) {
-    document.body.classList.remove('accent-lime', 'accent-blue', 'accent-purple', 'accent-green', 'accent-red');
+    document.body.classList.remove(
+      'accent-lime', 'accent-blue', 'accent-purple', 'accent-green', 'accent-red',
+      'accent-cyan', 'accent-orange', 'accent-pink', 'accent-teal'
+    );
     document.body.classList.add('accent-' + accent);
     currentAccent = accent;
-    document.querySelectorAll('.accent-swatch').forEach(swatch => {
-      swatch.classList.toggle('active', swatch.dataset.accent === accent);
-    });
+    document.getElementById('accentSelect').value = accent;
     if (save) localStorage.setItem('accent', accent);
   }
 
