@@ -393,8 +393,11 @@ def render_preview(people, is_pm, room_data=None):
         draw_border(start_col, 3, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 4: "Off:" + officiator name, "AM Shift" blue in room 1 AM only
-        off_label = f"Off: {rd.get('off', '')}" if rd.get('off') else 'Off:'
+        # Row 4: "Off:" + officiator, except AM room 1 which always shows "Off:" only
+        off_label = 'Off:'
+        if not (not is_pm and room_index == 0):
+            rd        = room_data.get(room['time'], {})
+            off_label = f"Off: {rd.get('off', '')}" if rd.get('off') else 'Off:'
         fill_cell(start_col, 4, '#FFFFFF', colspan=3)
         draw_text(start_col, 4, off_label, font_bold, '#000000', 'center', 3)
         draw_border(start_col, 4, colspan=3, left='medium', top='thin', bottom='double')

@@ -1085,7 +1085,7 @@
       const normalizedFirst = normalizeTime(parts[0]);
       if (ROOM_TIMES.includes(normalizedFirst)) {
         roomData[normalizedFirst] = {
-          off: parts[1] || '',
+          off: normalizedFirst === '11:00' ? '' : (parts[1] || ''),
           b:   parts[2] || '',
           s:   parts[3] || '',
         };
