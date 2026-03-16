@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.0] - 2026-03-16
+
+### ✨ Features
+
+- Add room data support for officiators and estimated B:/S: counts
 ## [1.16.7] - 2026-03-16
 
 ### 🐛 Bug Fixes
