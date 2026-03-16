@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.3] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Correct header rows 2-4 alignment, B:/S: positions, AM Shift blue color and PM sheet
 ## [1.16.2] - 2026-03-16
 
 ### 🐛 Bug Fixes
