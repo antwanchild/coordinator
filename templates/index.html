@@ -113,22 +113,6 @@
       border-color: var(--acc);
     }
 
-    .accent-picker select {
-      background: var(--card);
-      border: 1px solid var(--acc-btn, var(--acc));
-      border-radius: 6px;
-      color: var(--txt);
-      font-size: .75rem;
-      padding: 3px 7px;
-      cursor: pointer;
-      outline: none;
-      transition: border-color .15s;
-    }
-
-    .accent-picker select:hover {
-      border-color: var(--acc);
-    }
-
     .theme-btn {
       background: none;
       border: 1px solid var(--bdr);
@@ -144,6 +128,183 @@
     .theme-btn:hover {
       border-color: var(--acc);
       color: var(--acc);
+    }
+
+    .help-btn {
+      background: none;
+      border: 1px solid var(--bdr);
+      border-radius: 50%;
+      color: var(--mut);
+      cursor: pointer;
+      font-size: .75rem;
+      font-weight: 700;
+      width: 24px;
+      height: 24px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+
+    .help-btn:hover {
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+
+    /* ── Tooltip ── */
+    .tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tip-icon {
+      background: none;
+      border: 1px solid var(--bdr);
+      border-radius: 50%;
+      color: var(--mut);
+      cursor: default;
+      font-size: .55rem;
+      font-weight: 700;
+      width: 14px;
+      height: 14px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+
+    .tip-text {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: .65rem;
+      color: var(--txt);
+      white-space: nowrap;
+      z-index: 200;
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      pointer-events: none;
+    }
+
+    .tip:hover .tip-text {
+      display: block;
+    }
+
+    /* ── Help modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surf);
+      border: 1px solid var(--bdr);
+      border-radius: 12px;
+      padding: 24px;
+      width: 480px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal h2 {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--acc-title, var(--acc));
+      margin-bottom: 16px;
+    }
+
+    .modal h3 {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--acc-title, var(--acc));
+      margin: 14px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .modal p, .modal li {
+      font-size: .72rem;
+      color: var(--mut);
+      line-height: 1.6;
+    }
+
+    .modal ul {
+      padding-left: 14px;
+      margin-top: 4px;
+    }
+
+    .modal code {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      border-radius: 4px;
+      padding: 1px 4px;
+      color: var(--acc);
+    }
+
+    .modal pre {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--txt);
+      margin-top: 6px;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: 1px solid var(--bdr);
+      border-radius: 6px;
+      color: var(--mut);
+      cursor: pointer;
+      font-size: .8rem;
+      padding: 2px 8px;
+      transition: border-color .15s, color .15s;
+    }
+
+    .modal-close:hover {
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+
+    .kbd {
+      display: inline-block;
+      background: var(--card);
+      border: 1px solid var(--bdr);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      color: var(--txt);
     }
 
     /* ── App layout ── */
@@ -649,6 +810,7 @@
         <option value="teal">🫐 Teal</option>
       </select>
     </div>
+    <button class="help-btn" onclick="toggleHelp()" title="Help">?</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
     <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
   </div>
@@ -661,7 +823,9 @@
 
     <!-- 01 Sheet -->
     <div>
-      <div class="section-label">01 &mdash; Sheet</div>
+      <div class="section-label">01 &mdash; Sheet
+        <span class="tip"><span class="tip-icon">?</span><span class="tip-text">Switch between AM and PM rooms. Both sheets export together.</span></span>
+      </div>
       <div class="card">
         <div class="sheet-tabs">
           <div class="sheet-tab active" id="tab-sheet-AM" onclick="selectSheet(false)">
@@ -679,16 +843,18 @@
 
     <!-- 02 Names & Times -->
     <div>
-      <div class="section-label">02 &mdash; Names &amp; Times</div>
+      <div class="section-label">02 &mdash; Names &amp; Times
+        <span class="tip"><span class="tip-icon">?</span><span class="tip-text">Paste is recommended — supports people and room data together.</span></span>
+      </div>
       <div class="card">
         <div class="input-tabs">
-          <div class="input-tab" id="tab-manual" onclick="switchTab('manual')">📝 Manual</div>
+          <div class="input-tab active" id="tab-manual" onclick="switchTab('manual')">📝 Manual</div>
           <div class="input-tab" id="tab-csv" onclick="switchTab('csv')">📁 CSV</div>
-          <div class="input-tab active" id="tab-paste" onclick="switchTab('paste')">📋 Paste</div>
+          <div class="input-tab" id="tab-paste" onclick="switchTab('paste')">📋 Paste</div>
         </div>
 
         <!-- Manual panel -->
-        <div id="panel-manual" style="display: none">
+        <div id="panel-manual">
           <div class="add-row">
             <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30" onkeydown="if(event.key==='Enter') addName()">
             <button onclick="addName()">+</button>
@@ -724,6 +890,10 @@
 
         <!-- Paste panel -->
         <div id="panel-paste">
+          <p style="font-size:.6rem;color:var(--mut);margin-bottom:4px">
+            Person: <code style="font-size:.6rem;background:var(--card);padding:1px 3px;border-radius:3px;color:var(--acc)">Name, start, end</code>
+            &nbsp; Room: <code style="font-size:.6rem;background:var(--card);padding:1px 3px;border-radius:3px;color:var(--acc)">time, officiator, B, S</code>
+          </p>
           <textarea id="pasteInput" placeholder="Smith J, 11:00, 12:30&#10;Doe A, 11:00, 11:30, 14:00, 15:00&#10;&#10;11:00, Jones B, 3, 2&#10;11:30, Taylor C, 4, 1"></textarea>
           <button class="btn btn-primary" style="margin-top: 6px" onclick="importPaste()">Import</button>
           <div class="skipped-warning" id="skipped-paste"></div>
@@ -736,7 +906,9 @@
       <div class="section-label">03 &mdash; Generate</div>
       <div style="display: flex; gap: 6px; align-items: center;">
         <button class="btn btn-primary" style="flex: 1" onclick="build()">&#9889; Build Schedule</button>
-        <button class="btn btn-secondary" id="autoRefreshBtn" style="width: 60px" onclick="toggleAutoRefresh()" title="Auto-refresh preview when names change">Auto</button>
+        <button class="btn btn-secondary" id="autoRefreshBtn" style="width: 60px" onclick="toggleAutoRefresh()" title="Auto-refresh preview when names change">Auto
+          <span class="tip" style="position:absolute;top:-2px;right:-2px"><span class="tip-icon">?</span><span class="tip-text">Auto-rebuild preview when names or room data change.</span></span>
+        </button>
       </div>
       <button class="btn btn-export" id="exportBtn" onclick="doExport()">
         &#8595; Export Both Sheets (.xlsx)
@@ -769,6 +941,52 @@
     </div>
   </div>
 
+</div>
+
+<!-- Help modal -->
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this) toggleHelp()">
+  <div class="modal">
+    <button class="modal-close" onclick="toggleHelp()">&times; Close</button>
+    <h2>&#x2B21; V-Coordinator Help</h2>
+
+    <h3>Paste / CSV Format</h3>
+    <p>People and room data can be mixed in the same paste block.</p>
+    <pre>Smith J, 11:00, 13:30
+Doe A, 11:00, 11:30, 14:00, 15:30
+
+11:00, , 3, 2
+11:30, Taylor C, 4, 1
+12:00, Williams D, 2, 3
+12:30, Brown E, 5, 2
+13:00, Davis F, 3, 1</pre>
+    <p style="margin-top:6px"><strong>Person:</strong> <code>Name, start, end</code> — multiple time pairs allowed</p>
+    <p style="margin-top:4px"><strong>Room:</strong> <code>time, officiator, brothers, sisters</code></p>
+    <ul>
+      <li>Room 1 (11:00 AM) officiator is always AM Shift — leave blank</li>
+      <li>Lines starting with <code>#</code> are ignored</li>
+      <li>Valid times: <code>11:00</code> through <code>16:30</code></li>
+    </ul>
+
+    <h3>Sheet Tabs</h3>
+    <p>AM and PM show different rooms. Switch tabs to preview each sheet. Both sheets are always included in the export.</p>
+
+    <h3>Build Schedule</h3>
+    <p>Renders a pixel-perfect preview image of the schedule. Enable <strong>Auto</strong> to rebuild automatically whenever names change.</p>
+
+    <h3>Keyboard Shortcuts</h3>
+    <ul>
+      <li><span class="kbd">Ctrl+B</span> / <span class="kbd">⌘B</span> — Build Schedule</li>
+    </ul>
+
+    <h3>Export</h3>
+    <p>Downloads the filled .xlsx file with both AM and PM sheets. Use this to print — each sheet prints on a separate page.</p>
+
+    <h3>Bros Available</h3>
+    <p>The count per room includes the Off row plus any brother whose availability fully covers that room's 30-minute slot.</p>
+
+    <h3>Unavailable Slots</h3>
+    <p>Gray cells indicate a brother is not available for that room's time slot. A person must cover the full 30 minutes to be considered available.</p>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -841,6 +1059,16 @@
     document.getElementById('toggleBtn').innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
     document.getElementById('toggleBtn').title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
   }
+
+  // ── Help modal ─────────────────────────────────────────────────────────────
+  function toggleHelp() {
+    document.getElementById('helpModal').classList.toggle('show');
+  }
+
+  // close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('helpModal').classList.remove('show');
+  });
 
   // ── Auto-refresh ───────────────────────────────────────────────────────────
   function toggleAutoRefresh() {
