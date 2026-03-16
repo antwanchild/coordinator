@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.6] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Remove right border from col 2 of Bros Available box
 ## [1.16.5] - 2026-03-16
 
 ### 🐛 Bug Fixes
