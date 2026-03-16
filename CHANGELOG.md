@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.4] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Row 25 red two-line label, brothers box divider, THIN RECEIVERS color and position, wlkr labels
 ## [1.16.3] - 2026-03-16
 
 ### 🐛 Bug Fixes
