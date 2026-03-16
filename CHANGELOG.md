@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.7] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Brothers available box correct borders, no dividing line
 ## [1.16.6] - 2026-03-16
 
 ### 🐛 Bug Fixes
