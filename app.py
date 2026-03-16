@@ -381,7 +381,7 @@ def render_preview(people, is_pm):
         draw_border(start_col, 4, colspan=3, left='medium', top='thin', bottom='double')
         fill_cell(start_col + 3, 4, '#FFFFFF', colspan=9)
         if not is_pm and room_index == 0:
-            draw_text(start_col + 3, 4, 'AM Shift', font_bold, color='#4472C4', colspan=9)
+            draw_text(start_col + 3, 4, 'AM Shift', font_bold, '#335593', 'left', 9)
         draw_border(start_col + 3, 4, colspan=9, top='thin', bottom='double',
                     right='medium' if is_last_room else 'thin')
 
@@ -460,8 +460,19 @@ def render_preview(people, is_pm):
 
         # Column C label
         fill_cell(3, sheet_row, '#FFFFFF')
-        if footer_label:
-            draw_text(3, sheet_row, footer_label.split('\n')[0], font_small, align='center')
+        if footer_index == 0:
+            # Two-line red label for row 25
+            x1, y1, x2, y2 = cell_rect(3, sheet_row)
+            lines = footer_label.split('\n')
+            line_h = font_small.getbbox('A')[3] - font_small.getbbox('A')[1]
+            total_h = line_h * len(lines) + 2 * (len(lines) - 1)
+            ty = y1 + (y2 - y1 - total_h) // 2
+            for line in lines:
+                lw = draw.textlength(line, font=font_small)
+                draw.text((x1 + (x2 - x1 - lw) // 2, ty), line, fill=hex_to_rgb('#FF0000'), font=font_small)
+                ty += line_h + 2
+        elif footer_label:
+            draw_text(3, sheet_row, footer_label, font_small, align='center')
         draw_border(3, sheet_row, left='double', bottom='double' if is_last_footer else None)
 
         for room_index, room in enumerate(rooms):
@@ -479,18 +490,17 @@ def render_preview(people, is_pm):
                             right=right_border)
 
             elif footer_index == 1:
-                # Row 26: 2-col box with count, L:thin on col 3, R:medium on last col
+                # Row 26: 2-col box, no internal divider — col 4 L:medium R:thin, col 5 R:thin only
                 room_count = count_brothers_in_room(sorted_people, room['time'])
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=2)
                 draw_text(start_col, sheet_row, str(room_count), font_bold, align='center', colspan=2)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
                 draw_border(start_col + 1, sheet_row, right='thin', top='thin', bottom='thin')
                 fill_cell(start_col + 2, sheet_row, '#FFFFFF', colspan=SLOTS - 2)
-                draw_border(start_col + 2, sheet_row, left='thin')
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 2:
-                # Row 27: red checkbox col 1, letter col 2, THIN RECEIVERS from col 3
+                # Row 27: red checkbox col 1, letter col 2, THIN RECEIVERS red at relative col 3 spanning 8
                 checkbox_color = '#FF0000' if room['red'] else '#FFFFFF'
                 fill_cell(start_col, sheet_row, checkbox_color)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
@@ -500,7 +510,7 @@ def render_preview(people, is_pm):
                 draw_border(start_col + 1, sheet_row, left='thin', top='thin')
                 fill_cell(start_col + 2, sheet_row, '#FFFFFF', colspan=SLOTS - 2)
                 if room['thin']:
-                    draw_text(start_col + 2, sheet_row, room['thin'], font_small, colspan=SLOTS - 2)
+                    draw_text(start_col + 3, sheet_row, room['thin'], font_medium, color='#FF0000', colspan=8)
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 3:
@@ -511,7 +521,7 @@ def render_preview(people, is_pm):
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 4:
-                # Row 29: col 1 L:medium R:thin T:thin B:thin, wlkr label col 2, right edge
+                # Row 29: col 1 L:medium R:thin T:thin B:thin, wlkr label at col 2 L:thin
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
                 if room['wlkr']:
