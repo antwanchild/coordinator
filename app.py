@@ -180,8 +180,10 @@ def count_brothers_in_room(sorted_people, room_time):
 
 # ── Build xlsx from template ──────────────────────────────────────────────────
 
-def build_xlsx(people):
+def build_xlsx(people, room_data=None):
     """Fill the Excel template with people data and return a BytesIO buffer."""
+    if room_data is None:
+        room_data = {}
     if not os.path.exists(TEMPLATE_PATH):
         raise FileNotFoundError(f"Template file not found: {TEMPLATE_PATH}")
 
@@ -218,6 +220,17 @@ def build_xlsx(people):
             count     = count_brothers_in_room(sorted_people, room['time'])
             worksheet.cell(row=26, column=start_col).value = count
 
+        # Write officiator, B:, S: into header cells for each room
+        for room_index, room in enumerate(rooms):
+            start_col = ROOM_START_COLS[room_index]
+            rd        = room_data.get(room['time'], {})
+            if rd.get('off'):
+                worksheet.cell(row=4, column=start_col).value = f"Off: {rd['off']}"
+            if rd.get('b'):
+                worksheet.cell(row=3, column=start_col).value = f"B: {rd['b']}"
+            if rd.get('s'):
+                worksheet.cell(row=3, column=start_col + 6).value = f"S: {rd['s']}"
+
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)
     xlsx_buffer.seek(0)
@@ -230,8 +243,10 @@ def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
-def render_preview(people, is_pm):
+def render_preview(people, is_pm, room_data=None):
     """Render the schedule as a PNG image and return a BytesIO buffer."""
+    if room_data is None:
+        room_data = {}
     rooms          = PM_ROOMS if is_pm else AM_ROOMS
     visible_people = [person for person in people if person_on_sheet(person, is_pm)]
     sorted_people  = sorted(visible_people, key=lambda person: person['name'])
@@ -368,16 +383,20 @@ def render_preview(people, is_pm):
         draw_border(start_col, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 3: B: in relative cols 0-1, S: in relative cols 6-7, rest empty
+        # Row 3: B:/S: with estimated counts in left/right halves
+        rd      = room_data.get(room['time'], {})
+        b_label = f"B: {rd.get('b', '')}" if rd.get('b') else 'B:'
+        s_label = f"S: {rd.get('s', '')}" if rd.get('s') else 'S:'
         fill_cell(start_col, 3, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col, 3, 'B:', font_bold, '#000000', 'right', 2)
-        draw_text(start_col + 6, 3, 'S:', font_bold, '#000000', 'right', 2)
+        draw_text(start_col, 3, b_label, font_bold, '#000000', 'right', 6)
+        draw_text(start_col + 6, 3, s_label, font_bold, '#000000', 'right', 6)
         draw_border(start_col, 3, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 4: "Off:" in relative cols 0-2, "AM Shift" blue in relative cols 3-11 (AM sheet, room 1 only)
+        # Row 4: "Off:" + officiator name, "AM Shift" blue in room 1 AM only
+        off_label = f"Off: {rd.get('off', '')}" if rd.get('off') else 'Off:'
         fill_cell(start_col, 4, '#FFFFFF', colspan=3)
-        draw_text(start_col, 4, 'Off:', font_bold, '#000000', 'center', 3)
+        draw_text(start_col, 4, off_label, font_bold, '#000000', 'center', 3)
         draw_border(start_col, 4, colspan=3, left='medium', top='thin', bottom='double')
         fill_cell(start_col + 3, 4, '#FFFFFF', colspan=9)
         if not is_pm and room_index == 0:
@@ -577,10 +596,11 @@ def preview():
         return jsonify({'error': 'people must be a list'}), 400
 
     is_pm      = bool(data.get('is_pm', False))
+    room_data  = data.get('room_data', {})
     sheet_name = 'PM' if is_pm else 'AM'
 
     try:
-        image_buffer = render_preview(people, is_pm)
+        image_buffer = render_preview(people, is_pm, room_data)
         rooms        = PM_ROOMS if is_pm else AM_ROOMS
         visible      = [p for p in people if person_on_sheet(p, is_pm)]
         sorted_ppl   = sorted(visible, key=lambda p: p['name'])
@@ -606,8 +626,10 @@ def export():
     if not isinstance(people, list):
         return jsonify({'error': 'people must be a list'}), 400
 
+    room_data = data.get('room_data', {})
+
     try:
-        xlsx_buffer = build_xlsx(people)
+        xlsx_buffer = build_xlsx(people, room_data)
         am_visible  = sorted([p for p in people if person_on_sheet(p, False)], key=lambda p: p['name'])
         pm_visible  = sorted([p for p in people if person_on_sheet(p, True)],  key=lambda p: p['name'])
         am_brothers = [count_brothers_in_room(am_visible, room['time']) for room in AM_ROOMS]
