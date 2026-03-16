@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.2] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Officiator names in correct cell in blue, remove duplicate row 4 block
 ## [1.17.1] - 2026-03-16
 
 ### 🐛 Bug Fixes
