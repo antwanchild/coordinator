@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.2] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Rewrite footer rendering to match exact template border and fill layout
 ## [1.16.1] - 2026-03-16
 
 ### 🐛 Bug Fixes
