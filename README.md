@@ -33,6 +33,7 @@ services:
       - TZ=America/Denver
       - PUID=1000
       - PGID=1000
+      - LOG_LEVEL=INFO    # DEBUG, INFO, WARNING, ERROR
     volumes:
       - /path/to/config:/config
     restart: unless-stopped
@@ -47,6 +48,7 @@ Then open http://localhost:8080 in your browser.
 | `TZ` | `UTC` | Container timezone — affects log timestamps |
 | `PUID` | `0` (root) | User ID to run the process as |
 | `PGID` | `0` (root) | Group ID to run the process as |
+| `LOG_LEVEL` | `INFO` | Logging verbosity — `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 
 To find your PUID/PGID on Linux/Synology: `id your_username`
 
@@ -60,24 +62,51 @@ To find your PUID/PGID on Linux/Synology: `id your_username`
 
 If `/config` is not mapped the app runs normally and logs to the container console only, accessible via `docker logs`. If PUID/PGID are set, the `/config` folder will be `chown`'d to that user on startup.
 
+## 🏥 Health Check
+
+The app exposes `/health` returning `{"status": "ok", "version": "x.x.x"}`. The Dockerfile includes a built-in `HEALTHCHECK` polling this endpoint every 30 seconds.
+
 ## 🚀 Usage
 
-1. **Select sheet** — AM1 or PM1
-2. **Add names** — type a name, pick a start/end time, click +
-   - Repeat to add multiple time ranges per person
-   - Or use CSV/Paste tab for bulk import
-3. **Build Schedule** — renders a pixel-perfect preview image of the spreadsheet
-4. **Export Both Sheets** — downloads the filled xlsx with both AM and PM tabs
+1. **Select sheet** — AM or PM
+2. **Add names & room data** — use the Paste tab to import people and room data together
+   - Person: `Name, start, end` (multiple time pairs allowed)
+   - Room: `time, officiator, brothers, sisters`
+   - Or use Manual tab for individual name entry
+3. **Build Schedule** — renders a pixel-perfect preview (`Ctrl+B` / `Cmd+B`)
+   - Enable **Auto** to rebuild automatically when names change
+4. **Export Both Sheets** — downloads the filled xlsx with both AM and PM tabs — use this to print
 
-## 📋 CSV Format
+## 🎨 Themes
+
+Use the dropdown in the header to choose an accent color (Lime, Blue, Purple, Green, Red, Cyan, Orange, Pink, Teal). Toggle light/dark mode with the ☀️ button. Both preferences are saved across sessions.
+
+## 📋 Paste / CSV Format
+
+People and room data can be mixed in the same paste block:
 
 ```
-Smith J, 11:00, 12:30
+Smith J, 11:00, 13:30
 Doe A, 11:00, 11:30, 14:00, 15:30
-Jones B, 11:00, 13:00, 14:00, 16:00
+
+11:00, , 3, 2
+11:30, Taylor C, 4, 1
+12:00, Williams D, 2, 3
+12:30, Brown E, 5, 2
+13:00, Davis F, 3, 1
+14:00, Green A, 2, 4
+14:30, White B, 3, 2
+15:00, Jones E, 4, 1
+15:30, Black C, 2, 3
+16:00, Gray D, 5, 2
 ```
 
-Each row: `Name, start1, end1, start2, end2, ...` (unlimited time pairs)
+**Person line:** `Name, start1, end1, start2, end2, ...` (unlimited time pairs)
+
+**Room line:** `time, officiator, estimated brothers, estimated sisters`
+- Room 1 (11:00 AM) officiator is always AM Shift — leave blank
+- Lines starting with `#` are ignored
+- Valid times: `11:00` through `16:30`
 
 ## 🐍 Run locally (without Docker)
 
