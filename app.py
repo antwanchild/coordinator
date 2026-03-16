@@ -357,34 +357,31 @@ def render_preview(people, is_pm):
         draw_border(start_col, 1, colspan=SLOTS, left='medium', top='double', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 2: "Time:" centered in cols 2-4 of room, time value left-aligned red in cols 5-8
+        # Row 2: "Time:" centered in relative cols 1-3, time value left in relative cols 4-7
         fill_cell(start_col, 2, '#FFFFFF', colspan=SLOTS)
         x1l, y1l, x2l, y2l = cell_rect(start_col + 1, 2, 3, 1)
         x1r, y1r, x2r, y2r = cell_rect(start_col + 4, 2, 4, 1)
         ty = y1l + (y2l - y1l - font_bold.getbbox('A')[3]) // 2
-        time_w = draw.textlength('Time:', font=font_bold)
-        draw.text((x1l + (x2l - x1l - time_w) // 2, ty), 'Time:', fill=hex_to_rgb('#000000'), font=font_bold)
+        draw.text((x1l + (x2l - x1l - draw.textlength('Time:', font=font_bold)) // 2, ty),
+                  'Time:', fill=hex_to_rgb('#000000'), font=font_bold)
         draw.text((x1r + 3, ty), room['time_raw'], fill=hex_to_rgb('#FF0000'), font=font_bold)
         draw_border(start_col, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 3: B: right-aligned in left half, S: right-aligned in right half
-        half_slots = SLOTS // 2
+        # Row 3: B: in relative cols 0-1, S: in relative cols 6-7, rest empty 2-col pairs
         fill_cell(start_col, 3, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col, 3, 'B:', font_bold, align='right', colspan=half_slots)
-        draw_text(start_col + half_slots, 3, 'S:', font_bold, align='right', colspan=half_slots)
-        draw_border(start_col, 3, colspan=half_slots, left='medium', top='thin', bottom='thin')
-        draw_border(start_col + half_slots, 3, colspan=half_slots, top='thin', bottom='thin',
+        draw_text(start_col, 3, 'B:', font_bold, align='right', colspan=2)
+        draw_text(start_col + 6, 3, 'S:', font_bold, align='right', colspan=2)
+        draw_border(start_col, 3, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 4: "Off:" centered in first 3 cols, "AM/PM Shift" only in Room 1
-        shift_label = ('PM Shift' if is_pm else 'AM Shift') if room_index == 0 else ''
+        # Row 4: "Off:" in relative cols 0-2, "AM Shift" blue in relative cols 3-11 (AM sheet, room 1 only)
         fill_cell(start_col, 4, '#FFFFFF', colspan=3)
         draw_text(start_col, 4, 'Off:', font_bold, align='center', colspan=3)
         draw_border(start_col, 4, colspan=3, left='medium', top='thin', bottom='double')
         fill_cell(start_col + 3, 4, '#FFFFFF', colspan=9)
-        if shift_label:
-            draw_text(start_col + 3, 4, shift_label, font_bold, colspan=9)
+        if not is_pm and room_index == 0:
+            draw_text(start_col + 3, 4, 'AM Shift', font_bold, color='#4472C4', colspan=9)
         draw_border(start_col + 3, 4, colspan=9, top='thin', bottom='double',
                     right='medium' if is_last_room else 'thin')
 
