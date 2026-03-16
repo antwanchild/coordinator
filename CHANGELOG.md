@@ -3,6 +3,20 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.3] - 2026-03-16
+
+### ✨ Features
+
+- Add help modal with inline tooltips and paste format hint
+
+### 🐛 Bug Fixes
+
+- Set paste as default active tab, hide manual panel on load
+
+### 📖 Documentation
+
+- Update README with room data format and paste tab default
+- Update README with room data format, paste default, LOG_LEVEL, health check, themes
 ## [1.17.2] - 2026-03-16
 
 ### 🐛 Bug Fixes
