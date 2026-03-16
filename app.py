@@ -383,27 +383,26 @@ def render_preview(people, is_pm, room_data=None):
         draw_border(start_col, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 3: B:/S: with estimated counts in left/right halves
+        # Row 3: B: right-aligned in cols 0-1, S: right-aligned in cols 6-7
         rd      = room_data.get(room['time'], {})
         b_label = f"B: {rd.get('b', '')}" if rd.get('b') else 'B:'
         s_label = f"S: {rd.get('s', '')}" if rd.get('s') else 'S:'
         fill_cell(start_col, 3, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col, 3, b_label, font_bold, '#000000', 'right', 6)
-        draw_text(start_col + 6, 3, s_label, font_bold, '#000000', 'right', 6)
+        draw_text(start_col, 3, b_label, font_bold, '#000000', 'right', 2)
+        draw_text(start_col + 6, 3, s_label, font_bold, '#000000', 'right', 2)
         draw_border(start_col, 3, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 4: "Off:" + officiator, except AM room 1 which always shows "Off:" only
-        off_label = 'Off:'
-        if not (not is_pm and room_index == 0):
-            rd        = room_data.get(room['time'], {})
-            off_label = f"Off: {rd.get('off', '')}" if rd.get('off') else 'Off:'
+        # Row 4: "Off:" centered in cols 0-2, officiator name blue in cols 3-11
+        rd = room_data.get(room['time'], {})
         fill_cell(start_col, 4, '#FFFFFF', colspan=3)
-        draw_text(start_col, 4, off_label, font_bold, '#000000', 'center', 3)
+        draw_text(start_col, 4, 'Off:', font_bold, '#000000', 'center', 3)
         draw_border(start_col, 4, colspan=3, left='medium', top='thin', bottom='double')
         fill_cell(start_col + 3, 4, '#FFFFFF', colspan=9)
         if not is_pm and room_index == 0:
             draw_text(start_col + 3, 4, 'AM Shift', font_bold, '#335593', 'left', 9)
+        elif rd.get('off'):
+            draw_text(start_col + 3, 4, rd['off'], font_bold, '#335593', 'left', 9)
         draw_border(start_col + 3, 4, colspan=9, top='thin', bottom='double',
                     right='medium' if is_last_room else 'thin')
 
