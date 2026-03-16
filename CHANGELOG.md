@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.4] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Tooltip shows below element and wraps text to prevent overflow
 ## [1.17.3] - 2026-03-16
 
 ### ✨ Features
