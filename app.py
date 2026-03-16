@@ -4,7 +4,6 @@ import time
 import platform
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from datetime import datetime
 
 from flask import Flask, request, jsonify, send_file, render_template
 from openpyxl import load_workbook
@@ -24,6 +23,7 @@ log_formatter = logging.Formatter(
     datefmt='%Y-%m-%d %H:%M:%S %Z'
 )
 logger = logging.getLogger('coordinator')
+
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
 logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
@@ -70,7 +70,7 @@ def before_request():
 @app.after_request
 def after_request(response):
     duration_ms = int((time.monotonic() - request.start_time) * 1000)
-    label = ROUTE_LABELS.get(request.path, request.path)
+    label       = ROUTE_LABELS.get(request.path, request.path)
     logger.info(f"{label} | {response.status_code} ({duration_ms}ms)")
     return response
 
@@ -85,17 +85,18 @@ def points_to_pixels(point_height):
     return max(4, int(point_height * 96 / 72))
 
 # Column widths in Excel character units (used only as fallback reference)
-COL_WIDTHS_CHARS = {1: 5.28, 2: 3.85, 3: 11.28, 4: 1.85}
+COL_WIDTHS_CHARS = {1: 5.28, 2: 3.71, 3: 11.57, 4: 1.85}
 for col in range(5, 66):
     COL_WIDTHS_CHARS[col] = 13.0
 
 # Row heights in Excel point units
-ROW_HEIGHTS_PT = {1: 17.25, 2: 15.0, 3: 15.0, 4: 15.75, 5: 20.25}
-for row in range(6, 24):
+ROW_HEIGHTS_PT = {1: 17.25, 2: 15.0, 3: 15.0, 4: 15.75, 5: 20.25, 6: 20.25}
+for row in range(7, 25):
     ROW_HEIGHTS_PT[row] = 18.0
-for row in range(24, 31):
+for row in range(25, 32):
     ROW_HEIGHTS_PT[row] = 15.0
-ROW_HEIGHTS_PT[30] = 15.75
+ROW_HEIGHTS_PT[25] = 16.5
+ROW_HEIGHTS_PT[31] = 15.75
 
 # Pixel widths per column — overridden for key columns to match spreadsheet layout
 COL_PX = {}
@@ -109,37 +110,37 @@ for col in range(4, 66):
 ROW_PX = {row: points_to_pixels(height) for row, height in ROW_HEIGHTS_PT.items()}
 
 SLOTS           = 12                      # number of slot columns per room block
-ROWS            = 18                      # number of data rows (row 0 = Off, rows 1-17 = people)
+ROWS            = 19                      # number of data rows (row 0 = Off, rows 1-18 = people)
 ROOM_START_COLS = [4, 16, 28, 40, 52]    # first column of each room block
 
 # ── Room definitions ──────────────────────────────────────────────────────────
 
 AM_ROOMS = [
-    {'label': 'Room: 1', 'time': '11:00', 'time_raw': '  Time: 11:00+', 'n24': '#5--tight fit to Cel Room', 'n25': '',                        'red': True,  'letter': 'B', 'wlkr': '(#2/#3)'},
-    {'label': 'Room: 2', 'time': '11:30', 'time_raw': '  Time: 11:30+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
-    {'label': 'Room: 3', 'time': '12:00', 'time_raw': '  Time: 12:00+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
-    {'label': 'Room: 4', 'time': '12:30', 'time_raw': '  Time: 12:30+', 'n24': '#4--tight fit to Cel Room', 'n25': 'Use thin rec. for #1-#4', 'red': True,  'letter': 'S', 'wlkr': '(#6/#7)'},
-    {'label': 'Room: 1', 'time': '13:00', 'time_raw': '  Time: 1:00+',  'n24': '#5--tight fit to Cel Room', 'n25': '',                        'red': True,  'letter': 'B', 'wlkr': '(#2/#3)'},
+    {'label': 'Room: 1', 'time': '11:00', 'time_raw': ' 11:00+', 'n25': 'Skip V6 if possible',  'red': True,  'letter': 'B', 'wlkr': '(#2/#3)', 'thin': 'THIN RECEIVERS'},
+    {'label': 'Room: 2', 'time': '11:30', 'time_raw': ' 11:30+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
+    {'label': 'Room: 3', 'time': '12:00', 'time_raw': ' 12:00+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
+    {'label': 'Room: 4', 'time': '12:30', 'time_raw': ' 12:30+', 'n25': 'Skip V3 if possible',  'red': True,  'letter': 'S', 'wlkr': '(#6/#7)', 'thin': 'THIN RECEIVERS'},
+    {'label': 'Room: 1', 'time': '13:00', 'time_raw': ' 1:00+',  'n25': 'Skip V6 if possible',  'red': True,  'letter': 'B', 'wlkr': '(#2/#3)', 'thin': 'THIN RECEIVERS'},
 ]
 
 PM_ROOMS = [
-    {'label': 'Room: 3', 'time': '14:00', 'time_raw': '  Time: 2:00+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
-    {'label': 'Room: 4', 'time': '14:30', 'time_raw': '  Time: 2:30+', 'n24': '#4--tight fit to Cel Room', 'n25': 'Use thin rec. for #1-#4', 'red': True,  'letter': 'S', 'wlkr': '(#6/#7)'},
-    {'label': 'Room: 1', 'time': '15:00', 'time_raw': '  Time: 3:00+', 'n24': '#5--tight fit to Cel Room', 'n25': '',                        'red': True,  'letter': 'B', 'wlkr': '(#2/#3)'},
-    {'label': 'Room: 2', 'time': '15:30', 'time_raw': '  Time: 3:30+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
-    {'label': 'Room: 3', 'time': '16:00', 'time_raw': '  Time: 4:00+', 'n24': '',                          'n25': '',                        'red': False, 'letter': '',  'wlkr': ''},
+    {'label': 'Room: 3', 'time': '14:00', 'time_raw': ' 2:00+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
+    {'label': 'Room: 4', 'time': '14:30', 'time_raw': ' 2:30+', 'n25': 'Skip V3 if possible',  'red': True,  'letter': 'S', 'wlkr': '(#6/#7)', 'thin': 'THIN RECEIVERS'},
+    {'label': 'Room: 1', 'time': '15:00', 'time_raw': ' 3:00+', 'n25': 'Skip V6 if possible',  'red': True,  'letter': 'B', 'wlkr': '(#2/#3)', 'thin': 'THIN RECEIVERS'},
+    {'label': 'Room: 2', 'time': '15:30', 'time_raw': ' 3:30+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
+    {'label': 'Room: 3', 'time': '16:00', 'time_raw': ' 4:00+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
 ]
 
-# Slot colors and labels cycle across the 12 slot columns in each room block
+# Slot colors — derived from template theme colors with 80% tint
 SLOT_COLORS = [
-    '#B4C6E7', '#FFFFFF', '#FFE598', '#C5DEB5',
-    '#B4C6E7', '#B4C6E7',
+    '#D9E2F3', '#FFFFFF', '#FFF2CC', '#E2EEDA',
+    '#D9E2F3', '#D9E2F3',
     '#FFFFFF', '#FFFFFF',
-    '#FFE598', '#FFE598',
-    '#C5DEB5', '#C5DEB5',
+    '#FFF2CC', '#FFF2CC',
+    '#E2EEDA', '#E2EEDA',
 ]
 SLOT_LABELS       = ['1', '2', '3', '4', '5P', '5', '6P', '6', '7P', '7', '8P', '8']
-UNAVAILABLE_COLOR = '#FFFF00'  # yellow fill for slots where person is unavailable
+UNAVAILABLE_COLOR = '#EDEDED'  # Gray Accent 3 Lighter 80%
 
 # ── Time helpers ──────────────────────────────────────────────────────────────
 
@@ -177,10 +178,6 @@ def count_brothers_in_room(sorted_people, room_time):
     brothers_from_people = sum(1 for person in sorted_people if covers_slot(person['ranges'], room_time))
     return brothers_from_people + 1  # +1 for the Off row
 
-def brothers_label(count):
-    """Return a formatted string like '4 Brothers' or '1 Brother'."""
-    return f"{count} {'Brother' if count == 1 else 'Brothers'}"
-
 # ── Build xlsx from template ──────────────────────────────────────────────────
 
 def build_xlsx(people):
@@ -197,7 +194,7 @@ def build_xlsx(people):
         visible_people = [person for person in people if person_on_sheet(person, is_pm)]
         sorted_people  = sorted(visible_people, key=lambda person: person['name'])
 
-        # Write people data into rows 6-23
+        # Write people data into rows 6-24
         for row_index in range(ROWS):
             is_off_row = (row_index == 0)
             person     = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
@@ -210,16 +207,16 @@ def build_xlsx(people):
                 for room_index, room in enumerate(rooms):
                     is_available = covers_slot(person['ranges'], room['time'])
                     if not is_available:
-                        start_col   = ROOM_START_COLS[room_index]
-                        yellow_fill = PatternFill(patternType='solid', fgColor='FFFF00')
+                        start_col  = ROOM_START_COLS[room_index]
+                        gray_fill  = PatternFill(patternType='solid', fgColor='EDEDED')
                         for slot_index in range(SLOTS):
-                            worksheet.cell(row=sheet_row, column=start_col + slot_index).fill = yellow_fill
+                            worksheet.cell(row=sheet_row, column=start_col + slot_index).fill = gray_fill
 
-        # Write brothers count into row 25 (# Bro's Avail) for each room
+        # Write brothers count into row 26 (Bros Available?) for each room
         for room_index, room in enumerate(rooms):
             start_col = ROOM_START_COLS[room_index]
             count     = count_brothers_in_room(sorted_people, room['time'])
-            worksheet.cell(row=25, column=start_col).value = count
+            worksheet.cell(row=26, column=start_col).value = count
 
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)
@@ -250,7 +247,7 @@ def render_preview(people, is_pm):
     # Build cumulative y positions for each row
     y_positions = {}
     y = 0
-    for row in range(1, 31):
+    for row in range(1, 33):
         y_positions[row] = y
         y += ROW_PX.get(row, points_to_pixels(15.0))
     total_height = y
@@ -348,49 +345,51 @@ def render_preview(people, is_pm):
         start_col    = ROOM_START_COLS[room_index]
         is_last_room = (room_index == len(rooms) - 1)
 
-        # Row 1: Room label — full width, "Room: " black, number red
+        # Row 1: "Room:" in left 7 cols, room number in red in right 5 cols
         fill_cell(start_col, 1, '#FFFFFF', colspan=SLOTS)
-        room_prefix      = room['label'].split(':')[0] + ': '
-        room_number      = room['label'].split(': ')[1] if ': ' in room['label'] else ''
-        x1, y1, x2, y2  = cell_rect(start_col, 1, SLOTS, 1)
-        prefix_width     = draw.textlength(room_prefix, font=font_bold14)
-        total_text_width = prefix_width + draw.textlength(room_number, font=font_bold14)
-        tx = x1 + (x2 - x1 - total_text_width) // 2
-        ty = y1 + (y2 - y1 - font_bold14.getbbox('A')[3]) // 2
-        draw.text((tx, ty), room_prefix, fill=hex_to_rgb('#000000'), font=font_bold14)
-        draw.text((tx + int(prefix_width), ty), room_number, fill=hex_to_rgb('#FF0000'), font=font_bold14)
+        room_number = room['label'].split(': ')[1] if ': ' in room['label'] else ''
+        x1l, y1l, x2l, y2l = cell_rect(start_col, 1, 7, 1)
+        x1r, y1r, x2r, y2r = cell_rect(start_col + 7, 1, 5, 1)
+        ty = y1l + (y2l - y1l - font_bold14.getbbox('A')[3]) // 2
+        draw.text((x1l + (x2l - x1l - draw.textlength('Room:', font=font_bold14)) // 2, ty),
+                  'Room:', fill=hex_to_rgb('#000000'), font=font_bold14)
+        draw.text((x1r + (x2r - x1r - draw.textlength(room_number, font=font_bold14)) // 2, ty),
+                  room_number, fill=hex_to_rgb('#FF0000'), font=font_bold14)
         draw_border(start_col, 1, colspan=SLOTS, left='medium', top='double', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 2: "Time:" in left merge, time value in red in right merge
+        # Row 2: "Time:" centered in first 3 cols of room, time value in red in remaining cols
         fill_cell(start_col, 2, '#FFFFFF', colspan=SLOTS)
-        time_parts  = room['time_raw'].strip().split(': ', 1)
-        time_prefix = time_parts[0] + ': ' if len(time_parts) > 1 else room['time_raw'].strip()
-        time_value  = time_parts[1] if len(time_parts) > 1 else ''
-        # "Time:" centered in left 2 cols, time value left-aligned in remaining cols
-        x1l, y1l, x2l, y2l = cell_rect(start_col, 2, 2, 1)
-        x1r, y1r, x2r, y2r = cell_rect(start_col + 2, 2, SLOTS - 2, 1)
+        x1l, y1l, x2l, y2l = cell_rect(start_col + 1, 2, 3, 1)
+        x1r, y1r, x2r, y2r = cell_rect(start_col + 4, 2, SLOTS - 4, 1)
         ty = y1l + (y2l - y1l - font_bold.getbbox('A')[3]) // 2
-        prefix_w = draw.textlength(time_prefix, font=font_bold)
-        draw.text((x1l + (x2l - x1l - prefix_w) // 2, ty), time_prefix, fill=hex_to_rgb('#000000'), font=font_bold)
-        draw.text((x1r + 3, ty), time_value, fill=hex_to_rgb('#FF0000'), font=font_bold)
+        draw.text((x1l + (x2l - x1l - draw.textlength('Time:', font=font_bold)) // 2, ty),
+                  'Time:', fill=hex_to_rgb('#000000'), font=font_bold)
+        draw.text((x1r + 3, ty), room['time_raw'], fill=hex_to_rgb('#FF0000'), font=font_bold)
         draw_border(start_col, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 3: B: left half, S: right half
-        half_slots = SLOTS // 2
-        fill_cell(start_col, 3, '#FFFFFF', colspan=half_slots)
-        draw_text(start_col + 1, 3, 'B:', font_bold, colspan=half_slots - 1)
-        draw_border(start_col, 3, colspan=half_slots, left='medium', top='thin', bottom='thin')
-        fill_cell(start_col + half_slots, 3, '#FFFFFF', colspan=half_slots)
-        draw_text(start_col + half_slots, 3, 'S:', font_bold, colspan=half_slots)
-        draw_border(start_col + half_slots, 3, colspan=half_slots, top='thin', bottom='thin',
-                    right='medium' if is_last_room else 'thin')
+        # Row 3: B:/S: in 2-col pairs across room (6 pairs total)
+        pair_width = 2
+        num_pairs  = SLOTS // pair_width
+        for pair_index in range(num_pairs):
+            pair_col  = start_col + (pair_index * pair_width)
+            label     = 'B:' if pair_index < num_pairs // 2 else 'S:'
+            fill_cell(pair_col, 3, '#FFFFFF', colspan=pair_width)
+            draw_text(pair_col, 3, label, font_bold, colspan=pair_width)
+            draw_border(pair_col, 3, colspan=pair_width,
+                        left='medium' if pair_index == 0 else 'thin',
+                        top='thin', bottom='thin',
+                        right='medium' if (is_last_room and pair_index == num_pairs - 1) else None)
 
-        # Row 4: Full width "Off:"
-        fill_cell(start_col, 4, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=SLOTS - 1)
-        draw_border(start_col, 4, colspan=SLOTS, left='medium', top='thin', bottom='double',
+        # Row 4: "Off:" in first 3 cols, "AM Shift"/"PM Shift" in remaining 9
+        shift_label = 'PM Shift' if is_pm else 'AM Shift'
+        fill_cell(start_col, 4, '#FFFFFF', colspan=3)
+        draw_text(start_col + 1, 4, 'Off:', font_bold, colspan=2)
+        draw_border(start_col, 4, colspan=3, left='medium', top='thin', bottom='double')
+        fill_cell(start_col + 3, 4, '#FFFFFF', colspan=9)
+        draw_text(start_col + 3, 4, shift_label, font_bold, align='center', colspan=9)
+        draw_border(start_col + 3, 4, colspan=9, top='thin', bottom='double',
                     right='medium' if is_last_room else 'thin')
 
         # Row 5: Slot number labels
@@ -408,7 +407,7 @@ def render_preview(people, is_pm):
     draw_border(2, 5, left='thin', right='double', top='double', bottom='thin')
     draw_border(3, 5, left='double', top='double', bottom='thin')
 
-    # ── Data rows 6–23 ────────────────────────────────────────────────────────
+    # ── Data rows 6–24 ────────────────────────────────────────────────────────
 
     for row_index in range(ROWS):
         sheet_row   = 6 + row_index
@@ -429,7 +428,7 @@ def render_preview(people, is_pm):
         draw_border(3, sheet_row, left='double', right='medium', top='thin',
                     bottom='thin' if is_last_row else None)
 
-        # Slot columns: fill with slot color or yellow if unavailable
+        # Slot columns: fill with slot color or gray if unavailable
         for room_index, room in enumerate(rooms):
             start_col    = ROOM_START_COLS[room_index]
             is_last_room = (room_index == len(rooms) - 1)
@@ -446,12 +445,16 @@ def render_preview(people, is_pm):
                             bottom='thin' if is_last_row else None,
                             right='medium' if (is_last_room and is_last_slot) else ('thin' if is_last_slot else None))
 
-    # ── Footer rows 24–30 ─────────────────────────────────────────────────────
+    # ── Column B borders (data rows) ──────────────────────────────────────────
+    for row_index in range(ROWS):
+        draw_border(2, 6 + row_index, left='thin', right='double', top='thin')
 
-    FOOTER_LABELS = ['', "# Bro's Avail", 'Narrow Side?', 'Live?', 'Wchr/Wlkr?', 'Language?', 'Other?']
+    # ── Footer rows 25–31 ─────────────────────────────────────────────────────
+
+    FOOTER_LABELS = ['', "Bros Available?", 'Narrow Side?', 'Live?', 'Wchr/Wlkr?', 'Language?', 'Other?']
 
     for footer_index, footer_label in enumerate(FOOTER_LABELS):
-        sheet_row      = 24 + footer_index
+        sheet_row      = 25 + footer_index
         is_last_footer = (footer_index == len(FOOTER_LABELS) - 1)
 
         fill_cell(3, sheet_row, '#FFFFFF')
@@ -464,43 +467,40 @@ def render_preview(people, is_pm):
             is_last_room = (room_index == len(rooms) - 1)
 
             if footer_index == 0:
-                # First footer row: room note text
+                # Row 25: room notes
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
-                if room['n24']:
-                    draw_text(start_col, sheet_row, room['n24'], font_small, colspan=SLOTS)
+                if room['n25']:
+                    draw_text(start_col, sheet_row, room['n25'], font_small, colspan=SLOTS)
                 draw_border(start_col, sheet_row, colspan=SLOTS, left='medium', top='thin',
                             right='medium' if is_last_room else 'thin')
 
             elif footer_index == 1:
-                # Brothers count — single checkbox-sized box, rest of row empty
+                # Row 26: brothers count — single checkbox-sized box, rest empty
                 room_count = count_brothers_in_room(sorted_people, room['time'])
                 fill_cell(start_col, sheet_row, '#FFFFFF')
                 draw_text(start_col, sheet_row, str(room_count), font_bold, align='center')
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
-                # Fill remaining cols with empty bordered cells
                 fill_cell(start_col + 1, sheet_row, '#FFFFFF', colspan=SLOTS - 1)
                 draw_border(start_col + 1, sheet_row, colspan=SLOTS - 1, left='thin',
                             right='medium' if is_last_room else 'thin')
 
             else:
-                # Remaining footer rows: checkbox column + label column
+                # Rows 27-31: checkbox + label + optional THIN RECEIVERS
                 checkbox_color = '#FF0000' if (room['red'] and footer_index == 2) else '#FFFFFF'
                 fill_cell(start_col, sheet_row, checkbox_color)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin',
-                            bottom='thin' if not is_last_footer else 'double')
+                            bottom='double' if is_last_footer else 'thin')
 
                 fill_cell(start_col + 1, sheet_row, '#FFFFFF', colspan=SLOTS - 1)
                 if footer_index == 2 and room['letter']:
-                    draw_text(start_col + 1, sheet_row, room['letter'], font_bold, colspan=SLOTS - 1)
+                    draw_text(start_col + 1, sheet_row, room['letter'], font_bold, colspan=2)
+                if footer_index == 2 and room['thin']:
+                    draw_text(start_col + 3, sheet_row, room['thin'], font_small, colspan=SLOTS - 3)
                 elif footer_index == 4 and room['wlkr']:
                     draw_text(start_col + 1, sheet_row, room['wlkr'], font_bold, colspan=SLOTS - 1)
                 draw_border(start_col + 1, sheet_row, colspan=SLOTS - 1, left='thin',
                             right='medium' if is_last_room else 'thin',
                             bottom='double' if is_last_footer else None)
-
-    # ── Column B borders (data rows) ──────────────────────────────────────────
-    for row_index in range(ROWS):
-        draw_border(2, 6 + row_index, left='thin', right='double', top='thin')
 
     image_buffer = io.BytesIO()
     image.save(image_buffer, format='PNG', optimize=True)
@@ -508,13 +508,16 @@ def render_preview(people, is_pm):
     return image_buffer
 
 # ── Routes ────────────────────────────────────────────────────────────────────
-@app.route('/health')
-def health():
-    return jsonify({'status': 'ok', 'version': APP_VERSION}), 200
 
 @app.route('/')
 def index():
+    from datetime import datetime
     return render_template('index.html', version=APP_VERSION, now=datetime.now())
+
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'ok', 'version': APP_VERSION}), 200
 
 
 @app.route('/preview', methods=['POST'])
@@ -533,12 +536,10 @@ def preview():
 
     try:
         image_buffer = render_preview(people, is_pm)
-
         rooms        = PM_ROOMS if is_pm else AM_ROOMS
         visible      = [p for p in people if person_on_sheet(p, is_pm)]
         sorted_ppl   = sorted(visible, key=lambda p: p['name'])
         brothers     = [count_brothers_in_room(sorted_ppl, room['time']) for room in rooms]
-
         logger.info(f"Preview generated | sheet={sheet_name}, people={len(visible)}, brothers={brothers}")
         return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:
@@ -562,12 +563,10 @@ def export():
 
     try:
         xlsx_buffer = build_xlsx(people)
-
         am_visible  = sorted([p for p in people if person_on_sheet(p, False)], key=lambda p: p['name'])
         pm_visible  = sorted([p for p in people if person_on_sheet(p, True)],  key=lambda p: p['name'])
         am_brothers = [count_brothers_in_room(am_visible, room['time']) for room in AM_ROOMS]
         pm_brothers = [count_brothers_in_room(pm_visible, room['time']) for room in PM_ROOMS]
-
         logger.info(f"Export generated | people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}")
         return send_file(
             xlsx_buffer,
@@ -590,4 +589,3 @@ if __name__ == '__main__':
     logger.info(f"template={TEMPLATE_PATH} | logs={log_dir_display} | log_level={LOG_LEVEL}")
     logger.info(f"Python {platform.python_version()} | {platform.system()} {platform.release()} | {platform.machine()}")
     app.run(host='0.0.0.0', port=8080, debug=False)
-
