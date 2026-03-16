@@ -181,20 +181,22 @@
     .tip-text {
       display: none;
       position: absolute;
-      bottom: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%);
+      top: calc(100% + 6px);
+      left: 0;
+      transform: none;
       background: var(--card);
       border: 1px solid var(--bdr);
       border-radius: 6px;
       padding: 6px 9px;
       font-size: .65rem;
       color: var(--txt);
-      white-space: nowrap;
+      white-space: normal;
+      width: 180px;
       z-index: 200;
       box-shadow: 0 4px 12px rgba(0,0,0,.3);
       pointer-events: none;
     }
+
 
     .tip:hover .tip-text {
       display: block;
