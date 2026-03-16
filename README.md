@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
 ```
 
-Then open <http://localhost:8080> in your browser.
+Then open http://localhost:8080 in your browser.
 
 ## ⚙️ Environment Variables
 
@@ -71,7 +71,7 @@ If `/config` is not mapped the app runs normally and logs to the container conso
 
 ## 📋 CSV Format
 
-```csv
+```
 Smith J, 11:00, 12:30
 Doe A, 11:00, 11:30, 14:00, 15:30
 Jones B, 11:00, 13:00, 14:00, 16:00
