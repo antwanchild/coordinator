@@ -470,54 +470,75 @@ def render_preview(people, is_pm):
         for room_index, room in enumerate(rooms):
             start_col    = ROOM_START_COLS[room_index]
             is_last_room = (room_index == len(rooms) - 1)
+            right_border = 'medium' if is_last_room else None
 
             if footer_index == 0:
-                # Row 25: notes — full 12-col width, only some rooms have text
+                # Row 25: full width, notes for rooms 1/4/5 only, top border only on room 1
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
                 if room['n25']:
                     draw_text(start_col, sheet_row, room['n25'], font_small, align='center', colspan=SLOTS)
-                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium', top='thin',
-                            right='medium' if is_last_room else 'thin')
+                top = 'thin' if room_index == 0 else None
+                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium', top=top,
+                            right=right_border)
 
             elif footer_index == 1:
-                # Row 26: brothers count in 2-col merge, rest empty
+                # Row 26: 2-col box with count, L:thin on col 3, R:medium on last col
                 room_count = count_brothers_in_room(sorted_people, room['time'])
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=2)
                 draw_text(start_col, sheet_row, str(room_count), font_bold, align='center', colspan=2)
-                draw_border(start_col, sheet_row, colspan=2, left='medium', right='thin', top='thin', bottom='thin')
+                draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
+                draw_border(start_col + 1, sheet_row, right='thin', top='thin', bottom='thin')
                 fill_cell(start_col + 2, sheet_row, '#FFFFFF', colspan=SLOTS - 2)
-                draw_border(start_col + 2, sheet_row, colspan=SLOTS - 2, left='thin',
-                            right='medium' if is_last_room else 'thin')
+                draw_border(start_col + 2, sheet_row, left='thin')
+                draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 2:
-                # Row 27: red checkbox, B/S letter, THIN RECEIVERS for red rooms
+                # Row 27: red checkbox col 1, letter col 2, THIN RECEIVERS from col 3
                 checkbox_color = '#FF0000' if room['red'] else '#FFFFFF'
                 fill_cell(start_col, sheet_row, checkbox_color)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
                 fill_cell(start_col + 1, sheet_row, '#FFFFFF')
                 if room['letter']:
                     draw_text(start_col + 1, sheet_row, room['letter'], font_bold)
-                draw_border(start_col + 1, sheet_row, left='thin', right='thin', top='thin')
+                draw_border(start_col + 1, sheet_row, left='thin', top='thin')
                 fill_cell(start_col + 2, sheet_row, '#FFFFFF', colspan=SLOTS - 2)
                 if room['thin']:
                     draw_text(start_col + 2, sheet_row, room['thin'], font_small, colspan=SLOTS - 2)
-                draw_border(start_col + 2, sheet_row, colspan=SLOTS - 2, left='thin',
-                            right='medium' if is_last_room else 'thin')
+                draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
+
+            elif footer_index == 3:
+                # Row 28: col 1 L:medium R:thin, col 2 L:thin, right edge
+                fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
+                draw_border(start_col, sheet_row, left='medium', right='thin')
+                draw_border(start_col + 1, sheet_row, left='thin')
+                draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 4:
-                # Row 29: wlkr label in col 2 of room for applicable rooms
+                # Row 29: col 1 L:medium R:thin T:thin B:thin, wlkr label col 2, right edge
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
+                draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
                 if room['wlkr']:
                     draw_text(start_col + 1, sheet_row, room['wlkr'], font_bold)
-                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium',
-                            right='medium' if is_last_room else 'thin')
+                draw_border(start_col + 1, sheet_row, left='thin')
+                draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
+
+            elif footer_index == 5:
+                # Row 30: same structure as row 28
+                fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
+                draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
+                draw_border(start_col + 1, sheet_row, left='thin')
+                draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             else:
-                # Rows 28, 30, 31: empty room area
+                # Row 31: double bottom on all cols, medium/thin left, double right on last room
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
-                draw_border(start_col, sheet_row, colspan=SLOTS, left='medium',
-                            bottom='double' if is_last_footer else None,
-                            right='medium' if is_last_room else 'thin')
+                draw_border(start_col, sheet_row, left='medium', right='thin', bottom='double')
+                draw_border(start_col + 1, sheet_row, left='thin', bottom='double')
+                for slot_index in range(2, SLOTS):
+                    draw_border(start_col + slot_index, sheet_row, bottom='double')
+                draw_border(start_col + SLOTS - 1, sheet_row,
+                            right='double' if is_last_room else 'medium',
+                            bottom='double')
 
     image_buffer = io.BytesIO()
     image.save(image_buffer, format='PNG', optimize=True)
