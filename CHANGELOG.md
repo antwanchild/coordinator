@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.0] - 2026-03-16
+
+### ✨ Features
+
+- Update template layout, slot colors, gray unavailable, THIN RECEIVERS footer
+
+### 📖 Documentation
+
+- Update README with new features, LOG_LEVEL, health check, and theme picker`
 ## [1.15.3] - 2026-03-15
 
 ### 🐛 Bug Fixes
