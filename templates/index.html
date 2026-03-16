@@ -848,13 +848,13 @@
       </div>
       <div class="card">
         <div class="input-tabs">
-          <div class="input-tab active" id="tab-manual" onclick="switchTab('manual')">📝 Manual</div>
+          <div class="input-tab" id="tab-manual" onclick="switchTab('manual')">📝 Manual</div>
           <div class="input-tab" id="tab-csv" onclick="switchTab('csv')">📁 CSV</div>
-          <div class="input-tab" id="tab-paste" onclick="switchTab('paste')">📋 Paste</div>
+          <div class="input-tab active" id="tab-paste" onclick="switchTab('paste')">📋 Paste</div>
         </div>
 
         <!-- Manual panel -->
-        <div id="panel-manual">
+        <div id="panel-manual" style="display: none">
           <div class="add-row">
             <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30" onkeydown="if(event.key==='Enter') addName()">
             <button onclick="addName()">+</button>
