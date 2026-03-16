@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.1] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- AM room 1 always shows Off: with AM Shift, no officiator
 ## [1.17.0] - 2026-03-16
 
 ### ✨ Features
