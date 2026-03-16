@@ -490,12 +490,12 @@ def render_preview(people, is_pm):
                             right=right_border)
 
             elif footer_index == 1:
-                # Row 26: 2-col box — col 1: L:medium R:thin T:thin B:thin, col 2: R:thin T:thin B:thin (no left)
+                # Row 26: 2-col box — col 1: L:medium R:thin T:thin B:thin, col 2: T:thin B:thin (no left, no right)
                 room_count = count_brothers_in_room(sorted_people, room['time'])
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=2)
                 draw_text(start_col, sheet_row, str(room_count), font_bold, '#000000', 'center', 2)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
-                draw_border(start_col + 1, sheet_row, right='thin', top='thin', bottom='thin')
+                draw_border(start_col + 1, sheet_row, top='thin', bottom='thin')
                 fill_cell(start_col + 2, sheet_row, '#FFFFFF', colspan=SLOTS - 2)
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
