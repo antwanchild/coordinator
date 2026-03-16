@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.16.1] - 2026-03-16
+
+### 🐛 Bug Fixes
+
+- Correct header rows 1-4 and footer rows 25-31 rendering to match template
 ## [1.16.0] - 2026-03-16
 
 ### ✨ Features
