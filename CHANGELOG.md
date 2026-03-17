@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.22.0] - 2026-03-17
+
+### ✨ Features
+
+- Warn when more names than available rows on current sheet
 ## [1.21.4] - 2026-03-17
 
 ### 🐛 Bug Fixes
