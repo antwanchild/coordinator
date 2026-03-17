@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.19.0] - 2026-03-17
+
+### ✨ Features
+
+- Split B:/S: counts and veil recommendations into separate cells in row 3
 ## [1.18.0] - 2026-03-17
 
 ### ✨ Features
