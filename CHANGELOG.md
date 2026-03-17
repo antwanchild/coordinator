@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.17.5] - 2026-03-17
+
+### 🐛 Bug Fixes
+
+- Increase tooltip width, z-index, and allow overflow on section labels
 ## [1.17.4] - 2026-03-16
 
 ### 🐛 Bug Fixes
