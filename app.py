@@ -430,24 +430,25 @@ def render_preview(people, is_pm, room_data=None):
         draw_border(start_col, 2, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
-        # Row 3: B: right-aligned in cols 0-1, S: right-aligned in cols 6-7
-        # Include veil recommendation if B: and S: are provided
+        # Row 3: B: in cols 0-1, veil rec in cols 2-5, S: in cols 6-7, veil rec in cols 8-11
         rd        = room_data.get(room['time'], {})
         b_val     = rd.get('b', '')
         s_val     = rd.get('s', '')
         workers   = count_brothers_in_room(sorted_people, room['time'])
-        if b_val or s_val:
-            bv, sv    = recommend_veils(b_val, s_val, workers)
-            b_label   = f"B: {b_val} ({bv}B)" if bv is not None else f"B: {b_val}"
-            s_label   = f"S: {s_val} ({sv}S)" if sv is not None else f"S: {s_val}"
-            row3_font = font_small
-        else:
-            b_label   = 'B:'
-            s_label   = 'S:'
-            row3_font = font_bold
         fill_cell(start_col, 3, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col, 3, b_label, row3_font, '#000000', 'right', 2)
-        draw_text(start_col + 6, 3, s_label, row3_font, '#000000', 'right', 2)
+        if b_val or s_val:
+            bv, sv  = recommend_veils(b_val, s_val, workers)
+            b_label = f"B: {b_val}" if b_val else 'B:'
+            s_label = f"S: {s_val}" if s_val else 'S:'
+            draw_text(start_col, 3, b_label, font_bold, '#000000', 'right', 2)
+            draw_text(start_col + 6, 3, s_label, font_bold, '#000000', 'right', 2)
+            if bv is not None:
+                draw_text(start_col + 2, 3, f"{bv}B", font_bold, '#000000', 'left', 4)
+            if sv is not None:
+                draw_text(start_col + 8, 3, f"{sv}S", font_bold, '#000000', 'left', 4)
+        else:
+            draw_text(start_col, 3, 'B:', font_bold, '#000000', 'right', 2)
+            draw_text(start_col + 6, 3, 'S:', font_bold, '#000000', 'right', 2)
         draw_border(start_col, 3, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
