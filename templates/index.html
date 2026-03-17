@@ -1405,6 +1405,8 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const spinner     = document.getElementById('spinner');
     const previewArea = document.getElementById('previewArea');
 
+    console.log('build() called, people.length=', people.length, 'isPM=', isPM);
+
     if (!people.length) {
       const sheetName = isPM ? 'PM' : 'AM';
       previewArea.className = 'preview-empty';
@@ -1426,6 +1428,8 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       const url  = URL.createObjectURL(blob);
       spinner.className = 'spinner';
       previewArea.style.display = '';
+      previewArea.className = 'preview-wrap';
+      previewArea.innerHTML = `<img src="${url}" alt="Schedule Preview">`;
       const sheetPeople = people.filter(p => {
         const domainTimes = isPM ? PM_TIMES : AM_TIMES;
         const domainStart = toMinutes(domainTimes[0]);
@@ -1434,8 +1438,9 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       });
       if (sheetPeople.length > 18) {
         toast(`⚠ ${sheetPeople.length - 18} name(s) won't fit — only 18 slots available`);
+      } else {
+        toast('Built!');
       }
-
     } catch (e) {
       spinner.className = 'spinner';
       previewArea.style.display = '';
