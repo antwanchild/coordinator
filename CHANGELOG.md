@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.22.2] - 2026-03-17
+
+### 🐛 Bug Fixes
+
+- Set sidebar height so generate section stays pinned to bottom
 ## [1.22.1] - 2026-03-17
 
 ### 🐛 Bug Fixes
