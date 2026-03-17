@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.20.0] - 2026-03-17
+
+### ✨ Features
+
+- Separate B:/S: count and veil recommendation into individual cells in row 3
 ## [1.19.1] - 2026-03-17
 
 ### 🐛 Bug Fixes
