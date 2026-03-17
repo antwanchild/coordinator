@@ -1426,9 +1426,16 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       const url  = URL.createObjectURL(blob);
       spinner.className = 'spinner';
       previewArea.style.display = '';
-      previewArea.className = 'preview-wrap';
-      previewArea.innerHTML = `<img src="${url}" alt="Schedule Preview">`;
-      toast('Built!');
+      const sheetPeople = people.filter(p => {
+        const domainTimes = isPM ? PM_TIMES : AM_TIMES;
+        const domainStart = toMinutes(domainTimes[0]);
+        const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
+        return p.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart);
+      });
+      if (sheetPeople.length > 18) {
+        toast(`⚠ ${sheetPeople.length - 18} name(s) won't fit — only 18 slots available`);
+      }
+
     } catch (e) {
       spinner.className = 'spinner';
       previewArea.style.display = '';
