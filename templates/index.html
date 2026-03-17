@@ -346,9 +346,8 @@
     }
 
     .toggle-btn {
-      position: absolute;
+      position: fixed;
       top: 50%;
-      left: -13px;
       transform: translateY(-50%);
       width: 26px;
       height: 42px;
@@ -361,8 +360,9 @@
       justify-content: center;
       color: var(--acc-btn, var(--acc));
       font-size: .75rem;
-      transition: color .15s, border-color .15s, background .15s;
+      transition: color .15s, border-color .15s, background .15s, left .25s ease;
       user-select: none;
+      z-index: 10;
     }
 
     .toggle-btn:hover {
@@ -923,7 +923,7 @@
 
   <!-- Sidebar toggle -->
   <div class="toggle-col">
-    <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Collapse sidebar">&#8249;</div>
+    <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Collapse sidebar" style="left: 287px">&#8249;</div>
   </div>
 
   <!-- Main / Preview -->
@@ -1061,6 +1061,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     document.getElementById('app').classList.toggle('collapsed', !sidebarOpen);
     document.getElementById('toggleBtn').innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
     document.getElementById('toggleBtn').title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
+    document.getElementById('toggleBtn').style.left = sidebarOpen ? '287px' : '-13px';
   }
 
   // ── Help modal ─────────────────────────────────────────────────────────────
