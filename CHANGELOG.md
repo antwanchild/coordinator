@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.21.4] - 2026-03-17
+
+### 🐛 Bug Fixes
+
+- Use JS-positioned tooltip popup to escape sidebar overflow clipping
 ## [1.21.3] - 2026-03-17
 
 ### 🐛 Bug Fixes
