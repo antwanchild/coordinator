@@ -69,10 +69,11 @@ The app exposes `/health` returning `{"status": "ok", "version": "x.x.x"}`. The 
 ## 🚀 Usage
 
 1. **Select sheet** — AM or PM
-2. **Add names & room data** — use the Paste tab to import people and room data together
+2. **Add names & room data** — use the Paste tab (default) to import people and room data together
    - Person: `Name, start, end` (multiple time pairs allowed)
    - Room: `time, officiator, brothers, sisters`
    - Or use Manual tab for individual name entry
+   - Re-importing prompts to confirm before replacing existing data
 3. **Build Schedule** — renders a pixel-perfect preview (`Ctrl+B` / `Cmd+B`)
    - Enable **Auto** to rebuild automatically when names change
 4. **Export Both Sheets** — downloads the filled xlsx with both AM and PM tabs — use this to print
@@ -80,6 +81,10 @@ The app exposes `/health` returning `{"status": "ok", "version": "x.x.x"}`. The 
 ## 🎨 Themes
 
 Use the dropdown in the header to choose an accent color (Lime, Blue, Purple, Green, Red, Cyan, Orange, Pink, Teal). Toggle light/dark mode with the ☀️ button. Both preferences are saved across sessions.
+
+## ❓ Help
+
+Click the `?` button in the header for a built-in help modal covering paste format, keyboard shortcuts, and feature explanations. Inline tooltip hints `?` are also available on section labels and the Auto button.
 
 ## 📋 Paste / CSV Format
 
@@ -89,16 +94,16 @@ People and room data can be mixed in the same paste block:
 Smith J, 11:00, 13:30
 Doe A, 11:00, 11:30, 14:00, 15:30
 
-11:00, , 3, 2
-11:30, Taylor C, 4, 1
-12:00, Williams D, 2, 3
-12:30, Brown E, 5, 2
-13:00, Davis F, 3, 1
-14:00, Green A, 2, 4
-14:30, White B, 3, 2
-15:00, Jones E, 4, 1
-15:30, Black C, 2, 3
-16:00, Gray D, 5, 2
+11:00, , 13, 27
+11:30, Taylor C, 17, 19
+12:00, Williams D, 23, 11
+12:30, Brown E, 0, 37
+13:00, Davis F, 19, 13
+14:00, Green A, 15, 22
+14:30, White B, 18, 18
+15:00, Jones E, 21, 9
+15:30, Black C, 11, 25
+16:00, Gray D, 16, 14
 ```
 
 **Person line:** `Name, start1, end1, start2, end2, ...` (unlimited time pairs)
@@ -107,6 +112,21 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 - Room 1 (11:00 AM) officiator is always AM Shift — leave blank
 - Lines starting with `#` are ignored
 - Valid times: `11:00` through `16:30`
+
+## 🔢 Veil Recommendation
+
+When B: and S: patron estimates are provided for a room, the schedule automatically recommends a veil split displayed in row 3 of the preview:
+
+```
+B:  13  2B        S:  27  4S
+```
+
+- **B: 13** — estimated brothers coming through
+- **2B** — recommended brother veils
+- **S: 27** — estimated sisters coming through
+- **4S** — recommended sister veils
+
+The recommendation maximizes total veils within available worker constraints while minimizing the difference in rotations between brothers and sisters. Brother veils require 2 workers; sister veils require 1. Maximum 8 veils total.
 
 ## 🐍 Run locally (without Docker)
 
