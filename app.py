@@ -236,6 +236,53 @@ def build_xlsx(people, room_data=None):
     xlsx_buffer.seek(0)
     return xlsx_buffer
 
+def recommend_veils(b, s, workers):
+    """Recommend veil split based on patron ratio and available workers.
+
+    Finds the maximum total veils (up to 8) that fits within available workers
+    while maintaining the closest proportion to the B/S ratio.
+    Brother veil = 2 workers, sister veil = 1 worker.
+    """
+    try:
+        b       = int(b) if b else 0
+        s       = int(s) if s else 0
+        workers = int(workers) if workers else 0
+    except (ValueError, TypeError):
+        return None, None
+
+    if workers == 0:
+        return None, None
+
+    total = b + s
+    if total == 0:
+        return None, None
+
+    ratio_s  = s / total
+    best_bv  = 0
+    best_sv  = 0
+
+    for total_veils in range(1, 9):
+        sv = round(ratio_s * total_veils)
+        bv = total_veils - sv
+        if bv * 2 + sv <= workers:
+            best_bv = bv
+            best_sv = sv
+
+    # Edge cases: if either is 0, default to all of the other type
+    if b == 0:
+        for total_veils in range(1, 9):
+            if total_veils <= workers:
+                best_bv = 0
+                best_sv = total_veils
+    elif s == 0:
+        for total_veils in range(1, 9):
+            if total_veils * 2 <= workers:
+                best_bv = total_veils
+                best_sv = 0
+
+    return best_bv, best_sv
+
+
 # ── Render preview image ──────────────────────────────────────────────────────
 
 def hex_to_rgb(hex_color):
@@ -384,12 +431,23 @@ def render_preview(people, is_pm, room_data=None):
                     right='medium' if is_last_room else 'thin')
 
         # Row 3: B: right-aligned in cols 0-1, S: right-aligned in cols 6-7
-        rd      = room_data.get(room['time'], {})
-        b_label = f"B: {rd.get('b', '')}" if rd.get('b') else 'B:'
-        s_label = f"S: {rd.get('s', '')}" if rd.get('s') else 'S:'
+        # Include veil recommendation if B: and S: are provided
+        rd        = room_data.get(room['time'], {})
+        b_val     = rd.get('b', '')
+        s_val     = rd.get('s', '')
+        workers   = count_brothers_in_room(sorted_people, room['time'])
+        if b_val or s_val:
+            bv, sv    = recommend_veils(b_val, s_val, workers)
+            b_label   = f"B: {b_val} ({bv}B)" if bv is not None else f"B: {b_val}"
+            s_label   = f"S: {s_val} ({sv}S)" if sv is not None else f"S: {s_val}"
+            row3_font = font_small
+        else:
+            b_label   = 'B:'
+            s_label   = 'S:'
+            row3_font = font_bold
         fill_cell(start_col, 3, '#FFFFFF', colspan=SLOTS)
-        draw_text(start_col, 3, b_label, font_bold, '#000000', 'right', 2)
-        draw_text(start_col + 6, 3, s_label, font_bold, '#000000', 'right', 2)
+        draw_text(start_col, 3, b_label, row3_font, '#000000', 'right', 2)
+        draw_text(start_col + 6, 3, s_label, row3_font, '#000000', 'right', 2)
         draw_border(start_col, 3, colspan=SLOTS, left='medium', top='thin', bottom='thin',
                     right='medium' if is_last_room else 'thin')
 
