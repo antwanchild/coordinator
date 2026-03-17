@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.0] - 2026-03-17
+
+### ♻️ Refactoring
+
+- Move datetime import to top level, add scoring comments to recommend_veils
+
+### ✨ Features
+
+- Use native file picker for export on supported browsers, fallback for Safari
 ## [1.22.3] - 2026-03-17
 
 ### 🐛 Bug Fixes
