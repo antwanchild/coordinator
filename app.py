@@ -266,6 +266,7 @@ def recommend_veils(b, s, workers):
     best_bv   = 0
     best_sv   = 0
     best_diff = float('inf')
+    best_total = 0
 
     for bv in range(0, 9):
         for sv in range(0, 9 - bv):
@@ -275,16 +276,16 @@ def recommend_veils(b, s, workers):
                 continue
             if bv * 2 + sv > workers:
                 continue
-            # Rotations: B/bv and S/sv — minimize difference
             rot_b = b / bv if bv > 0 else float('inf')
             rot_s = s / sv if sv > 0 else float('inf')
             diff  = abs(rot_b - rot_s)
             total = bv + sv
-            # Prefer more total veils when diff is equal
-            if diff < best_diff or (diff == best_diff and total > best_bv + best_sv):
-                best_diff = diff
-                best_bv   = bv
-                best_sv   = sv
+            # Prefer: 1) smaller rotation diff, 2) more total veils when diff is close
+            if diff < best_diff - 0.5 or (diff <= best_diff + 0.5 and total > best_total):
+                best_diff  = diff
+                best_bv    = bv
+                best_sv    = sv
+                best_total = total
 
     return best_bv, best_sv
 
