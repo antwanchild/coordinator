@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.19.1] - 2026-03-17
+
+### 🐛 Bug Fixes
+
+- Veil recommendation based on B:/S: ratio and available workers
 ## [1.19.0] - 2026-03-17
 
 ### ✨ Features
