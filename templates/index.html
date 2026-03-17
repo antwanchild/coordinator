@@ -1277,6 +1277,12 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
+      const hasExisting = people.length > 0 || Object.values(roomData).some(r => r.off || r.b || r.s);
+      if (hasExisting) {
+        if (!confirm('This will replace all existing names and room data. Continue?')) return;
+        people = [];
+        ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+      }
       const { imported, skipped } = parseData(e.target.result);
       showSkippedWarning('skipped-csv', skipped);
       toast(`CSV imported — ${imported} added`);
@@ -1286,7 +1292,17 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function importPaste() {
-    const { imported, skipped } = parseData(document.getElementById('pasteInput').value);
+    const text = document.getElementById('pasteInput').value;
+    if (!text.trim()) return;
+
+    const hasExisting = people.length > 0 || Object.values(roomData).some(r => r.off || r.b || r.s);
+    if (hasExisting) {
+      if (!confirm('This will replace all existing names and room data. Continue?')) return;
+      people = [];
+      ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+    }
+
+    const { imported, skipped } = parseData(text);
     document.getElementById('pasteInput').value = '';
     showSkippedWarning('skipped-paste', skipped);
     toast(`Imported — ${imported} added`);
