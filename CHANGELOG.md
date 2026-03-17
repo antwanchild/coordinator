@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.20.1] - 2026-03-17
+
+### 🐛 Bug Fixes
+
+- Rewrite veil recommendation for equal rotations instead of proportional split
 ## [1.20.0] - 2026-03-17
 
 ### ✨ Features
