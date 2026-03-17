@@ -237,10 +237,10 @@ def build_xlsx(people, room_data=None):
     return xlsx_buffer
 
 def recommend_veils(b, s, workers):
-    """Recommend veil split based on patron ratio and available workers.
+    """Recommend veil split to achieve equal rotations for brothers and sisters.
 
-    Finds the maximum total veils (up to 8) that fits within available workers
-    while maintaining the closest proportion to the B/S ratio.
+    Equal rotations means B/bv == S/sv, i.e. bv/sv == B/S.
+    Finds the best split within worker constraints, up to 8 veils total.
     Brother veil = 2 workers, sister veil = 1 worker.
     """
     try:
@@ -253,32 +253,38 @@ def recommend_veils(b, s, workers):
     if workers == 0:
         return None, None
 
-    total = b + s
-    if total == 0:
+    # Edge cases: one side is zero
+    if b == 0 and s == 0:
         return None, None
-
-    ratio_s  = s / total
-    best_bv  = 0
-    best_sv  = 0
-
-    for total_veils in range(1, 9):
-        sv = round(ratio_s * total_veils)
-        bv = total_veils - sv
-        if bv * 2 + sv <= workers:
-            best_bv = bv
-            best_sv = sv
-
-    # Edge cases: if either is 0, default to all of the other type
     if b == 0:
-        for total_veils in range(1, 9):
-            if total_veils <= workers:
-                best_bv = 0
-                best_sv = total_veils
-    elif s == 0:
-        for total_veils in range(1, 9):
-            if total_veils * 2 <= workers:
-                best_bv = total_veils
-                best_sv = 0
+        sv = min(8, workers)
+        return 0, sv
+    if s == 0:
+        bv = min(8, workers // 2)
+        return bv, 0
+
+    best_bv   = 0
+    best_sv   = 0
+    best_diff = float('inf')
+
+    for bv in range(0, 9):
+        for sv in range(0, 9 - bv):
+            if bv + sv == 0:
+                continue
+            if bv + sv > 8:
+                continue
+            if bv * 2 + sv > workers:
+                continue
+            # Rotations: B/bv and S/sv — minimize difference
+            rot_b = b / bv if bv > 0 else float('inf')
+            rot_s = s / sv if sv > 0 else float('inf')
+            diff  = abs(rot_b - rot_s)
+            total = bv + sv
+            # Prefer more total veils when diff is equal
+            if diff < best_diff or (diff == best_diff and total > best_bv + best_sv):
+                best_diff = diff
+                best_bv   = bv
+                best_sv   = sv
 
     return best_bv, best_sv
 
