@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.21.0] - 2026-03-17
+
+### ✨ Features
+
+- Confirm before replacing existing data on paste or CSV import
 ## [1.20.2] - 2026-03-17
 
 ### 🐛 Bug Fixes
