@@ -3,6 +3,7 @@ import os
 import time
 import platform
 import logging
+from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask, request, jsonify, send_file, render_template
@@ -263,10 +264,10 @@ def recommend_veils(b, s, workers):
         bv = min(8, workers // 2)
         return bv, 0
 
-    best_bv   = 0
-    best_sv   = 0
-    best_diff = float('inf')
-    best_total = 0
+    best_bv    = 0   # recommended brother veils
+    best_sv    = 0   # recommended sister veils
+    best_diff  = float('inf')  # best rotation difference found so far
+    best_total = 0   # total veils for best candidate (used as tiebreaker)
 
     for bv in range(0, 9):
         for sv in range(0, 9 - bv):
@@ -642,7 +643,6 @@ def render_preview(people, is_pm, room_data=None):
 
 @app.route('/')
 def index():
-    from datetime import datetime
     return render_template('index.html', version=APP_VERSION, now=datetime.now())
 
 
