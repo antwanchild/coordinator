@@ -1435,7 +1435,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
         return p.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart);
       });
       if (sheetPeople.length > 18) {
-        toast(`⚠ ${sheetPeople.length - 18} name(s) won't fit — only 18 slots available`);
+        toast(`⚠ ${sheetPeople.length - 18} name(s) won't fit on ${isPM ? 'PM' : 'AM'} sheet — only 18 slots available`);
       } else {
         toast('Built!');
       }
