@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.22.3] - 2026-03-17
+
+### 🐛 Bug Fixes
+
+- Restore margin-top auto on generate section
 ## [1.22.2] - 2026-03-17
 
 ### 🐛 Bug Fixes
