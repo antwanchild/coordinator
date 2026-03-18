@@ -668,10 +668,10 @@ def preview():
 
     try:
         image_buffer = render_preview(people, is_pm, room_data)
-        rooms        = PM_ROOMS if is_pm else AM_ROOMS
-        visible      = [p for p in people if person_on_sheet(p, is_pm)]
-        sorted_ppl   = sorted(visible, key=lambda p: p['name'])
-        brothers     = [count_brothers_in_room(sorted_ppl, room['time']) for room in rooms]
+        rooms          = PM_ROOMS if is_pm else AM_ROOMS
+        visible        = [p for p in people if person_on_sheet(p, is_pm)]
+        sorted_people  = sorted(visible, key=lambda p: p['name'])
+        brothers       = [count_brothers_in_room(sorted_people, room['time']) for room in rooms]
         logger.info(f"Preview generated | sheet={sheet_name}, people={len(visible)}, brothers={brothers}")
         return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:

@@ -10,6 +10,13 @@ README.md
 CONTRIBUTING.md
 CHANGELOG.md
 
+# Project config / tooling
+cliff.toml
+VERSION
+
+# Legacy
+OLDschedule-builder.html
+
 # Python
 __pycache__/
 *.pyc

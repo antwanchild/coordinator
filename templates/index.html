@@ -1449,42 +1449,42 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 
   // ── Export ─────────────────────────────────────────────────────────────────
   async function doExport() {
-  if (!people.length) { toast('No people to export'); return; }
+    if (!people.length) { toast('No people to export'); return; }
 
-  try {
-    const res = await fetch('/export', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ people, room_data: roomData })
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const blob     = await res.blob();
-    const filename = prompt('Save as:', todayFilename()) || todayFilename();
-
-    if (window.showSaveFilePicker) {
-      // Chrome/Edge: native file picker
-      const handle = await window.showSaveFilePicker({
-        suggestedName: filename,
-        types: [{ description: 'Excel', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }]
+    try {
+      const res = await fetch('/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ people, room_data: roomData })
       });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      toast('Exported!');
-    } else {
-      // Safari/Firefox fallback: standard download
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement('a');
-      a.href     = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast('Exported!');
+      if (!res.ok) throw new Error(await res.text());
+      const blob     = await res.blob();
+      const filename = prompt('Save as:', todayFilename()) || todayFilename();
+
+      if (window.showSaveFilePicker) {
+        // Chrome/Edge: native file picker
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'Excel', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        toast('Exported!');
+      } else {
+        // Safari/Firefox fallback: standard download
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Exported!');
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') toast('Export failed: ' + e.message);
     }
-  } catch (e) {
-    if (e.name !== 'AbortError') toast('Export failed: ' + e.message);
   }
-}
 
   // ── Toast ──────────────────────────────────────────────────────────────────
   function toast(msg) {
