@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.2] - 2026-03-20
+
+### 🐛 Bug Fixes
+
+- Update minor changes on code
 ## [1.23.1] - 2026-03-18
 
 ### 🐛 Bug Fixes
