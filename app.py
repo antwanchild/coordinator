@@ -85,11 +85,6 @@ def points_to_pixels(point_height):
     """Convert Excel point height to pixels at 96 DPI."""
     return max(4, int(point_height * 96 / 72))
 
-# Column widths in Excel character units (used only as fallback reference)
-COL_WIDTHS_CHARS = {1: 5.28, 2: 3.71, 3: 11.57, 4: 1.85}
-for col in range(5, 66):
-    COL_WIDTHS_CHARS[col] = 13.0
-
 # Row heights in Excel point units
 ROW_HEIGHTS_PT = {1: 17.25, 2: 15.0, 3: 15.0, 4: 15.75, 5: 20.25, 6: 20.25}
 for row in range(7, 25):
