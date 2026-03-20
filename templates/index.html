@@ -853,11 +853,13 @@
           <div class="csv-drop">
             <input type="file" accept=".csv" onchange="handleCSV(this)">
             <p>&#128194; Upload CSV</p>
-            <p style="font-size: .6rem; margin-top: 2px">Name, start1, end1, start2, end2, ...</p>
+            <p style="font-size: .6rem; margin-top: 2px">Person: Name, start1, end1, start2, end2, &hellip;</p>
+            <p style="font-size: .6rem; margin-top: 1px">Room: time, officiator, b, s</p>
           </div>
           <code style="font-size: .6rem; color: #aaa; line-height: 1.9">
             Smith J, 11:00, 11:30, 14:00, 15:00<br>
-            Doe A, 11:00, 13:00
+            Doe A, 11:00, 13:00<br>
+            11:00, Jones B, 3, 2
           </code>
           <div class="skipped-warning" id="skipped-csv"></div>
         </div>
