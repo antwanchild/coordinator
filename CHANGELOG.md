@@ -3,6 +3,12 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.3] - 2026-03-20
+
+### 🐛 Bug Fixes
+
+- Changed case on hint in paste box
+- Edit hint on csv import
 ## [1.23.2] - 2026-03-20
 
 ### 🐛 Bug Fixes
