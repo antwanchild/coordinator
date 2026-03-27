@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.4] - 2026-03-27
+
+### 🐛 Bug Fixes
+
+- Exporting of the officiator name was crammed with the "Off:"
 ## [1.23.3] - 2026-03-20
 
 ### 🐛 Bug Fixes
