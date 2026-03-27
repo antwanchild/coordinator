@@ -8,7 +8,7 @@ from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask, request, jsonify, send_file, render_template
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
+from openpyxl.styles import PatternFill, Font
 from PIL import Image, ImageDraw, ImageFont
 
 app = Flask(__name__)
@@ -221,7 +221,9 @@ def build_xlsx(people, room_data=None):
             start_col = ROOM_START_COLS[room_index]
             rd        = room_data.get(room['time'], {})
             if rd.get('off'):
-                worksheet.cell(row=4, column=start_col).value = f"Off: {rd['off']}"
+                off_cell = worksheet.cell(row=4, column=start_col + 3)
+                off_cell.value = rd['off']
+                off_cell.font = Font(bold=True, color='335593')
             if rd.get('b'):
                 worksheet.cell(row=3, column=start_col).value = f"B: {rd['b']}"
             if rd.get('s'):
