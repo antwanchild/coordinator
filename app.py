@@ -224,10 +224,19 @@ def build_xlsx(people, room_data=None):
                 off_cell = worksheet.cell(row=4, column=start_col + 3)
                 off_cell.value = rd['off']
                 off_cell.font = Font(bold=True, color='335593')
-            if rd.get('b'):
-                worksheet.cell(row=3, column=start_col).value = f"B: {rd['b']}"
-            if rd.get('s'):
-                worksheet.cell(row=3, column=start_col + 6).value = f"S: {rd['s']}"
+            b_val   = rd.get('b', '')
+            s_val   = rd.get('s', '')
+            workers = count_brothers_in_room(sorted_people, room['time'])
+            if b_val:
+                worksheet.cell(row=3, column=start_col + 2).value = b_val
+            if s_val:
+                worksheet.cell(row=3, column=start_col + 8).value = s_val
+            if b_val or s_val:
+                bv, sv = recommend_veils(b_val, s_val, workers)
+                if bv is not None:
+                    worksheet.cell(row=3, column=start_col + 4).value = f"{bv}B"
+                if sv is not None:
+                    worksheet.cell(row=3, column=start_col + 10).value = f"{sv}S"
 
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)
@@ -251,15 +260,8 @@ def recommend_veils(b, s, workers):
     if workers == 0:
         return None, None
 
-    # Edge cases: one side is zero
     if b == 0 and s == 0:
         return None, None
-    if b == 0:
-        sv = min(8, workers)
-        return 0, sv
-    if s == 0:
-        bv = min(8, workers // 2)
-        return bv, 0
 
     best_bv    = 0   # recommended brother veils
     best_sv    = 0   # recommended sister veils
@@ -273,6 +275,10 @@ def recommend_veils(b, s, workers):
             if bv + sv > 8:
                 continue
             if bv * 2 + sv > workers:
+                continue
+            if bv > b:  # can't have more brother veils than brothers
+                continue
+            if sv > s:  # can't have more sister veils than sisters
                 continue
             rot_b = b / bv if bv > 0 else float('inf')
             rot_s = s / sv if sv > 0 else float('inf')
