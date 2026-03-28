@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.7] - 2026-03-28
+
+### 🐛 Bug Fixes
+
+- 3rd worksheet adjustments
 ## [1.23.6] - 2026-03-28
 
 ### 🐛 Bug Fixes
