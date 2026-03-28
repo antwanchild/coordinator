@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.5] - 2026-03-28
+
+### 🐛 Bug Fixes
+
+- Logic for veil count and proper layout on export
 ## [1.23.4] - 2026-03-27
 
 ### 🐛 Bug Fixes
