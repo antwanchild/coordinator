@@ -239,51 +239,30 @@ def build_xlsx(people, room_data=None):
                     worksheet.cell(row=3, column=start_col + 10).value = f"{sv}S"
 
     # ── Source data sheet ─────────────────────────────────────────────────────
+    # Each row is a single paste-ready line matching the paste box format:
+    #   Person:  Name, start, end[, start, end ...]
+    #   Room:    time, officiator, b, s
     src = workbook.create_sheet(title='Source Data')
 
-    header_font  = Font(bold=True)
-    section_font = Font(bold=True, color='335593')
-
-    # People section
-    src.cell(row=1, column=1).value = 'Name'
-    src.cell(row=1, column=2).value = 'Time Ranges'
-    src.cell(row=1, column=1).font  = header_font
-    src.cell(row=1, column=2).font  = header_font
-
-    row = 2
+    row = 1
     for person in sorted(people, key=lambda p: p['name']):
-        ranges_str = '  |  '.join(f"{r['start']} – {r['end']}" for r in person['ranges'])
-        src.cell(row=row, column=1).value = person['name']
-        src.cell(row=row, column=2).value = ranges_str
+        parts = [person['name']] + [t for r in person['ranges'] for t in (r['start'], r['end'])]
+        src.cell(row=row, column=1).value = ', '.join(parts)
         row += 1
 
-    # Blank separator row
-    row += 1
-
-    # Room data section
-    src.cell(row=row, column=1).value = 'Time'
-    src.cell(row=row, column=2).value = 'Officiator'
-    src.cell(row=row, column=3).value = 'B'
-    src.cell(row=row, column=4).value = 'S'
-    for col in range(1, 5):
-        src.cell(row=row, column=col).font = header_font
-    row += 1
+    row += 1  # blank separator
 
     all_times = [r['time'] for r in AM_ROOMS] + [r['time'] for r in PM_ROOMS]
     for time in all_times:
         rd = room_data.get(time, {})
         if not any([rd.get('off'), rd.get('b'), rd.get('s')]):
             continue
-        src.cell(row=row, column=1).value = time
-        src.cell(row=row, column=2).value = rd.get('off', '')
-        src.cell(row=row, column=3).value = rd.get('b', '')
-        src.cell(row=row, column=4).value = rd.get('s', '')
+        parts = [time, rd.get('off', ''), str(rd.get('b', '')), str(rd.get('s', ''))]
+        src.cell(row=row, column=1).value = ', '.join(parts)
         row += 1
 
-    # Auto-size columns A and B
-    for col_cells in src.columns:
-        max_len = max((len(str(c.value)) for c in col_cells if c.value), default=0)
-        src.column_dimensions[col_cells[0].column_letter].width = min(max_len + 4, 60)
+    max_len = max((len(str(c.value)) for c in src['A'] if c.value), default=20)
+    src.column_dimensions['A'].width = min(max_len + 4, 80)
 
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)
