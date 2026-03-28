@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.6] - 2026-03-28
+
+### 🐛 Bug Fixes
+
+- Add 3rd sheet on export with table data
 ## [1.23.5] - 2026-03-28
 
 ### 🐛 Bug Fixes
