@@ -8,6 +8,7 @@ updates:
       - "antwanchild"
     commit-message:
       prefix: "chore"
+    rebase-strategy: "auto"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -17,6 +18,7 @@ updates:
       - "antwanchild"
     commit-message:
       prefix: "chore"
+    rebase-strategy: "auto"
 
   - package-ecosystem: "pip"
     directory: "/"
@@ -26,3 +28,4 @@ updates:
       - "antwanchild"
     commit-message:
       prefix: "chore"
+    rebase-strategy: "auto"
