@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.8] - 2026-04-01
+
+### 🐛 Bug Fixes
+
+- Dependabot automerge pr
 ## [1.23.7] - 2026-03-28
 
 ### 🐛 Bug Fixes
