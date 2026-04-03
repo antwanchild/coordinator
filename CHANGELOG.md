@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.9] - 2026-04-03
+
+### 🐛 Bug Fixes
+
+- Add missing CSS for sidebar toggle button
 ## [1.23.8] - 2026-04-01
 
 ### 🐛 Bug Fixes
