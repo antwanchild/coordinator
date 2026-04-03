@@ -306,6 +306,34 @@
       color: var(--txt);
     }
 
+    /* ── Sidebar toggle ── */
+    .toggle-col {
+      position: relative;
+      width: 0;
+      overflow: visible;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      background: var(--surf);
+      border: 1px solid var(--bdr);
+      border-radius: 0 4px 4px 0;
+      color: var(--mut);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 6px 4px;
+      transition: left .25s ease, color .15s ease;
+      user-select: none;
+    }
+
+    .toggle-btn:hover {
+      color: var(--txt);
+    }
+
     /* ── App layout ── */
     .app {
       display: grid;
