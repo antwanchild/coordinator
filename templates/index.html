@@ -335,6 +335,10 @@
       opacity: .8;
     }
 
+    .toggle-btn.collapsed {
+      padding: 24px 8px;
+    }
+
     /* ── App layout ── */
     .app {
       display: grid;
@@ -1063,10 +1067,12 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   // ── Sidebar ────────────────────────────────────────────────────────────────
   function toggleSidebar() {
     sidebarOpen = !sidebarOpen;
+    const btn = document.getElementById('toggleBtn');
     document.getElementById('app').classList.toggle('collapsed', !sidebarOpen);
-    document.getElementById('toggleBtn').innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
-    document.getElementById('toggleBtn').title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
-    document.getElementById('toggleBtn').style.left = sidebarOpen ? '287px' : '-13px';
+    btn.innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
+    btn.title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
+    btn.style.left = sidebarOpen ? '287px' : '-13px';
+    btn.classList.toggle('collapsed', !sidebarOpen);
   }
 
   // ── Tooltips ───────────────────────────────────────────────────────────────
