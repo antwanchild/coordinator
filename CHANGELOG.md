@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.10] - 2026-04-03
+
+### 🐛 Bug Fixes
+
+- Restore toggle button pill shape and accent color
 ## [1.23.9] - 2026-04-03
 
 ### 🐛 Bug Fixes
