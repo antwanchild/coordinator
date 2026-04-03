@@ -76,7 +76,7 @@ The app exposes `/health` returning `{"status": "ok", "version": "x.x.x"}`. The 
    - Re-importing prompts to confirm before replacing existing data
 3. **Build Schedule** — renders a pixel-perfect preview (`Ctrl+B` / `Cmd+B`)
    - Enable **Auto** to rebuild automatically when names change
-4. **Export Both Sheets** — downloads the filled xlsx with both AM and PM tabs — use this to print
+4. **Export Both Sheets** — downloads the filled xlsx with AM, PM, and a **Source Data** tab containing all people and room data in paste-ready format — use the print tabs to print, and Source Data to re-import later
 
 ## 🎨 Themes
 
@@ -126,7 +126,7 @@ B:  13  2B        S:  27  4S
 - **S: 27** — estimated sisters coming through
 - **4S** — recommended sister veils
 
-The recommendation maximizes total veils within available worker constraints while minimizing the difference in rotations between brothers and sisters. Brother veils require 2 workers; sister veils require 1. Maximum 8 veils total.
+The recommendation maximizes total veils while minimizing the difference in rotations between brothers and sisters, subject to three constraints: available workers (brother veils require 2, sister veils require 1), a maximum of 8 veils total, and veil count never exceeding the number of patrons on that side (e.g. if only 2 sisters are attending, at most 2 sister veils will be suggested).
 
 ## 🐍 Run locally (without Docker)
 
