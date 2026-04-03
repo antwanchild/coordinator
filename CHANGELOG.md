@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.11] - 2026-04-03
+
+### 🐛 Bug Fixes
+
+- Increase collapsed sidebar toggle button click target
 ## [1.23.10] - 2026-04-03
 
 ### 🐛 Bug Fixes
