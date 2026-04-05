@@ -14,6 +14,19 @@ from PIL import Image, ImageDraw, ImageFont
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max request size
 
+@app.after_request
+def set_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options']        = 'DENY'
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' blob:; "
+        "script-src 'self' 'unsafe-inline';"
+    )
+    return response
+
 TEMPLATE_PATH = "V-COORDINATE--Scheduled.xlsx"
 APP_VERSION   = os.environ.get('APP_VERSION', 'dev')
 
@@ -165,6 +178,11 @@ def person_on_sheet(person, is_pm):
         for time_range in person['ranges']
     )
 
+def safe_cell_value(value):
+    """Prevent Excel formula injection by prefixing formula characters with a single quote."""
+    s = str(value)
+    return "'" + s if s and s[0] in ('=', '+', '-', '@', '\t', '\r') else s
+
 def count_brothers_in_room(sorted_people, room_time):
     """Count brothers assigned to a room slot, including the Off row.
 
@@ -199,7 +217,7 @@ def build_xlsx(people, room_data=None):
             sheet_row  = 6 + row_index
 
             worksheet.cell(row=sheet_row, column=2).value = row_index + 1
-            worksheet.cell(row=sheet_row, column=3).value = 'Off.' if is_off_row else (person['name'] if person else '')
+            worksheet.cell(row=sheet_row, column=3).value = 'Off.' if is_off_row else (safe_cell_value(person['name']) if person else '')
 
             if person:
                 for room_index, room in enumerate(rooms):
@@ -222,7 +240,7 @@ def build_xlsx(people, room_data=None):
             rd        = room_data.get(room['time'], {})
             if rd.get('off'):
                 off_cell = worksheet.cell(row=4, column=start_col + 3)
-                off_cell.value = rd['off']
+                off_cell.value = safe_cell_value(rd['off'])
                 off_cell.font = Font(bold=True, color='335593')
             b_val   = rd.get('b', '')
             s_val   = rd.get('s', '')
@@ -705,7 +723,7 @@ def preview():
         return send_file(image_buffer, mimetype='image/png')
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Template file not found'}), 500
     except Exception as e:
         logger.error(f"Preview failed | sheet={sheet_name}, people={len(people)}, error={e}")
         return jsonify({'error': 'Preview generation failed'}), 500
@@ -739,7 +757,7 @@ def export():
         )
     except FileNotFoundError as e:
         logger.error(f"Template missing: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Template file not found'}), 500
     except Exception as e:
         logger.error(f"Export failed | people={len(people)}, error={e}")
         return jsonify({'error': 'Export generation failed'}), 500
