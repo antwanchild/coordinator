@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.12] - 2026-04-05
+
+### 🐛 Bug Fixes
+
+- Security hardening — headers, formula injection, error message sanitization
+
+### 📖 Documentation
+
+- Update README for source data sheet and veil recommendation logic
 ## [1.23.11] - 2026-04-03
 
 ### 🐛 Bug Fixes
