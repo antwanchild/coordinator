@@ -73,13 +73,13 @@ Install it by searching `vivaxy.vscode-conventional-commits` in the Extensions p
 ```bash
 pip install flask openpyxl Pillow
 python app.py
-# Open http://localhost:5000
+# Open http://localhost:8080
 ```
 
 ## 🐳 Running with Docker
 
 ```bash
-docker build -t vcord-scheduler .
-docker run -p 5000:5000 vcord-scheduler
-# Open http://localhost:5000
+docker build -t coordinator .
+docker run -p 8080:8080 coordinator
+# Open http://localhost:8080
 ```

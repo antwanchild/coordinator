@@ -15,7 +15,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app
-COPY app.py .
+COPY app.py constants.py schedule.py renderer.py ./
 COPY entrypoint.sh .
 COPY V-COORDINATE--Scheduled.xlsx .
 COPY templates/ templates/

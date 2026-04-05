@@ -133,6 +133,7 @@ The recommendation maximizes total veils while minimizing the difference in rota
 ```bash
 pip install flask openpyxl Pillow
 python app.py
+# Open http://localhost:8080
 ```
 
 ## 🔖 Versioning
