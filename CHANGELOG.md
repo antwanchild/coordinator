@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.13] - 2026-04-08
+
+### ♻️ Refactoring
+
+- Split app.py into constants, schedule, renderer, and app modules
+
+### 🐛 Bug Fixes
+
+- Refactor of some code and variable checking
 ## [1.23.12] - 2026-04-05
 
 ### 🐛 Bug Fixes
