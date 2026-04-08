@@ -805,7 +805,7 @@
   </div>
   <div class="header-right">
     <div class="accent-picker">
-      <select id="accentSelect" title="Choose accent color">
+      <select id="accentSelect" onchange="setAccent(this.value)" title="Choose accent color">
         <option value="lime">🟡 Lime</option>
         <option value="blue">🔵 Blue</option>
         <option value="purple">🟣 Purple</option>
@@ -817,8 +817,8 @@
         <option value="teal">🫐 Teal</option>
       </select>
     </div>
-    <button class="help-btn" id="helpBtn" title="Help">?</button>
-    <button class="theme-btn" id="themeBtn" title="Switch to light mode">☀️</button>
+    <button class="help-btn" id="helpBtn" onclick="toggleHelp()" title="Help">?</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
     <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
   </div>
 </header>
@@ -835,11 +835,11 @@
       </div>
       <div class="card">
         <div class="sheet-tabs">
-          <div class="sheet-tab active" id="tab-sheet-AM" data-sheet="AM">
+          <div class="sheet-tab active" id="tab-sheet-AM" data-sheet="AM" onclick="selectSheet(false)">
             AM
             <span class="tab-badge" id="badge-AM"></span>
           </div>
-          <div class="sheet-tab" id="tab-sheet-PM" data-sheet="PM">
+          <div class="sheet-tab" id="tab-sheet-PM" data-sheet="PM" onclick="selectSheet(true)">
             PM
             <span class="tab-badge" id="badge-PM"></span>
           </div>
@@ -855,16 +855,16 @@
       </div>
       <div class="card">
         <div class="input-tabs">
-          <div class="input-tab" id="tab-manual" data-tab="manual">📝 Manual</div>
-          <div class="input-tab" id="tab-csv" data-tab="csv">📁 CSV</div>
-          <div class="input-tab active" id="tab-paste" data-tab="paste">📋 Paste</div>
+          <div class="input-tab" id="tab-manual" data-tab="manual" onclick="switchTab('manual')">📝 Manual</div>
+          <div class="input-tab" id="tab-csv" data-tab="csv" onclick="switchTab('csv')">📁 CSV</div>
+          <div class="input-tab active" id="tab-paste" data-tab="paste" onclick="switchTab('paste')">📋 Paste</div>
         </div>
 
         <!-- Manual panel -->
         <div id="panel-manual" style="display: none">
           <div class="add-row">
-            <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30">
-            <button id="addNameBtn" type="button">+</button>
+            <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30" onkeydown="if(event.key==='Enter'){event.preventDefault();addName();}">
+            <button id="addNameBtn" type="button" onclick="addName()">+</button>
           </div>
           <div class="time-row">
             <select id="timeStart"></select>
@@ -876,15 +876,15 @@
             <p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>
           </div>
           <div style="display: flex; gap: 5px; margin-top: 7px">
-            <button class="btn btn-secondary btn-small" id="clearNamesBtn" type="button">Clear All</button>
-            <button class="btn btn-secondary btn-small" id="copyCsvBtn" type="button">Copy CSV</button>
+            <button class="btn btn-secondary btn-small" id="clearNamesBtn" type="button" onclick="clearNames()">Clear All</button>
+            <button class="btn btn-secondary btn-small" id="copyCsvBtn" type="button" onclick="copyNamesAsCSV()">Copy CSV</button>
           </div>
         </div>
 
         <!-- CSV panel -->
         <div id="panel-csv" style="display: none">
           <div class="csv-drop">
-            <input type="file" id="csvInput" accept=".csv">
+            <input type="file" id="csvInput" accept=".csv" onchange="handleCSV(this)">
             <p>&#128194; Upload CSV</p>
             <p style="font-size: .6rem; margin-top: 2px">Person: Name, start1, end1, start2, end2, &hellip;</p>
             <p style="font-size: .6rem; margin-top: 1px">Room: time, officiator, b, s</p>
@@ -904,7 +904,7 @@
             Room: <code style="font-size:.6rem;background:var(--card);padding:1px 3px;border-radius:3px;color:var(--acc)">time, officiator, b, s</code>
           </p>
           <textarea id="pasteInput" placeholder="Smith J, 11:00, 12:30&#10;Doe A, 11:00, 11:30, 14:00, 15:00&#10;&#10;11:00, Jones B, 3, 2&#10;11:30, Taylor C, 4, 1"></textarea>
-          <button class="btn btn-primary" id="importPasteBtn" type="button" style="margin-top: 6px">Import</button>
+          <button class="btn btn-primary" id="importPasteBtn" type="button" style="margin-top: 6px" onclick="importPaste()">Import</button>
           <div class="skipped-warning" id="skipped-paste"></div>
         </div>
       </div>
@@ -914,12 +914,12 @@
     <div style="margin-top: auto">
       <div class="section-label">03 &mdash; Generate</div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <button class="btn btn-primary" id="buildBtn" type="button" style="flex: 1">&#9889; Build Schedule</button>
-        <button class="btn btn-secondary" id="autoRefreshBtn" type="button" style="width: 60px" title="Auto-refresh preview when names change">Auto
+        <button class="btn btn-primary" id="buildBtn" type="button" style="flex: 1" onclick="build()">&#9889; Build Schedule</button>
+        <button class="btn btn-secondary" id="autoRefreshBtn" type="button" style="width: 60px" onclick="toggleAutoRefresh()" title="Auto-refresh preview when names change">Auto
           <span class="tip" style="position:absolute;top:-2px;right:-2px"><span class="tip-icon">?</span><span class="tip-text">Auto-rebuild preview when names or room data change.</span></span>
         </button>
       </div>
-      <button class="btn btn-export" id="exportBtn" type="button">
+      <button class="btn btn-export" id="exportBtn" type="button" onclick="doExport()">
         &#8595; Export Both Sheets (.xlsx)
       </button>
       <p style="font-size: .6rem; color: var(--mut); text-align: center; margin-top: 4px">Export to print both sheets</p>
@@ -929,7 +929,7 @@
 
   <!-- Sidebar toggle -->
   <div class="toggle-col">
-    <div class="toggle-btn" id="toggleBtn" title="Collapse sidebar" style="left: 287px">&#8249;</div>
+    <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()" title="Collapse sidebar" style="left: 287px">&#8249;</div>
   </div>
 
   <!-- Main / Preview -->
@@ -953,9 +953,9 @@
 </div>
 
 <!-- Help modal -->
-<div class="modal-overlay" id="helpModal">
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this) toggleHelp()">
   <div class="modal">
-    <button class="modal-close" id="helpCloseBtn" type="button">&times; Close</button>
+    <button class="modal-close" id="helpCloseBtn" type="button" onclick="toggleHelp()">&times; Close</button>
     <h2>&#x2B21; V-Coordinator Help</h2>
 
     <h3>Paste / CSV Format</h3>

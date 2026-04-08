@@ -57,7 +57,11 @@ const elements = {
   toggleBtn: document.getElementById('toggleBtn'),
 };
 
-init();
+try {
+  init();
+} catch (error) {
+  console.error('Frontend initialization failed', error);
+}
 
 function init() {
   populateTimeDropdowns();
@@ -69,26 +73,6 @@ function init() {
 }
 
 function bindEvents() {
-  elements.accentSelect.addEventListener('change', event => setAccent(event.target.value));
-  elements.helpBtn.addEventListener('click', toggleHelp);
-  elements.helpCloseBtn.addEventListener('click', toggleHelp);
-  elements.themeBtn.addEventListener('click', toggleTheme);
-  elements.toggleBtn.addEventListener('click', toggleSidebar);
-  elements.buildBtn.addEventListener('click', build);
-  elements.autoRefreshBtn.addEventListener('click', toggleAutoRefresh);
-  elements.exportBtn.addEventListener('click', doExport);
-  elements.addNameBtn = document.getElementById('addNameBtn');
-  elements.addNameBtn.addEventListener('click', addName);
-  elements.clearNamesBtn.addEventListener('click', clearNames);
-  elements.copyCsvBtn.addEventListener('click', copyNamesAsCSV);
-  elements.importPasteBtn.addEventListener('click', importPaste);
-  elements.csvInput.addEventListener('change', event => handleCSV(event.target));
-  elements.nameInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      addName();
-    }
-  });
   elements.nameList.addEventListener('click', handleNameListClick);
   elements.helpModal.addEventListener('click', event => {
     if (event.target === elements.helpModal) {
