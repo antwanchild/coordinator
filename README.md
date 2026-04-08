@@ -64,7 +64,7 @@ If `/config` is not mapped the app runs normally and logs to the container conso
 
 ## 🏥 Health Check
 
-The app exposes `/health` returning `{"status": "ok", "version": "x.x.x"}`. The Dockerfile includes a built-in `HEALTHCHECK` polling this endpoint every 30 seconds.
+The app exposes `/health` returning `{"status": "ok", "version": "x.x.x", "commit": "<sha>"}`. The Dockerfile includes a built-in `HEALTHCHECK` polling this endpoint every 30 seconds.
 
 ## 🚀 Usage
 
@@ -150,3 +150,5 @@ Versions are bumped automatically from commit messages and the changelog is gene
 | `docs:` | 📖 Documentation | None |
 | `chore:` | 🔧 Chores | None |
 | plain message | Not in changelog | None |
+
+`VERSION` is treated as workflow-managed release metadata. In normal development, prefer using the commit message convention above and let GitHub Actions bump the version, changelog, and tags during the Docker publish workflow.

@@ -819,7 +819,7 @@
     </div>
     <button class="help-btn" onclick="toggleHelp()" title="Help">?</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
-    <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
+    <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }} &nbsp;·&nbsp; {{ commit_short }}</span>
   </div>
 </header>
 
@@ -1182,7 +1182,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function renderHeaderStatus() {
-    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }}';
+    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }} &nbsp;&middot;&nbsp; {{ commit_short }}';
     document.getElementById('previewTitle').textContent = (isPM ? 'P.M.' : 'A.M.') + ' - ' + (isPM ? 'PM' : 'AM');
   }
 

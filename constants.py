@@ -2,6 +2,8 @@ import os
 
 TEMPLATE_PATH = "V-COORDINATE--Scheduled.xlsx"
 APP_VERSION   = os.environ.get('APP_VERSION', 'dev')
+APP_COMMIT_SHA = os.environ.get('APP_COMMIT_SHA', 'unknown')
+APP_COMMIT_SHORT = APP_COMMIT_SHA[:7] if APP_COMMIT_SHA and APP_COMMIT_SHA != 'unknown' else 'unknown'
 AM_SHEET_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00']
 PM_SHEET_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00']
 ALLOWED_INPUT_TIMES = [

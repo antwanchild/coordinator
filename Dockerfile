@@ -26,6 +26,8 @@ RUN chmod +x entrypoint.sh
 # Version build arg — passed in by GitHub Actions
 ARG APP_VERSION=dev
 ENV APP_VERSION=${APP_VERSION}
+ARG APP_COMMIT_SHA=unknown
+ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}
 
 # Timezone — override with -e TZ=America/Denver
 ENV TZ=UTC

@@ -9,7 +9,7 @@ from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, request, jsonify, send_file, render_template
 from werkzeug.exceptions import MethodNotAllowed
 
-from constants import APP_VERSION, AM_ROOMS, PM_ROOMS, ALL_TIMES
+from constants import APP_VERSION, APP_COMMIT_SHA, APP_COMMIT_SHORT, AM_ROOMS, PM_ROOMS, ALL_TIMES
 from schedule import build_xlsx, person_on_sheet, count_brothers_in_room
 from renderer import render_preview
 
@@ -218,12 +218,12 @@ def handle_method_not_allowed(error):
 
 @app.route('/')
 def index():
-    return render_template('index.html', version=APP_VERSION, now=datetime.now())
+    return render_template('index.html', version=APP_VERSION, commit_short=APP_COMMIT_SHORT, now=datetime.now())
 
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'version': APP_VERSION}), 200
+    return jsonify({'status': 'ok', 'version': APP_VERSION, 'commit': APP_COMMIT_SHA}), 200
 
 
 @app.route('/preview', methods=['POST'])
@@ -290,7 +290,7 @@ def export():
 if __name__ == '__main__':
     log_dir_display = LOG_DIR if LOG_DIR else 'console only'
     logger.info("=" * 60)
-    logger.info(f"Coordinator v{APP_VERSION} starting on port 8080")
+    logger.info(f"Coordinator v{APP_VERSION} ({APP_COMMIT_SHORT}) starting on port 8080")
     logger.info(f"logs={log_dir_display} | log_level={LOG_LEVEL}")
     logger.info(f"Python {platform.python_version()} | {platform.system()} {platform.release()} | {platform.machine()}")
     app.run(host='0.0.0.0', port=8080, debug=False)
