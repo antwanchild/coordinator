@@ -16,8 +16,8 @@ class CoordinatorAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.get_data(as_text=True)
         self.assertIn('id="app-config"', html)
-        self.assertIn('static/app.js', html)
-        self.assertNotIn('const TIME_VALUES =', html)
+        self.assertIn("const configElement = document.getElementById('app-config');", html)
+        self.assertNotIn('src="/static/app.js', html)
 
     def test_preview_validation_error_includes_person_name(self):
         response = self.client.post('/preview', json={

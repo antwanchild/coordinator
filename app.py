@@ -225,13 +225,16 @@ def handle_method_not_allowed(error):
 @app.route('/')
 def index():
     static_app_path = os.path.join(app.static_folder, 'app.js')
-    static_asset_version = str(int(os.path.getmtime(static_app_path))) if os.path.exists(static_app_path) else APP_VERSION
+    app_script = ''
+    if os.path.exists(static_app_path):
+        with open(static_app_path, 'r', encoding='utf-8') as static_app_file:
+            app_script = static_app_file.read()
     return render_template(
         'index.html',
         version=APP_VERSION,
         now=datetime.now(),
         ui_config=build_ui_config(),
-        static_asset_version=static_asset_version,
+        app_script=app_script,
     )
 
 
