@@ -3,6 +3,16 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.14] - 2026-04-08
+
+### ♻️ Refactoring
+
+- Remove the front end
+
+### 🐛 Bug Fixes
+
+- Some minor code changes
+- Harden frontend state reset and preview handling
 ## [1.23.13] - 2026-04-08
 
 ### ♻️ Refactoring
