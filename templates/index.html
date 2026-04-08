@@ -98,6 +98,29 @@
       color: var(--mut);
     }
 
+    .build-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .commit-chip {
+      background: none;
+      border: 1px solid var(--bdr);
+      border-radius: 999px;
+      color: var(--mut);
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      padding: 1px 6px;
+      transition: border-color .15s, color .15s;
+    }
+
+    .commit-chip:hover {
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+
     .accent-picker select {
       background: var(--card);
       border: 1px solid var(--acc-btn, var(--acc));
@@ -819,7 +842,7 @@
     </div>
     <button class="help-btn" onclick="toggleHelp()" title="Help">?</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
-    <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }} &nbsp;·&nbsp; {{ commit_short }}</span>
+    <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }} &nbsp;·&nbsp; <span class="build-meta"><button class="commit-chip" type="button" onclick="copyCommitSha()" title="Copy full build commit">{{ commit_short }}</button></span></span>
   </div>
 </header>
 
@@ -1182,8 +1205,23 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function renderHeaderStatus() {
-    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }} &nbsp;&middot;&nbsp; {{ commit_short }}';
+    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }} &nbsp;&middot;&nbsp; <span class="build-meta"><button class="commit-chip" type="button" onclick="copyCommitSha()" title="Copy full build commit">{{ commit_short }}</button></span>';
     document.getElementById('previewTitle').textContent = (isPM ? 'P.M.' : 'A.M.') + ' - ' + (isPM ? 'PM' : 'AM');
+  }
+
+  async function copyCommitSha() {
+    const commitSha = '{{ commit_sha }}';
+    if (!commitSha || commitSha === 'unknown') {
+      toast('Commit SHA unavailable');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(commitSha);
+      toast('Copied build commit');
+    } catch (e) {
+      toast('Clipboard copy failed');
+    }
   }
 
   function switchTab(tab) {

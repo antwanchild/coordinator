@@ -218,7 +218,13 @@ def handle_method_not_allowed(error):
 
 @app.route('/')
 def index():
-    return render_template('index.html', version=APP_VERSION, commit_short=APP_COMMIT_SHORT, now=datetime.now())
+    return render_template(
+        'index.html',
+        version=APP_VERSION,
+        commit_short=APP_COMMIT_SHORT,
+        commit_sha=APP_COMMIT_SHA,
+        now=datetime.now(),
+    )
 
 
 @app.route('/health')
