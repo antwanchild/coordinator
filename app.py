@@ -7,6 +7,7 @@ from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask, request, jsonify, send_file, render_template
+from werkzeug.exceptions import MethodNotAllowed
 
 from constants import APP_VERSION, AM_ROOMS, PM_ROOMS, ALL_TIMES
 from schedule import build_xlsx, person_on_sheet, count_brothers_in_room
@@ -192,10 +193,26 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    duration_ms = int((time.monotonic() - request.start_time) * 1000)
+    start_time = getattr(request, 'start_time', time.monotonic())
+    duration_ms = int((time.monotonic() - start_time) * 1000)
     label       = ROUTE_LABELS.get(request.path, request.path)
-    logger.info(f"{label} | {response.status_code} ({duration_ms}ms)")
+    logger.info(f"{label} | method={request.method} | {response.status_code} ({duration_ms}ms)")
     return response
+
+
+@app.errorhandler(MethodNotAllowed)
+def handle_method_not_allowed(error):
+    allowed_methods = ', '.join(error.valid_methods or [])
+    logger.warning(
+        f"Method not allowed | path={request.path} | method={request.method} | "
+        f"allowed={allowed_methods or 'unknown'}"
+    )
+    return jsonify({
+        'error': 'Method not allowed',
+        'path': request.path,
+        'method': request.method,
+        'allowed_methods': error.valid_methods or [],
+    }), 405
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
