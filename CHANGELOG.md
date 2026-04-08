@@ -3,24 +3,6 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.23.15] - 2026-04-08
-
-### 🐛 Bug Fixes
-
-- Accept quarter-hour availability input (`:15` and `:45`) without changing 30-minute schedule slot behavior
-- Align frontend and backend time validation to prevent preview and export mismatches
-- Improve validation errors to include the affected person name
-- Restore reliable frontend button behavior by consolidating shared script loading and cache-busting the app script
-
-### 📖 Documentation
-
-- Update help text and README examples to reflect quarter-hour input support
-
-### ♻️ Refactoring
-
-- Consolidate frontend schedule config into a single shared source
-- Add smoke tests for page config rendering and preview/export validation
-
 ## [1.23.14] - 2026-04-08
 
 ### ♻️ Refactoring

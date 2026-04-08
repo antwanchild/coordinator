@@ -796,7 +796,7 @@
     }
   </style>
 </head>
-<body data-app-version="{{ version }}">
+<body>
 
 <header>
   <div style="display: flex; flex-direction: column; gap: 2px">
@@ -817,7 +817,7 @@
         <option value="teal">🫐 Teal</option>
       </select>
     </div>
-    <button class="help-btn" id="helpBtn" onclick="toggleHelp()" title="Help">?</button>
+    <button class="help-btn" onclick="toggleHelp()" title="Help">?</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
     <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }}</span>
   </div>
@@ -835,11 +835,11 @@
       </div>
       <div class="card">
         <div class="sheet-tabs">
-          <div class="sheet-tab active" id="tab-sheet-AM" data-sheet="AM" onclick="selectSheet(false)">
+          <div class="sheet-tab active" id="tab-sheet-AM" onclick="selectSheet(false)">
             AM
             <span class="tab-badge" id="badge-AM"></span>
           </div>
-          <div class="sheet-tab" id="tab-sheet-PM" data-sheet="PM" onclick="selectSheet(true)">
+          <div class="sheet-tab" id="tab-sheet-PM" onclick="selectSheet(true)">
             PM
             <span class="tab-badge" id="badge-PM"></span>
           </div>
@@ -855,16 +855,16 @@
       </div>
       <div class="card">
         <div class="input-tabs">
-          <div class="input-tab" id="tab-manual" data-tab="manual" onclick="switchTab('manual')">📝 Manual</div>
-          <div class="input-tab" id="tab-csv" data-tab="csv" onclick="switchTab('csv')">📁 CSV</div>
-          <div class="input-tab active" id="tab-paste" data-tab="paste" onclick="switchTab('paste')">📋 Paste</div>
+          <div class="input-tab" id="tab-manual" onclick="switchTab('manual')">📝 Manual</div>
+          <div class="input-tab" id="tab-csv" onclick="switchTab('csv')">📁 CSV</div>
+          <div class="input-tab active" id="tab-paste" onclick="switchTab('paste')">📋 Paste</div>
         </div>
 
         <!-- Manual panel -->
         <div id="panel-manual" style="display: none">
           <div class="add-row">
-            <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30" onkeydown="if(event.key==='Enter'){event.preventDefault();addName();}">
-            <button id="addNameBtn" type="button" onclick="addName()">+</button>
+            <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30" onkeydown="if(event.key==='Enter') addName()">
+            <button onclick="addName()">+</button>
           </div>
           <div class="time-row">
             <select id="timeStart"></select>
@@ -876,15 +876,15 @@
             <p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>
           </div>
           <div style="display: flex; gap: 5px; margin-top: 7px">
-            <button class="btn btn-secondary btn-small" id="clearNamesBtn" type="button" onclick="clearNames()">Clear All</button>
-            <button class="btn btn-secondary btn-small" id="copyCsvBtn" type="button" onclick="copyNamesAsCSV()">Copy CSV</button>
+            <button class="btn btn-secondary btn-small" onclick="clearNames()">Clear All</button>
+            <button class="btn btn-secondary btn-small" onclick="copyNamesAsCSV()">Copy CSV</button>
           </div>
         </div>
 
         <!-- CSV panel -->
         <div id="panel-csv" style="display: none">
           <div class="csv-drop">
-            <input type="file" id="csvInput" accept=".csv" onchange="handleCSV(this)">
+            <input type="file" accept=".csv" onchange="handleCSV(this)">
             <p>&#128194; Upload CSV</p>
             <p style="font-size: .6rem; margin-top: 2px">Person: Name, start1, end1, start2, end2, &hellip;</p>
             <p style="font-size: .6rem; margin-top: 1px">Room: time, officiator, b, s</p>
@@ -904,7 +904,7 @@
             Room: <code style="font-size:.6rem;background:var(--card);padding:1px 3px;border-radius:3px;color:var(--acc)">time, officiator, b, s</code>
           </p>
           <textarea id="pasteInput" placeholder="Smith J, 11:00, 12:30&#10;Doe A, 11:00, 11:30, 14:00, 15:00&#10;&#10;11:00, Jones B, 3, 2&#10;11:30, Taylor C, 4, 1"></textarea>
-          <button class="btn btn-primary" id="importPasteBtn" type="button" style="margin-top: 6px" onclick="importPaste()">Import</button>
+          <button class="btn btn-primary" style="margin-top: 6px" onclick="importPaste()">Import</button>
           <div class="skipped-warning" id="skipped-paste"></div>
         </div>
       </div>
@@ -914,12 +914,12 @@
     <div style="margin-top: auto">
       <div class="section-label">03 &mdash; Generate</div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <button class="btn btn-primary" id="buildBtn" type="button" style="flex: 1" onclick="build()">&#9889; Build Schedule</button>
-        <button class="btn btn-secondary" id="autoRefreshBtn" type="button" style="width: 60px" onclick="toggleAutoRefresh()" title="Auto-refresh preview when names change">Auto
+        <button class="btn btn-primary" style="flex: 1" onclick="build()">&#9889; Build Schedule</button>
+        <button class="btn btn-secondary" id="autoRefreshBtn" style="width: 60px" onclick="toggleAutoRefresh()" title="Auto-refresh preview when names change">Auto
           <span class="tip" style="position:absolute;top:-2px;right:-2px"><span class="tip-icon">?</span><span class="tip-text">Auto-rebuild preview when names or room data change.</span></span>
         </button>
       </div>
-      <button class="btn btn-export" id="exportBtn" type="button" onclick="doExport()">
+      <button class="btn btn-export" id="exportBtn" onclick="doExport()">
         &#8595; Export Both Sheets (.xlsx)
       </button>
       <p style="font-size: .6rem; color: var(--mut); text-align: center; margin-top: 4px">Export to print both sheets</p>
@@ -955,13 +955,13 @@
 <!-- Help modal -->
 <div class="modal-overlay" id="helpModal" onclick="if(event.target===this) toggleHelp()">
   <div class="modal">
-    <button class="modal-close" id="helpCloseBtn" type="button" onclick="toggleHelp()">&times; Close</button>
+    <button class="modal-close" onclick="toggleHelp()">&times; Close</button>
     <h2>&#x2B21; V-Coordinator Help</h2>
 
     <h3>Paste / CSV Format</h3>
     <p>People and room data can be mixed in the same paste block.</p>
-    <pre>Smith J, 11:15, 13:45
-Doe A, 11:00, 11:30, 14:15, 15:45
+    <pre>Smith J, 11:00, 13:30
+Doe A, 11:00, 11:30, 14:00, 15:30
 
 11:00, , 3, 2
 11:30, Taylor C, 4, 1
@@ -1003,8 +1003,580 @@ Doe A, 11:00, 11:30, 14:15, 15:45
 
 <div class="toast" id="toast"></div>
 
-<script id="app-config" type="application/json">{{ ui_config|tojson }}</script>
-<script>{{ app_script|safe }}</script>
+<script>
+  const TIME_VALUES = ['11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45'];
+  const TIME_LABELS = ['11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM'];
+
+  const AM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00'];
+  const PM_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00'];
+
+  let people = [], isPM = false, sidebarOpen = true, isLightMode = false, autoRefresh = false;
+  let currentAccent = localStorage.getItem('accent') || 'lime';
+  let currentPreviewUrl = null;
+  let toastTimeoutId = null;
+
+  const ROOM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
+  const ACCENT_OPTIONS = ['lime', 'blue', 'purple', 'green', 'red', 'cyan', 'orange', 'pink', 'teal'];
+  let roomData = {};
+  ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+
+  ['timeStart', 'timeEnd'].forEach(id => {
+    const select = document.getElementById(id);
+    select.innerHTML = TIME_VALUES.map((t, i) => `<option value="${t}">${TIME_LABELS[i]}</option>`).join('');
+  });
+  document.getElementById('timeEnd').value = '11:30';
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      build();
+    }
+  });
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') {
+    isLightMode = true;
+    document.body.classList.add('light');
+    document.getElementById('themeBtn').textContent = '🌙';
+    document.getElementById('themeBtn').title = 'Switch to dark mode';
+  }
+  setAccent(currentAccent, false);
+
+  function toggleTheme() {
+    isLightMode = !isLightMode;
+    document.body.classList.toggle('light', isLightMode);
+    document.getElementById('themeBtn').textContent = isLightMode ? '🌙' : '☀️';
+    document.getElementById('themeBtn').title = isLightMode ? 'Switch to dark mode' : 'Switch to light mode';
+    localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+  }
+
+  function setAccent(accent, save = true) {
+    if (!ACCENT_OPTIONS.includes(accent)) accent = 'lime';
+    document.body.classList.remove(
+      'accent-lime', 'accent-blue', 'accent-purple', 'accent-green', 'accent-red',
+      'accent-cyan', 'accent-orange', 'accent-pink', 'accent-teal'
+    );
+    document.body.classList.add('accent-' + accent);
+    currentAccent = accent;
+    document.getElementById('accentSelect').value = accent;
+    if (save) localStorage.setItem('accent', accent);
+  }
+
+  function toggleSidebar() {
+    sidebarOpen = !sidebarOpen;
+    const btn = document.getElementById('toggleBtn');
+    document.getElementById('app').classList.toggle('collapsed', !sidebarOpen);
+    btn.innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
+    btn.title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
+    btn.style.left = sidebarOpen ? '287px' : '-13px';
+    btn.classList.toggle('collapsed', !sidebarOpen);
+  }
+
+  const tipPopup = document.getElementById('tip-popup');
+
+  document.querySelectorAll('.tip-icon').forEach(icon => {
+    const nextElement = icon.nextElementSibling;
+    const text = nextElement ? nextElement.textContent : '';
+    if (!text) return;
+
+    icon.addEventListener('mouseenter', () => {
+      tipPopup.textContent = text;
+      tipPopup.style.display = 'block';
+      const rect = icon.getBoundingClientRect();
+      let left = rect.left;
+      let top  = rect.bottom + 6;
+      if (left + 260 > window.innerWidth - 10) left = window.innerWidth - 270;
+      tipPopup.style.left = left + 'px';
+      tipPopup.style.top  = top + 'px';
+    });
+
+    icon.addEventListener('mouseleave', () => {
+      tipPopup.style.display = 'none';
+    });
+  });
+
+  function toggleHelp() {
+    document.getElementById('helpModal').classList.toggle('show');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('helpModal').classList.remove('show');
+  });
+
+  function toggleAutoRefresh() {
+    autoRefresh = !autoRefresh;
+    document.getElementById('autoRefreshBtn').classList.toggle('active', autoRefresh);
+    document.getElementById('autoRefreshBtn').title = autoRefresh ? 'Auto-refresh on' : 'Auto-refresh off';
+    toast(autoRefresh ? 'Auto-refresh on' : 'Auto-refresh off');
+  }
+
+  function maybeRefresh() {
+    if (autoRefresh && document.getElementById('previewArea').className !== 'preview-empty') build();
+  }
+
+  function selectSheet(pm) {
+    isPM = pm;
+    ['AM', 'PM'].forEach(x =>
+      document.getElementById('tab-sheet-' + x).classList.toggle('active', pm ? (x === 'PM') : (x === 'AM'))
+    );
+    renderHeaderStatus();
+    if (document.getElementById('previewArea').className !== 'preview-empty') build();
+  }
+
+  function toMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function countOnSheet(sheetIsPM) {
+    const domainTimes = sheetIsPM ? PM_TIMES : AM_TIMES;
+    const domainStart = toMinutes(domainTimes[0]);
+    const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
+    return people.filter(person =>
+      person.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart)
+    ).length;
+  }
+
+  function formatTime12(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    return hour12 + ':' + (m < 10 ? '0' + m : m) + ' ' + period;
+  }
+
+  function escapeHTML(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function todayFilename() {
+    const now = new Date();
+    const y   = now.getFullYear();
+    const mo  = String(now.getMonth() + 1).padStart(2, '0');
+    const d   = String(now.getDate()).padStart(2, '0');
+    return `schedule-${y}-${mo}-${d}.xlsx`;
+  }
+
+  function releasePreviewUrl() {
+    if (currentPreviewUrl) {
+      URL.revokeObjectURL(currentPreviewUrl);
+      currentPreviewUrl = null;
+    }
+  }
+
+  function resetRoomData() {
+    ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+  }
+
+  function hasImportedData() {
+    return people.length > 0 || Object.values(roomData).some(r => r.off || r.b || r.s);
+  }
+
+  function resetPreview(message) {
+    releasePreviewUrl();
+    const previewArea = document.getElementById('previewArea');
+    previewArea.style.display = '';
+    previewArea.className = 'preview-empty';
+    previewArea.innerHTML = `<div class="icon">&#128203;</div><p>${message}</p>`;
+  }
+
+  function renderHeaderStatus() {
+    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }}';
+    document.getElementById('previewTitle').textContent = (isPM ? 'P.M.' : 'A.M.') + ' - ' + (isPM ? 'PM' : 'AM');
+  }
+
+  function switchTab(tab) {
+    ['manual', 'csv', 'paste'].forEach(x => {
+      document.getElementById('tab-' + x).classList.toggle('active', x === tab);
+      document.getElementById('panel-' + x).style.display = x === tab ? 'block' : 'none';
+    });
+  }
+
+  function addName() {
+    const rawInput = document.getElementById('nameInput').value.trim();
+    if (!rawInput) { toast('Enter a name'); return; }
+
+    if (rawInput.includes(',')) {
+      const { imported, skipped } = parseData(rawInput);
+      document.getElementById('nameInput').value = '';
+      showSkippedWarning('skipped-csv', skipped);
+      if (imported) toast(`Added ${imported} ${imported === 1 ? 'person' : 'people'}`);
+      else toast('Could not parse - check format');
+      maybeRefresh();
+      return;
+    }
+
+    const name  = rawInput;
+    const start = document.getElementById('timeStart').value;
+    const end   = document.getElementById('timeEnd').value;
+    if (start >= end) { toast('End must be after start'); return; }
+    const existing = people.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      existing.ranges.push({ start, end });
+    } else {
+      people.push({ name, ranges: [{ start, end }] });
+    }
+    document.getElementById('nameInput').value = '';
+    people.sort((a, b) => a.name.localeCompare(b.name));
+    renderNameList();
+    maybeRefresh();
+  }
+
+  function renderNameList() {
+    const container = document.getElementById('nameList');
+    const countEl   = document.getElementById('peopleCount');
+    const amCount   = countOnSheet(false);
+    const pmCount   = countOnSheet(true);
+
+    container.classList.toggle('has-names', people.length > 0);
+
+    if (people.length) {
+      countEl.textContent = `${people.length} total · ${amCount} AM · ${pmCount} PM`;
+    } else {
+      countEl.textContent = '';
+    }
+
+    const amBadge = document.getElementById('badge-AM');
+    const pmBadge = document.getElementById('badge-PM');
+    amBadge.textContent = amCount;
+    pmBadge.textContent = pmCount;
+    amBadge.classList.toggle('visible', amCount > 0);
+    pmBadge.classList.toggle('visible', pmCount > 0);
+
+    if (!people.length) {
+      container.innerHTML = '<p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>';
+      return;
+    }
+
+    container.innerHTML = people.map((person, pi) => `
+      <div class="name-entry">
+        <div class="name-entry-top">
+          <span>${escapeHTML(person.name)}</span>
+          <button class="delete-btn" onclick="removePerson(${pi})">&times;</button>
+        </div>
+        ${person.ranges.map((range, ri) => `
+          <div class="name-entry-range">
+            <span>${formatTime12(range.start)}&ndash;${formatTime12(range.end)}</span>
+            <button class="delete-btn" onclick="removeRange(${pi}, ${ri})">&times;</button>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  function removeRange(personIndex, rangeIndex) {
+    people[personIndex].ranges.splice(rangeIndex, 1);
+    if (!people[personIndex].ranges.length) people.splice(personIndex, 1);
+    renderNameList();
+    maybeRefresh();
+  }
+
+  function removePerson(personIndex) {
+    people.splice(personIndex, 1);
+    renderNameList();
+    maybeRefresh();
+  }
+
+  function clearNames() {
+    if (!hasImportedData()) return;
+    if (!confirm('Clear all names and room data? This cannot be undone.')) return;
+    people = [];
+    resetRoomData();
+    renderNameList();
+    resetPreview('Add names then click Build Schedule.');
+    toast('Cleared');
+  }
+
+  function copyNamesAsCSV() {
+    if (!hasImportedData()) {
+      toast('Nothing to copy');
+      return;
+    }
+    const peopleLines = people.map(person =>
+      [person.name, ...person.ranges.flatMap(r => [r.start, r.end])].join(', ')
+    );
+    const roomLines = ROOM_TIMES
+      .filter(t => roomData[t].off || roomData[t].b || roomData[t].s)
+      .map(t => [t, roomData[t].off, roomData[t].b, roomData[t].s].join(', '));
+    const csv = [...peopleLines, ...(roomLines.length ? ['', ...roomLines] : [])].join('\n');
+    navigator.clipboard.writeText(csv)
+      .then(() => toast('Copied to clipboard'))
+      .catch(() => toast('Clipboard copy failed'));
+  }
+
+  function normalizeTime(t) {
+    const raw = String(t || '').trim();
+    if (!raw) return '';
+
+    const meridiemMatch = raw.match(/\b([aApP])[mM]\b/);
+    const meridiem = meridiemMatch ? meridiemMatch[1].toUpperCase() : '';
+    let normalized = raw.replace(/[aApP][mM]/g, '').replace(/\s+/g, '');
+    if (!normalized.includes(':')) normalized += ':00';
+
+    const parts = normalized.split(':');
+    let h = parseInt(parts[0], 10);
+    let m = parseInt(parts[1] || '0', 10);
+    if (!Number.isInteger(h) || !Number.isInteger(m) || m < 0 || m > 59) return '';
+
+    if (meridiem === 'P' && h < 12) {
+      h += 12;
+    } else if (meridiem === 'A' && h === 12) {
+      h = 0;
+    } else if (!meridiem && h >= 1 && h <= 4) {
+      h += 12;
+    }
+
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+
+  function isValidTime(t) {
+    if (!t || !t.match(/^\d{2}:\d{2}$/)) return false;
+    return TIME_VALUES.includes(t);
+  }
+
+  function validatePeopleBeforeSubmit() {
+    for (let personIndex = 0; personIndex < people.length; personIndex++) {
+      const person = people[personIndex];
+      if (!person || !Array.isArray(person.ranges)) {
+        return `Person ${personIndex + 1} is missing schedule ranges`;
+      }
+
+      for (let rangeIndex = 0; rangeIndex < person.ranges.length; rangeIndex++) {
+        const range = person.ranges[rangeIndex];
+        if (!range || !isValidTime(range.start) || !isValidTime(range.end)) {
+          return `${person.name}: range ${rangeIndex + 1} must use 15-minute times between 11:00 and 16:45`;
+        }
+        if (toMinutes(range.start) >= toMinutes(range.end)) {
+          return `${person.name}: range ${rangeIndex + 1} must end after it starts`;
+        }
+      }
+    }
+
+    return '';
+  }
+
+  function handleCSV(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (hasImportedData()) {
+        if (!confirm('This will replace all existing names and room data. Continue?')) {
+          input.value = '';
+          return;
+        }
+        people = [];
+        resetRoomData();
+      }
+      const text = e.target && typeof e.target.result === 'string' ? e.target.result : '';
+      const { imported, skipped } = parseData(text);
+      showSkippedWarning('skipped-csv', skipped);
+      toast(`CSV imported - ${imported} added`);
+      maybeRefresh();
+      input.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function importPaste() {
+    const text = document.getElementById('pasteInput').value;
+    if (!text.trim()) return;
+
+    if (hasImportedData()) {
+      if (!confirm('This will replace all existing names and room data. Continue?')) return;
+      people = [];
+      resetRoomData();
+    }
+
+    const { imported, skipped } = parseData(text);
+    document.getElementById('pasteInput').value = '';
+    showSkippedWarning('skipped-paste', skipped);
+    toast(`Imported - ${imported} added`);
+    maybeRefresh();
+  }
+
+  function showSkippedWarning(elementId, skippedLines) {
+    const warningEl = document.getElementById(elementId);
+    if (!skippedLines.length) {
+      warningEl.classList.remove('visible');
+      warningEl.textContent = '';
+      return;
+    }
+    warningEl.innerHTML = `<strong>⚠ ${skippedLines.length} line(s) skipped:</strong>` +
+      skippedLines.map(l => `<div style="font-family:monospace;margin-top:2px">${escapeHTML(l)}</div>`).join('');
+    warningEl.classList.add('visible');
+  }
+
+  function parseData(text) {
+    let imported = 0;
+    const skipped = [];
+
+    text.split('\n').map(l => l.trim()).filter(l => l && !l.toLowerCase().startsWith('name') && !l.startsWith('#')).forEach(line => {
+      const parts = line.split(',').map(x => x.trim());
+      if (!parts.length) return;
+
+      const normalizedFirst = normalizeTime(parts[0]);
+      if (ROOM_TIMES.includes(normalizedFirst)) {
+        roomData[normalizedFirst] = {
+          off: normalizedFirst === '11:00' ? '' : (parts[1] || ''),
+          b:   parts[2] || '',
+          s:   parts[3] || '',
+        };
+        imported++;
+        return;
+      }
+
+      if (parts.length < 3) { skipped.push(line); return; }
+
+      const ranges = [];
+      for (let i = 1; i + 1 < parts.length; i += 2) {
+        if (!parts[i] || !parts[i + 1]) continue;
+        const start = normalizeTime(parts[i]);
+        const end   = normalizeTime(parts[i + 1]);
+        if (!isValidTime(start) || !isValidTime(end) || start >= end) {
+          skipped.push(line);
+          return;
+        }
+        ranges.push({ start, end });
+      }
+
+      if (!ranges.length) { skipped.push(line); return; }
+
+      const existing = people.find(x => x.name.toLowerCase() === parts[0].toLowerCase());
+      if (existing) {
+        existing.ranges.push(...ranges);
+      } else {
+        people.push({ name: parts[0], ranges });
+      }
+      imported++;
+    });
+
+    people.sort((a, b) => a.name.localeCompare(b.name));
+    renderNameList();
+    return { imported, skipped };
+  }
+
+  async function getErrorMessage(response, fallbackMessage) {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const payload = await response.json();
+      return payload.error || fallbackMessage;
+    }
+    const text = await response.text();
+    return text || fallbackMessage;
+  }
+
+  async function build() {
+    const spinner     = document.getElementById('spinner');
+    const previewArea = document.getElementById('previewArea');
+
+    if (!people.length) {
+      const sheetName = isPM ? 'PM' : 'AM';
+      resetPreview(`No people on ${sheetName} sheet.`);
+      return;
+    }
+
+    const validationError = validatePeopleBeforeSubmit();
+    if (validationError) {
+      resetPreview('Build failed. Please review your input and try again.');
+      toast('Error: ' + validationError);
+      return;
+    }
+
+    spinner.className = 'spinner show';
+    previewArea.style.display = 'none';
+
+    try {
+      const res = await fetch('/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ people, is_pm: isPM, room_data: roomData })
+      });
+      if (!res.ok) throw new Error(await getErrorMessage(res, 'Preview generation failed'));
+      const blob = await res.blob();
+      releasePreviewUrl();
+      currentPreviewUrl = URL.createObjectURL(blob);
+      spinner.className = 'spinner';
+      previewArea.style.display = '';
+      previewArea.className = 'preview-wrap';
+      previewArea.innerHTML = `<img src="${currentPreviewUrl}" alt="Schedule Preview">`;
+      const sheetPeople = people.filter(p => {
+        const domainTimes = isPM ? PM_TIMES : AM_TIMES;
+        const domainStart = toMinutes(domainTimes[0]);
+        const domainEnd   = toMinutes(domainTimes[domainTimes.length - 1]) + 30;
+        return p.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart);
+      });
+      if (sheetPeople.length > 18) {
+        toast(`⚠ ${sheetPeople.length - 18} name(s) won't fit on ${isPM ? 'PM' : 'AM'} sheet - only 18 slots available`);
+      } else {
+        toast('Built!');
+      }
+    } catch (e) {
+      spinner.className = 'spinner';
+      previewArea.style.display = '';
+      if (previewArea.className !== 'preview-wrap') {
+        resetPreview('Build failed. Please review your input and try again.');
+      }
+      toast('Error: ' + e.message);
+    }
+  }
+
+  async function doExport() {
+    if (!people.length) { toast('No people to export'); return; }
+
+    const validationError = validatePeopleBeforeSubmit();
+    if (validationError) {
+      toast('Export failed: ' + validationError);
+      return;
+    }
+
+    try {
+      const res = await fetch('/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ people, room_data: roomData })
+      });
+      if (!res.ok) throw new Error(await getErrorMessage(res, 'Export generation failed'));
+      const blob     = await res.blob();
+      const filename = prompt('Save as:', todayFilename()) || todayFilename();
+
+      if (window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'Excel', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        toast('Exported!');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Exported!');
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') toast('Export failed: ' + e.message);
+    }
+  }
+
+  function toast(msg) {
+    const toastEl = document.getElementById('toast');
+    if (toastTimeoutId) clearTimeout(toastTimeoutId);
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    toastTimeoutId = setTimeout(() => {
+      toastEl.classList.remove('show');
+      toastTimeoutId = null;
+    }, 2400);
+  }
+
+  renderHeaderStatus();
+</script>
 
 </body>
 </html>

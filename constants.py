@@ -13,7 +13,6 @@ ALLOWED_INPUT_TIMES = [
     '16:00', '16:15', '16:30', '16:45',
 ]
 ALL_TIMES      = ALLOWED_INPUT_TIMES
-ACCENT_OPTIONS = ['lime', 'blue', 'purple', 'green', 'red', 'cyan', 'orange', 'pink', 'teal']
 
 # ── Layout helpers ────────────────────────────────────────────────────────────
 
@@ -77,27 +76,3 @@ SLOT_COLORS = [
 ]
 SLOT_LABELS       = ['1', '2', '3', '4', '5P', '5', '6P', '6', '7P', '7', '8P', '8']
 UNAVAILABLE_COLOR = '#EDEDED'
-
-
-def format_time_label(time_value):
-    """Convert a 24-hour HH:MM value into a 12-hour display label."""
-    hours, minutes = [int(part) for part in time_value.split(':')]
-    period = 'PM' if hours >= 12 else 'AM'
-    hour12 = hours if 1 <= hours <= 12 else abs(hours - 12)
-    if hour12 == 0:
-        hour12 = 12
-    return f'{hour12}:{minutes:02d} {period}'
-
-
-def build_ui_config():
-    """Return the frontend config derived from backend constants."""
-    room_times = [room['time'] for room in AM_ROOMS + PM_ROOMS]
-    return {
-        'appVersion': APP_VERSION,
-        'timeValues': ALLOWED_INPUT_TIMES,
-        'timeLabels': [format_time_label(time_value) for time_value in ALLOWED_INPUT_TIMES],
-        'amTimes': AM_SHEET_TIMES,
-        'pmTimes': PM_SHEET_TIMES,
-        'roomTimes': room_times,
-        'accentOptions': ACCENT_OPTIONS,
-    }
