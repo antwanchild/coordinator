@@ -1306,18 +1306,55 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function normalizeTime(t) {
-    t = t.trim().replace(/[aApP][mM]/g, '').trim();
-    if (!t.includes(':')) t += ':00';
-    const parts = t.split(':');
-    const h = parseInt(parts[0], 10);
-    const m = parts[1] || '00';
-    return (h < 10 ? '0' + h : h) + ':' + m;
+    const raw = String(t || '').trim();
+    if (!raw) return '';
+
+    const meridiemMatch = raw.match(/\b([aApP])[mM]\b/);
+    const meridiem = meridiemMatch ? meridiemMatch[1].toUpperCase() : '';
+    let normalized = raw.replace(/[aApP][mM]/g, '').replace(/\s+/g, '');
+    if (!normalized.includes(':')) normalized += ':00';
+
+    const parts = normalized.split(':');
+    let h = parseInt(parts[0], 10);
+    let m = parseInt(parts[1] || '0', 10);
+    if (!Number.isInteger(h) || !Number.isInteger(m) || m < 0 || m > 59) return '';
+
+    if (meridiem === 'P' && h < 12) {
+      h += 12;
+    } else if (meridiem === 'A' && h === 12) {
+      h = 0;
+    } else if (!meridiem && h >= 1 && h <= 4) {
+      h += 12;
+    }
+
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
   }
 
   function isValidTime(t) {
     if (!t || !t.match(/^\d{2}:\d{2}$/)) return false;
     const minutes = toMinutes(t);
     return minutes >= toMinutes('11:00') && minutes <= toMinutes('16:30');
+  }
+
+  function validatePeopleBeforeSubmit() {
+    for (let personIndex = 0; personIndex < people.length; personIndex++) {
+      const person = people[personIndex];
+      if (!person || !Array.isArray(person.ranges)) {
+        return `Person ${personIndex + 1} is missing schedule ranges`;
+      }
+
+      for (let rangeIndex = 0; rangeIndex < person.ranges.length; rangeIndex++) {
+        const range = person.ranges[rangeIndex];
+        if (!range || !isValidTime(range.start) || !isValidTime(range.end)) {
+          return `${person.name}: range ${rangeIndex + 1} must use times between 11:00 and 16:30`;
+        }
+        if (toMinutes(range.start) >= toMinutes(range.end)) {
+          return `${person.name}: range ${rangeIndex + 1} must end after it starts`;
+        }
+      }
+    }
+
+    return '';
   }
 
   function handleCSV(input) {
@@ -1441,6 +1478,13 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       return;
     }
 
+    const validationError = validatePeopleBeforeSubmit();
+    if (validationError) {
+      resetPreview('Build failed. Please review your input and try again.');
+      toast('Error: ' + validationError);
+      return;
+    }
+
     spinner.className = 'spinner show';
     previewArea.style.display = 'none';
 
@@ -1481,6 +1525,12 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 
   async function doExport() {
     if (!people.length) { toast('No people to export'); return; }
+
+    const validationError = validatePeopleBeforeSubmit();
+    if (validationError) {
+      toast('Export failed: ' + validationError);
+      return;
+    }
 
     try {
       const res = await fetch('/export', {

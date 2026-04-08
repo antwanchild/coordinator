@@ -412,14 +412,35 @@ async function copyNamesAsCSV() {
 }
 
 function normalizeTime(timeValue) {
-  let normalized = timeValue.trim().replace(/[aApP][mM]/g, '').trim();
+  const rawValue = String(timeValue || '').trim();
+  if (!rawValue) {
+    return '';
+  }
+
+  const meridiemMatch = rawValue.match(/\b([aApP])[mM]\b/);
+  const meridiem = meridiemMatch ? meridiemMatch[1].toUpperCase() : '';
+  let normalized = rawValue.replace(/[aApP][mM]/g, '').replace(/\s+/g, '');
   if (!normalized.includes(':')) {
     normalized += ':00';
   }
+
   const parts = normalized.split(':');
-  const hours = parseInt(parts[0], 10);
-  const minutes = parts[1] || '00';
-  return `${hours < 10 ? `0${hours}` : hours}:${minutes}`;
+  let hours = parseInt(parts[0], 10);
+  let minutes = parseInt(parts[1] || '0', 10);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || minutes < 0 || minutes > 59) {
+    return '';
+  }
+
+  if (meridiem === 'P' && hours < 12) {
+    hours += 12;
+  } else if (meridiem === 'A' && hours === 12) {
+    hours = 0;
+  } else if (!meridiem && hours >= 1 && hours <= 4) {
+    // Treat ambiguous afternoon shorthand like "4" or "4:30" as PM in this schedule window.
+    hours += 12;
+  }
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 function isValidTime(timeValue) {
@@ -428,6 +449,27 @@ function isValidTime(timeValue) {
   }
   const minutes = toMinutes(timeValue);
   return minutes >= toMinutes('11:00') && minutes <= toMinutes('16:30');
+}
+
+function validatePeopleBeforeSubmit() {
+  for (let personIndex = 0; personIndex < people.length; personIndex += 1) {
+    const person = people[personIndex];
+    if (!person || !Array.isArray(person.ranges)) {
+      return `Person ${personIndex + 1} is missing schedule ranges`;
+    }
+
+    for (let rangeIndex = 0; rangeIndex < person.ranges.length; rangeIndex += 1) {
+      const range = person.ranges[rangeIndex];
+      if (!range || !isValidTime(range.start) || !isValidTime(range.end)) {
+        return `${person.name}: range ${rangeIndex + 1} must use times between 11:00 and 16:30`;
+      }
+      if (toMinutes(range.start) >= toMinutes(range.end)) {
+        return `${person.name}: range ${rangeIndex + 1} must end after it starts`;
+      }
+    }
+  }
+
+  return '';
 }
 
 function shouldReplaceExistingData() {
@@ -581,6 +623,13 @@ async function build() {
     return;
   }
 
+  const validationError = validatePeopleBeforeSubmit();
+  if (validationError) {
+    resetPreview('Build failed. Please review your input and try again.');
+    toast(`Error: ${validationError}`);
+    return;
+  }
+
   elements.spinner.className = 'spinner show';
   elements.previewArea.style.display = 'none';
 
@@ -623,6 +672,12 @@ async function build() {
 async function doExport() {
   if (!people.length) {
     toast('No people to export');
+    return;
+  }
+
+  const validationError = validatePeopleBeforeSubmit();
+  if (validationError) {
+    toast(`Export failed: ${validationError}`);
     return;
   }
 
