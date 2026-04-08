@@ -112,7 +112,8 @@ function bindEvents() {
 
 function wireTooltips() {
   document.querySelectorAll('.tip-icon').forEach(icon => {
-    const text = icon.nextElementSibling?.textContent;
+    const nextElement = icon.nextElementSibling;
+    const text = nextElement ? nextElement.textContent : '';
     if (!text) {
       return;
     }
@@ -450,7 +451,8 @@ function handleCSV(input) {
       resetRoomData();
     }
 
-    const { importedCount, skippedLines } = parseData(event.target?.result || '');
+    const readerResult = event.target && typeof event.target.result === 'string' ? event.target.result : '';
+    const { importedCount, skippedLines } = parseData(readerResult);
     showSkippedWarning(elements.skippedCsv, skippedLines);
     toast(`CSV imported - ${importedCount} added`);
     maybeRefresh();
