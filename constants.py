@@ -2,6 +2,9 @@ import os
 
 TEMPLATE_PATH = "V-COORDINATE--Scheduled.xlsx"
 APP_VERSION   = os.environ.get('APP_VERSION', 'dev')
+AM_SHEET_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00']
+PM_SHEET_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00']
+ALL_TIMES      = AM_SHEET_TIMES + ['13:30'] + PM_SHEET_TIMES + ['16:30']
 
 # ── Layout helpers ────────────────────────────────────────────────────────────
 
@@ -39,19 +42,19 @@ ROOM_START_COLS = [4, 16, 28, 40, 52]
 # ── Room definitions ──────────────────────────────────────────────────────────
 
 AM_ROOMS = [
-    {'label': 'Room: 1', 'time': '11:00', 'time_raw': ' 11:00+', 'n25': 'Skip V6 if possible',  'red': True,  'letter': 'B', 'wlkr': '(#2/#3)', 'thin': 'THIN RECEIVERS'},
-    {'label': 'Room: 2', 'time': '11:30', 'time_raw': ' 11:30+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
-    {'label': 'Room: 3', 'time': '12:00', 'time_raw': ' 12:00+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
-    {'label': 'Room: 4', 'time': '12:30', 'time_raw': ' 12:30+', 'n25': 'Skip V3 if possible',  'red': True,  'letter': 'S', 'wlkr': '(#6/#7)', 'thin': 'THIN RECEIVERS'},
-    {'label': 'Room: 1', 'time': '13:00', 'time_raw': ' 1:00+',  'n25': 'Skip V6 if possible',  'red': True,  'letter': 'B', 'wlkr': '(#2/#3)', 'thin': 'THIN RECEIVERS'},
+    {'label': 'Room: 1', 'time': '11:00', 'time_raw': ' 11:00+', 'footer_note': 'Skip V6 if possible',  'highlight_narrow_side': True,  'narrow_side_marker': 'B', 'wheelchair_walker_note': '(#2/#3)', 'thin_receivers_note': 'THIN RECEIVERS'},
+    {'label': 'Room: 2', 'time': '11:30', 'time_raw': ' 11:30+', 'footer_note': '',                     'highlight_narrow_side': False, 'narrow_side_marker': '',  'wheelchair_walker_note': '',         'thin_receivers_note': ''},
+    {'label': 'Room: 3', 'time': '12:00', 'time_raw': ' 12:00+', 'footer_note': '',                     'highlight_narrow_side': False, 'narrow_side_marker': '',  'wheelchair_walker_note': '',         'thin_receivers_note': ''},
+    {'label': 'Room: 4', 'time': '12:30', 'time_raw': ' 12:30+', 'footer_note': 'Skip V3 if possible',  'highlight_narrow_side': True,  'narrow_side_marker': 'S', 'wheelchair_walker_note': '(#6/#7)', 'thin_receivers_note': 'THIN RECEIVERS'},
+    {'label': 'Room: 1', 'time': '13:00', 'time_raw': ' 1:00+',  'footer_note': 'Skip V6 if possible',  'highlight_narrow_side': True,  'narrow_side_marker': 'B', 'wheelchair_walker_note': '(#2/#3)', 'thin_receivers_note': 'THIN RECEIVERS'},
 ]
 
 PM_ROOMS = [
-    {'label': 'Room: 3', 'time': '14:00', 'time_raw': ' 2:00+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
-    {'label': 'Room: 4', 'time': '14:30', 'time_raw': ' 2:30+', 'n25': 'Skip V3 if possible',  'red': True,  'letter': 'S', 'wlkr': '(#6/#7)', 'thin': 'THIN RECEIVERS'},
-    {'label': 'Room: 1', 'time': '15:00', 'time_raw': ' 3:00+', 'n25': 'Skip V6 if possible',  'red': True,  'letter': 'B', 'wlkr': '(#2/#3)', 'thin': 'THIN RECEIVERS'},
-    {'label': 'Room: 2', 'time': '15:30', 'time_raw': ' 3:30+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
-    {'label': 'Room: 3', 'time': '16:00', 'time_raw': ' 4:00+', 'n25': '',                     'red': False, 'letter': '',  'wlkr': '',         'thin': ''},
+    {'label': 'Room: 3', 'time': '14:00', 'time_raw': ' 2:00+', 'footer_note': '',                     'highlight_narrow_side': False, 'narrow_side_marker': '',  'wheelchair_walker_note': '',         'thin_receivers_note': ''},
+    {'label': 'Room: 4', 'time': '14:30', 'time_raw': ' 2:30+', 'footer_note': 'Skip V3 if possible',  'highlight_narrow_side': True,  'narrow_side_marker': 'S', 'wheelchair_walker_note': '(#6/#7)', 'thin_receivers_note': 'THIN RECEIVERS'},
+    {'label': 'Room: 1', 'time': '15:00', 'time_raw': ' 3:00+', 'footer_note': 'Skip V6 if possible',  'highlight_narrow_side': True,  'narrow_side_marker': 'B', 'wheelchair_walker_note': '(#2/#3)', 'thin_receivers_note': 'THIN RECEIVERS'},
+    {'label': 'Room: 2', 'time': '15:30', 'time_raw': ' 3:30+', 'footer_note': '',                     'highlight_narrow_side': False, 'narrow_side_marker': '',  'wheelchair_walker_note': '',         'thin_receivers_note': ''},
+    {'label': 'Room: 3', 'time': '16:00', 'time_raw': ' 4:00+', 'footer_note': '',                     'highlight_narrow_side': False, 'narrow_side_marker': '',  'wheelchair_walker_note': '',         'thin_receivers_note': ''},
 ]
 
 # ── Slot styling ──────────────────────────────────────────────────────────────

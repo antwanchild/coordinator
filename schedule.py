@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font
 
 from constants import (
-    TEMPLATE_PATH, AM_ROOMS, PM_ROOMS,
+    TEMPLATE_PATH, AM_ROOMS, PM_ROOMS, AM_SHEET_TIMES, PM_SHEET_TIMES,
     SLOTS, ROWS, ROOM_START_COLS,
 )
 
@@ -28,7 +28,7 @@ def covers_slot(time_ranges, room_time):
 
 def person_on_sheet(person, is_pm):
     """Return True if the person has any availability overlapping the given sheet's time domain."""
-    domain_times = ['14:00', '14:30', '15:00', '15:30', '16:00'] if is_pm else ['11:00', '11:30', '12:00', '12:30', '13:00']
+    domain_times = PM_SHEET_TIMES if is_pm else AM_SHEET_TIMES
     domain_start = to_minutes(domain_times[0])
     domain_end   = to_minutes(domain_times[-1]) + 30
     return any(
@@ -40,6 +40,14 @@ def safe_cell_value(value):
     """Prevent Excel formula injection by prefixing formula characters with a single quote."""
     s = str(value)
     return "'" + s if s and s[0] in ('=', '+', '-', '@', '\t', '\r') else s
+
+def safe_excel_value(value):
+    """Return a workbook-safe value while preserving numeric types when possible."""
+    if value is None:
+        return ''
+    if isinstance(value, (int, float)):
+        return value
+    return safe_cell_value(value)
 
 def count_brothers_in_room(sorted_people, room_time):
     """Count brothers assigned to a room slot, including the Off row.
@@ -155,9 +163,9 @@ def build_xlsx(people, room_data=None):
             s_val   = rd.get('s', '')
             workers = count_brothers_in_room(sorted_people, room['time'])
             if b_val:
-                worksheet.cell(row=3, column=start_col + 2).value = b_val
+                worksheet.cell(row=3, column=start_col + 2).value = safe_excel_value(b_val)
             if s_val:
-                worksheet.cell(row=3, column=start_col + 8).value = s_val
+                worksheet.cell(row=3, column=start_col + 8).value = safe_excel_value(s_val)
             if b_val or s_val:
                 bv, sv = recommend_veils(b_val, s_val, workers)
                 if bv is not None:
@@ -173,7 +181,7 @@ def build_xlsx(people, room_data=None):
 
     row = 1
     for person in sorted(people, key=lambda p: p['name']):
-        parts = [person['name']] + [t for r in person['ranges'] for t in (r['start'], r['end'])]
+        parts = [safe_cell_value(person['name'])] + [safe_cell_value(t) for r in person['ranges'] for t in (r['start'], r['end'])]
         src.cell(row=row, column=1).value = ', '.join(parts)
         row += 1
 
@@ -184,7 +192,12 @@ def build_xlsx(people, room_data=None):
         rd = room_data.get(time, {})
         if not any([rd.get('off'), rd.get('b'), rd.get('s')]):
             continue
-        parts = [time, rd.get('off', ''), str(rd.get('b', '')), str(rd.get('s', ''))]
+        parts = [
+            safe_cell_value(time),
+            safe_cell_value(rd.get('off', '')),
+            safe_cell_value(rd.get('b', '')),
+            safe_cell_value(rd.get('s', '')),
+        ]
         src.cell(row=row, column=1).value = ', '.join(parts)
         row += 1
 

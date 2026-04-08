@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import platform
 import logging
@@ -7,23 +8,28 @@ from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask, request, jsonify, send_file, render_template
 
-from constants import APP_VERSION, AM_ROOMS, PM_ROOMS
+from constants import APP_VERSION, AM_ROOMS, PM_ROOMS, ALL_TIMES
 from schedule import build_xlsx, person_on_sheet, count_brothers_in_room
 from renderer import render_preview
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max request size
+TIME_PATTERN = re.compile(r'^\d{2}:\d{2}$')
 
 @app.after_request
 def set_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options']        = 'DENY'
+    response.headers['Referrer-Policy']        = 'same-origin'
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' blob:; "
-        "script-src 'self' 'unsafe-inline';"
+        "script-src 'self'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "object-src 'none';"
     )
     return response
 
@@ -71,6 +77,114 @@ ROUTE_LABELS = {
     '/export':  'Export requested',
     '/health':  'Health check',
 }
+ROOM_TIME_SET = {room['time'] for room in AM_ROOMS + PM_ROOMS}
+
+
+def to_minutes(time_str):
+    hours, minutes = time_str.split(':')
+    return int(hours) * 60 + int(minutes)
+
+
+def is_valid_time_value(value):
+    if not isinstance(value, str) or not TIME_PATTERN.match(value):
+        return False
+    return value in ALL_TIMES
+
+
+def validate_people(people):
+    if not isinstance(people, list):
+        return None, 'people must be a list'
+
+    validated_people = []
+    for index, person in enumerate(people):
+        if not isinstance(person, dict):
+            return None, f'people[{index}] must be an object'
+
+        name = person.get('name')
+        ranges = person.get('ranges')
+        if not isinstance(name, str) or not name.strip():
+            return None, f'people[{index}].name must be a non-empty string'
+        if not isinstance(ranges, list) or not ranges:
+            return None, f'people[{index}].ranges must be a non-empty list'
+
+        validated_ranges = []
+        for range_index, time_range in enumerate(ranges):
+            if not isinstance(time_range, dict):
+                return None, f'people[{index}].ranges[{range_index}] must be an object'
+
+            start = time_range.get('start')
+            end = time_range.get('end')
+            if not is_valid_time_value(start) or not is_valid_time_value(end):
+                return None, f'people[{index}].ranges[{range_index}] must use valid times between 11:00 and 16:30'
+            if to_minutes(start) >= to_minutes(end):
+                return None, f'people[{index}].ranges[{range_index}] end must be after start'
+
+            validated_ranges.append({'start': start, 'end': end})
+
+        validated_people.append({'name': name.strip(), 'ranges': validated_ranges})
+
+    return validated_people, None
+
+
+def validate_room_data(room_data):
+    if room_data is None:
+        return {}, None
+    if not isinstance(room_data, dict):
+        return None, 'room_data must be an object'
+
+    validated_room_data = {}
+    for room_time, raw_room in room_data.items():
+        if room_time not in ROOM_TIME_SET:
+            return None, f'room_data contains unsupported time "{room_time}"'
+        if not isinstance(raw_room, dict):
+            return None, f'room_data["{room_time}"] must be an object'
+
+        off = raw_room.get('off', '')
+        b_value = raw_room.get('b', '')
+        s_value = raw_room.get('s', '')
+
+        if off is None:
+            off = ''
+        if not isinstance(off, str):
+            return None, f'room_data["{room_time}"].off must be a string'
+
+        for field_name, field_value in (('b', b_value), ('s', s_value)):
+            if field_value in ('', None):
+                continue
+            if isinstance(field_value, bool) or not isinstance(field_value, (int, str)):
+                return None, f'room_data["{room_time}"].{field_name} must be a non-negative integer or empty'
+            if not str(field_value).isdigit():
+                return None, f'room_data["{room_time}"].{field_name} must be a non-negative integer or empty'
+
+        validated_room_data[room_time] = {
+            'off': off.strip(),
+            'b': '' if b_value in ('', None) else str(int(str(b_value))),
+            's': '' if s_value in ('', None) else str(int(str(s_value))),
+        }
+
+    return validated_room_data, None
+
+
+def validate_request_payload(data, require_is_pm=False):
+    if not data or not isinstance(data, dict):
+        return None, 'Invalid request body'
+
+    people, people_error = validate_people(data.get('people', []))
+    if people_error:
+        return None, people_error
+
+    room_data, room_data_error = validate_room_data(data.get('room_data', {}))
+    if room_data_error:
+        return None, room_data_error
+
+    is_pm = data.get('is_pm', False)
+    if require_is_pm:
+        if not isinstance(is_pm, bool):
+            return None, 'is_pm must be a boolean'
+    else:
+        is_pm = bool(is_pm)
+
+    return {'people': people, 'room_data': room_data, 'is_pm': is_pm}, None
 
 @app.before_request
 def before_request():
@@ -98,16 +212,14 @@ def health():
 @app.route('/preview', methods=['POST'])
 def preview():
     data = request.get_json(silent=True)
-    if not data or not isinstance(data, dict):
-        logger.warning("Preview request | invalid or missing JSON body")
-        return jsonify({'error': 'Invalid request body'}), 400
+    payload, error_message = validate_request_payload(data, require_is_pm=True)
+    if error_message:
+        logger.warning(f"Preview request | validation failed | error={error_message}")
+        return jsonify({'error': error_message}), 400
 
-    people = data.get('people', [])
-    if not isinstance(people, list):
-        return jsonify({'error': 'people must be a list'}), 400
-
-    is_pm      = bool(data.get('is_pm', False))
-    room_data  = data.get('room_data', {})
+    people = payload['people']
+    is_pm = payload['is_pm']
+    room_data = payload['room_data']
     sheet_name = 'PM' if is_pm else 'AM'
 
     try:
@@ -129,15 +241,13 @@ def preview():
 @app.route('/export', methods=['POST'])
 def export():
     data = request.get_json(silent=True)
-    if not data or not isinstance(data, dict):
-        logger.warning("Export request | invalid or missing JSON body")
-        return jsonify({'error': 'Invalid request body'}), 400
+    payload, error_message = validate_request_payload(data)
+    if error_message:
+        logger.warning(f"Export request | validation failed | error={error_message}")
+        return jsonify({'error': error_message}), 400
 
-    people = data.get('people', [])
-    if not isinstance(people, list):
-        return jsonify({'error': 'people must be a list'}), 400
-
-    room_data = data.get('room_data', {})
+    people = payload['people']
+    room_data = payload['room_data']
 
     try:
         xlsx_buffer = build_xlsx(people, room_data)

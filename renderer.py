@@ -280,8 +280,8 @@ def render_preview(people, is_pm, room_data=None):
 
             if footer_index == 0:
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
-                if room['n25']:
-                    draw_text(start_col, sheet_row, room['n25'], font_medium, '#000000', 'center', SLOTS)
+                if room['footer_note']:
+                    draw_text(start_col, sheet_row, room['footer_note'], font_medium, '#000000', 'center', SLOTS)
                 top = 'thin' if room_index == 0 else None
                 draw_border(start_col, sheet_row, colspan=SLOTS, left='medium', top=top,
                             right=right_border)
@@ -296,16 +296,16 @@ def render_preview(people, is_pm, room_data=None):
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 2:
-                checkbox_color = '#FF0000' if room['red'] else '#FFFFFF'
+                checkbox_color = '#FF0000' if room['highlight_narrow_side'] else '#FFFFFF'
                 fill_cell(start_col, sheet_row, checkbox_color)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
                 fill_cell(start_col + 1, sheet_row, '#FFFFFF')
-                if room['letter']:
-                    draw_text(start_col + 1, sheet_row, room['letter'], font_bold)
+                if room['narrow_side_marker']:
+                    draw_text(start_col + 1, sheet_row, room['narrow_side_marker'], font_bold)
                 draw_border(start_col + 1, sheet_row, left='thin', top='thin')
                 fill_cell(start_col + 2, sheet_row, '#FFFFFF', colspan=SLOTS - 2)
-                if room['thin']:
-                    draw_text(start_col + 3, sheet_row, room['thin'], font_medium, '#FF0000', 'left', 8)
+                if room['thin_receivers_note']:
+                    draw_text(start_col + 3, sheet_row, room['thin_receivers_note'], font_medium, '#FF0000', 'left', 8)
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
             elif footer_index == 3:
@@ -317,8 +317,8 @@ def render_preview(people, is_pm, room_data=None):
             elif footer_index == 4:
                 fill_cell(start_col, sheet_row, '#FFFFFF', colspan=SLOTS)
                 draw_border(start_col, sheet_row, left='medium', right='thin', top='thin', bottom='thin')
-                if room['wlkr']:
-                    draw_text(start_col + 1, sheet_row, room['wlkr'], font_bold, '#000000', 'left', SLOTS - 1)
+                if room['wheelchair_walker_note']:
+                    draw_text(start_col + 1, sheet_row, room['wheelchair_walker_note'], font_bold, '#000000', 'left', SLOTS - 1)
                 draw_border(start_col + 1, sheet_row, left='thin')
                 draw_border(start_col + SLOTS - 1, sheet_row, right=right_border)
 
