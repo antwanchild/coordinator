@@ -1217,10 +1217,26 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     }
 
     try {
-      await navigator.clipboard.writeText(commitSha);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(commitSha);
+      } else {
+        const tempInput = document.createElement('textarea');
+        tempInput.value = commitSha;
+        tempInput.setAttribute('readonly', '');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        tempInput.setSelectionRange(0, tempInput.value.length);
+        const copied = document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        if (!copied) {
+          throw new Error('execCommand copy failed');
+        }
+      }
       toast('Copied build commit');
     } catch (e) {
-      toast('Clipboard copy failed');
+      window.prompt('Copy build commit:', commitSha);
     }
   }
 
