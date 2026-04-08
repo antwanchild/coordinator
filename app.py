@@ -116,7 +116,7 @@ def validate_people(people):
             start = time_range.get('start')
             end = time_range.get('end')
             if not is_valid_time_value(start) or not is_valid_time_value(end):
-                return None, f'people[{index}].ranges[{range_index}] must use valid times between 11:00 and 16:30'
+                return None, f'people[{index}].ranges[{range_index}] must use 15-minute times between 11:00 and 16:45'
             if to_minutes(start) >= to_minutes(end):
                 return None, f'people[{index}].ranges[{range_index}] end must be after start'
 
