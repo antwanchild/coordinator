@@ -9,7 +9,7 @@ from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, request, jsonify, send_file, render_template
 from werkzeug.exceptions import MethodNotAllowed
 
-from constants import APP_VERSION, AM_ROOMS, PM_ROOMS, ALL_TIMES
+from constants import APP_VERSION, AM_ROOMS, PM_ROOMS, ALL_TIMES, build_ui_config
 from schedule import build_xlsx, person_on_sheet, count_brothers_in_room
 from renderer import render_preview
 
@@ -105,8 +105,9 @@ def validate_people(people):
         ranges = person.get('ranges')
         if not isinstance(name, str) or not name.strip():
             return None, f'people[{index}].name must be a non-empty string'
+        person_name = name.strip()
         if not isinstance(ranges, list) or not ranges:
-            return None, f'people[{index}].ranges must be a non-empty list'
+            return None, f'people[{index}] ({person_name}).ranges must be a non-empty list'
 
         validated_ranges = []
         for range_index, time_range in enumerate(ranges):
@@ -116,13 +117,16 @@ def validate_people(people):
             start = time_range.get('start')
             end = time_range.get('end')
             if not is_valid_time_value(start) or not is_valid_time_value(end):
-                return None, f'people[{index}].ranges[{range_index}] must use 15-minute times between 11:00 and 16:45'
+                return None, (
+                    f'people[{index}] ({person_name}).ranges[{range_index}] '
+                    f'must use 15-minute times between 11:00 and 16:45'
+                )
             if to_minutes(start) >= to_minutes(end):
-                return None, f'people[{index}].ranges[{range_index}] end must be after start'
+                return None, f'people[{index}] ({person_name}).ranges[{range_index}] end must be after start'
 
             validated_ranges.append({'start': start, 'end': end})
 
-        validated_people.append({'name': name.strip(), 'ranges': validated_ranges})
+        validated_people.append({'name': person_name, 'ranges': validated_ranges})
 
     return validated_people, None
 
@@ -196,7 +200,9 @@ def after_request(response):
     start_time = getattr(request, 'start_time', time.monotonic())
     duration_ms = int((time.monotonic() - start_time) * 1000)
     label       = ROUTE_LABELS.get(request.path, request.path)
-    logger.info(f"{label} | method={request.method} | {response.status_code} ({duration_ms}ms)")
+    if request.path == '/health' and response.status_code < 400:
+        return response
+    logger.info(f"{label} | {response.status_code} ({duration_ms}ms)")
     return response
 
 
@@ -218,7 +224,7 @@ def handle_method_not_allowed(error):
 
 @app.route('/')
 def index():
-    return render_template('index.html', version=APP_VERSION, now=datetime.now())
+    return render_template('index.html', version=APP_VERSION, now=datetime.now(), ui_config=build_ui_config())
 
 
 @app.route('/health')

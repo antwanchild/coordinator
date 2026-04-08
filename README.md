@@ -90,9 +90,9 @@ Click the `?` button in the header for a built-in help modal covering paste form
 
 People and room data can be mixed in the same paste block:
 
-```
-Smith J, 11:00, 13:30
-Doe A, 11:00, 11:30, 14:00, 15:30
+``` 
+Smith J, 11:15, 13:45
+Doe A, 11:00, 11:30, 14:15, 15:45
 
 11:00, , 13, 27
 11:30, Taylor C, 17, 19
@@ -111,7 +111,8 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 **Room line:** `time, officiator, estimated brothers, estimated sisters`
 - Room 1 (11:00 AM) officiator is always AM Shift — leave blank
 - Lines starting with `#` are ignored
-- Valid times: `11:00` through `16:30`
+- Valid times: `11:00` through `16:45` in 15-minute increments
+- The builder still uses the same 30-minute room slots; quarter-hour availability just gives more precise coverage
 
 ## 🔢 Veil Recommendation
 

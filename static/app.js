@@ -1,9 +1,12 @@
-const TIME_VALUES = ['11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45'];
-const TIME_LABELS = ['11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM'];
-const AM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00'];
-const PM_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00'];
-const ROOM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
-const APP_VERSION = document.body.dataset.appVersion || 'dev';
+const configElement = document.getElementById('app-config');
+const appConfig = configElement ? JSON.parse(configElement.textContent) : {};
+const TIME_VALUES = appConfig.timeValues || [];
+const TIME_LABELS = appConfig.timeLabels || [];
+const AM_TIMES = appConfig.amTimes || [];
+const PM_TIMES = appConfig.pmTimes || [];
+const ROOM_TIMES = appConfig.roomTimes || [];
+const ACCENT_OPTIONS = appConfig.accentOptions || ['lime'];
+const APP_VERSION = appConfig.appVersion || 'dev';
 
 let people = [];
 let isPM = false;
@@ -12,6 +15,7 @@ let isLightMode = false;
 let autoRefresh = false;
 let currentAccent = localStorage.getItem('accent') || 'lime';
 let currentPreviewUrl = null;
+let toastTimeoutId = null;
 
 const roomData = {};
 ROOM_TIMES.forEach(timeValue => {
@@ -165,6 +169,9 @@ function toggleTheme() {
 }
 
 function setAccent(accent, save = true) {
+  if (!ACCENT_OPTIONS.includes(accent)) {
+    accent = ACCENT_OPTIONS[0] || 'lime';
+  }
   document.body.classList.remove(
     'accent-lime', 'accent-blue', 'accent-purple', 'accent-green', 'accent-red',
     'accent-cyan', 'accent-orange', 'accent-pink', 'accent-teal'
@@ -720,7 +727,13 @@ async function doExport() {
 }
 
 function toast(message) {
+  if (toastTimeoutId) {
+    window.clearTimeout(toastTimeoutId);
+  }
   elements.toast.textContent = message;
   elements.toast.classList.add('show');
-  window.setTimeout(() => elements.toast.classList.remove('show'), 2400);
+  toastTimeoutId = window.setTimeout(() => {
+    elements.toast.classList.remove('show');
+    toastTimeoutId = null;
+  }, 2400);
 }
