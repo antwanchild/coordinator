@@ -1013,8 +1013,10 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   let people = [], isPM = false, sidebarOpen = true, isLightMode = false, autoRefresh = false;
   let currentAccent = localStorage.getItem('accent') || 'lime';
   let currentPreviewUrl = null;
+  let toastTimeoutId = null;
 
   const ROOM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
+  const ACCENT_OPTIONS = ['lime', 'blue', 'purple', 'green', 'red', 'cyan', 'orange', 'pink', 'teal'];
   let roomData = {};
   ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
 
@@ -1049,6 +1051,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function setAccent(accent, save = true) {
+    if (!ACCENT_OPTIONS.includes(accent)) accent = 'lime';
     document.body.classList.remove(
       'accent-lime', 'accent-blue', 'accent-purple', 'accent-green', 'accent-red',
       'accent-cyan', 'accent-orange', 'accent-pink', 'accent-teal'
@@ -1116,8 +1119,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     ['AM', 'PM'].forEach(x =>
       document.getElementById('tab-sheet-' + x).classList.toggle('active', pm ? (x === 'PM') : (x === 'AM'))
     );
-    document.getElementById('headerStatus').innerHTML = (pm ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }}';
-    document.getElementById('previewTitle').textContent = (pm ? 'P.M.' : 'A.M.') + ' - ' + (pm ? 'PM' : 'AM');
+    renderHeaderStatus();
     if (document.getElementById('previewArea').className !== 'preview-empty') build();
   }
 
@@ -1161,6 +1163,27 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       URL.revokeObjectURL(currentPreviewUrl);
       currentPreviewUrl = null;
     }
+  }
+
+  function resetRoomData() {
+    ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+  }
+
+  function hasImportedData() {
+    return people.length > 0 || Object.values(roomData).some(r => r.off || r.b || r.s);
+  }
+
+  function resetPreview(message) {
+    releasePreviewUrl();
+    const previewArea = document.getElementById('previewArea');
+    previewArea.style.display = '';
+    previewArea.className = 'preview-empty';
+    previewArea.innerHTML = `<div class="icon">&#128203;</div><p>${message}</p>`;
+  }
+
+  function renderHeaderStatus() {
+    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }}';
+    document.getElementById('previewTitle').textContent = (isPM ? 'P.M.' : 'A.M.') + ' - ' + (isPM ? 'PM' : 'AM');
   }
 
   function switchTab(tab) {
@@ -1256,19 +1279,17 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function clearNames() {
-    if (!people.length && !Object.values(roomData).some(r => r.off || r.b || r.s)) return;
+    if (!hasImportedData()) return;
     if (!confirm('Clear all names and room data? This cannot be undone.')) return;
     people = [];
-    ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+    resetRoomData();
     renderNameList();
-    releasePreviewUrl();
-    document.getElementById('previewArea').className = 'preview-empty';
-    document.getElementById('previewArea').innerHTML = '<div class="icon">&#128203;</div><p>Add names then click Build Schedule.</p>';
+    resetPreview('Add names then click Build Schedule.');
     toast('Cleared');
   }
 
   function copyNamesAsCSV() {
-    if (!people.length && !Object.values(roomData).some(r => r.off || r.b || r.s)) {
+    if (!hasImportedData()) {
       toast('Nothing to copy');
       return;
     }
@@ -1304,14 +1325,13 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-      const hasExisting = people.length > 0 || Object.values(roomData).some(r => r.off || r.b || r.s);
-      if (hasExisting) {
+      if (hasImportedData()) {
         if (!confirm('This will replace all existing names and room data. Continue?')) {
           input.value = '';
           return;
         }
         people = [];
-        ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+        resetRoomData();
       }
       const text = e.target && typeof e.target.result === 'string' ? e.target.result : '';
       const { imported, skipped } = parseData(text);
@@ -1327,11 +1347,10 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const text = document.getElementById('pasteInput').value;
     if (!text.trim()) return;
 
-    const hasExisting = people.length > 0 || Object.values(roomData).some(r => r.off || r.b || r.s);
-    if (hasExisting) {
+    if (hasImportedData()) {
       if (!confirm('This will replace all existing names and room data. Continue?')) return;
       people = [];
-      ROOM_TIMES.forEach(t => roomData[t] = { off: '', b: '', s: '' });
+      resetRoomData();
     }
 
     const { imported, skipped } = parseData(text);
@@ -1417,10 +1436,8 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const previewArea = document.getElementById('previewArea');
 
     if (!people.length) {
-      releasePreviewUrl();
       const sheetName = isPM ? 'PM' : 'AM';
-      previewArea.className = 'preview-empty';
-      previewArea.innerHTML = `<div class="icon">&#128203;</div><p>No people on ${sheetName} sheet.</p>`;
+      resetPreview(`No people on ${sheetName} sheet.`);
       return;
     }
 
@@ -1455,6 +1472,9 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     } catch (e) {
       spinner.className = 'spinner';
       previewArea.style.display = '';
+      if (previewArea.className !== 'preview-wrap') {
+        resetPreview('Build failed. Please review your input and try again.');
+      }
       toast('Error: ' + e.message);
     }
   }
@@ -1497,10 +1517,16 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 
   function toast(msg) {
     const toastEl = document.getElementById('toast');
+    if (toastTimeoutId) clearTimeout(toastTimeoutId);
     toastEl.textContent = msg;
     toastEl.classList.add('show');
-    setTimeout(() => toastEl.classList.remove('show'), 2400);
+    toastTimeoutId = setTimeout(() => {
+      toastEl.classList.remove('show');
+      toastTimeoutId = null;
+    }, 2400);
   }
+
+  renderHeaderStatus();
 </script>
 
 </body>
