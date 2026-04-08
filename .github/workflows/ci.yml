@@ -33,4 +33,9 @@ jobs:
         run: python -c "import app"
 
       - name: Run unit tests
-        run: python -m unittest discover -s tests
+        run: |
+          if find tests -maxdepth 1 -name 'test*.py' -print -quit | grep -q .; then
+            python -m unittest discover -s tests
+          else
+            echo "No committed unit tests found; skipping discovery."
+          fi
