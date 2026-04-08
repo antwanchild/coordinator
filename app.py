@@ -26,7 +26,7 @@ def set_security_headers(response):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' blob:; "
-        "script-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
         "base-uri 'self'; "
         "form-action 'self'; "
         "object-src 'none';"
