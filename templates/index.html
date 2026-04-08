@@ -1004,7 +1004,7 @@ Doe A, 11:00, 11:30, 14:15, 15:45
 <div class="toast" id="toast"></div>
 
 <script id="app-config" type="application/json">{{ ui_config|tojson }}</script>
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js', v=static_asset_version) }}"></script>
 
 </body>
 </html>
