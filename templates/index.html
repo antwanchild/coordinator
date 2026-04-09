@@ -121,6 +121,12 @@
       color: var(--acc);
     }
 
+    .commit-chip.copied {
+      border-color: var(--acc);
+      color: #000;
+      background: var(--acc);
+    }
+
     .accent-picker select {
       background: var(--card);
       border: 1px solid var(--acc-btn, var(--acc));
@@ -690,6 +696,48 @@
       margin-bottom: 3px;
     }
 
+    .inline-status {
+      border: 1px solid var(--bdr);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: .67rem;
+      line-height: 1.5;
+      color: var(--mut);
+      background: var(--card);
+      margin-top: 8px;
+      display: none;
+    }
+
+    .inline-status.visible {
+      display: block;
+    }
+
+    .inline-status.error {
+      border-color: #ff9900;
+      background: #3a2000;
+      color: #ffcc80;
+    }
+
+    .inline-status.success {
+      border-color: #4caf50;
+      background: #16311a;
+      color: #b9f6ca;
+    }
+
+    .inline-status.info {
+      border-color: var(--acc-btn, var(--acc));
+      color: var(--txt);
+    }
+
+    .last-built {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      color: var(--mut);
+      text-align: center;
+      margin-top: 6px;
+      min-height: 1.2em;
+    }
+
     /* ── Main / Preview area ── */
     .main {
       padding: 16px;
@@ -946,6 +994,8 @@
         &#8595; Export Both Sheets (.xlsx)
       </button>
       <p style="font-size: .6rem; color: var(--mut); text-align: center; margin-top: 4px">Export to print both sheets</p>
+      <div class="last-built" id="lastBuiltLabel">Last built: not yet</div>
+      <div class="inline-status visible info" id="inlineStatus">Ready. Add names, import data, or build a preview.</div>
     </div>
 
   </div>
@@ -1037,6 +1087,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   let currentAccent = localStorage.getItem('accent') || 'lime';
   let currentPreviewUrl = null;
   let toastTimeoutId = null;
+  let commitChipResetTimeoutId = null;
 
   const ROOM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
   const ACCENT_OPTIONS = ['lime', 'blue', 'purple', 'green', 'red', 'cyan', 'orange', 'pink', 'teal'];
@@ -1204,9 +1255,35 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     previewArea.innerHTML = `<div class="icon">&#128203;</div><p>${message}</p>`;
   }
 
+  function setInlineStatus(message, type = 'info') {
+    const statusEl = document.getElementById('inlineStatus');
+    statusEl.textContent = message;
+    statusEl.className = `inline-status visible ${type}`;
+  }
+
+  function updateLastBuiltLabel() {
+    const labelEl = document.getElementById('lastBuiltLabel');
+    const now = new Date();
+    labelEl.textContent = `Last built: ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+
   function renderHeaderStatus() {
-    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }} &nbsp;&middot;&nbsp; <span class="build-meta"><button class="commit-chip" type="button" onclick="copyCommitSha()" title="Copy full build commit">{{ commit_short }}</button></span>';
+    document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }} &nbsp;&middot;&nbsp; <span class="build-meta"><button class="commit-chip" id="commitChip" type="button" onclick="copyCommitSha()" title="Copy full build commit">{{ commit_short }}</button></span>';
     document.getElementById('previewTitle').textContent = (isPM ? 'P.M.' : 'A.M.') + ' - ' + (isPM ? 'PM' : 'AM');
+  }
+
+  function showCommitChipCopiedState() {
+    const commitChip = document.getElementById('commitChip');
+    if (!commitChip) return;
+
+    if (commitChipResetTimeoutId) clearTimeout(commitChipResetTimeoutId);
+    commitChip.textContent = 'Copied';
+    commitChip.classList.add('copied');
+    commitChipResetTimeoutId = setTimeout(() => {
+      commitChip.textContent = '{{ commit_short }}';
+      commitChip.classList.remove('copied');
+      commitChipResetTimeoutId = null;
+    }, 1500);
   }
 
   async function copyCommitSha() {
@@ -1234,6 +1311,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
           throw new Error('execCommand copy failed');
         }
       }
+      showCommitChipCopiedState();
       toast('Copied build commit');
     } catch (e) {
       window.prompt('Copy build commit:', commitSha);
@@ -1339,11 +1417,13 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     resetRoomData();
     renderNameList();
     resetPreview('Add names then click Build Schedule.');
+    setInlineStatus('Cleared all names and room data.', 'info');
     toast('Cleared');
   }
 
   function copyNamesAsCSV() {
     if (!hasImportedData()) {
+      setInlineStatus('Nothing to copy yet.', 'info');
       toast('Nothing to copy');
       return;
     }
@@ -1355,8 +1435,14 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       .map(t => [t, roomData[t].off, roomData[t].b, roomData[t].s].join(', '));
     const csv = [...peopleLines, ...(roomLines.length ? ['', ...roomLines] : [])].join('\n');
     navigator.clipboard.writeText(csv)
-      .then(() => toast('Copied to clipboard'))
-      .catch(() => toast('Clipboard copy failed'));
+      .then(() => {
+        setInlineStatus('Copied current names and room data to the clipboard.', 'success');
+        toast('Copied to clipboard');
+      })
+      .catch(() => {
+        setInlineStatus('Could not copy data to the clipboard in this browser.', 'error');
+        toast('Clipboard copy failed');
+      });
   }
 
   function normalizeTime(t) {
@@ -1426,6 +1512,12 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       const text = e.target && typeof e.target.result === 'string' ? e.target.result : '';
       const { imported, skipped } = parseData(text);
       showSkippedWarning('skipped-csv', skipped);
+      setInlineStatus(
+        skipped.length
+          ? `Imported ${imported} line(s). ${skipped.length} line(s) were skipped.`
+          : `Imported ${imported} line(s) from CSV.`,
+        skipped.length ? 'info' : 'success'
+      );
       toast(`CSV imported - ${imported} added`);
       maybeRefresh();
       input.value = '';
@@ -1446,6 +1538,12 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const { imported, skipped } = parseData(text);
     document.getElementById('pasteInput').value = '';
     showSkippedWarning('skipped-paste', skipped);
+    setInlineStatus(
+      skipped.length
+        ? `Imported ${imported} line(s). ${skipped.length} pasted line(s) were skipped.`
+        : `Imported ${imported} line(s) from pasted data.`,
+      skipped.length ? 'info' : 'success'
+    );
     toast(`Imported - ${imported} added`);
     maybeRefresh();
   }
@@ -1528,12 +1626,14 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     if (!people.length) {
       const sheetName = isPM ? 'PM' : 'AM';
       resetPreview(`No people on ${sheetName} sheet.`);
+      setInlineStatus(`No people available to build on the ${sheetName} sheet yet.`, 'info');
       return;
     }
 
     const validationError = validatePeopleBeforeSubmit();
     if (validationError) {
       resetPreview('Build failed. Please review your input and try again.');
+      setInlineStatus(validationError, 'error');
       toast('Error: ' + validationError);
       return;
     }
@@ -1562,8 +1662,12 @@ Doe A, 11:00, 11:30, 14:00, 15:30
         return p.ranges.some(r => toMinutes(r.start) < domainEnd && toMinutes(r.end) > domainStart);
       });
       if (sheetPeople.length > 18) {
+        updateLastBuiltLabel();
+        setInlineStatus(`${sheetPeople.length} people overlap the ${isPM ? 'PM' : 'AM'} sheet. Only 18 slots fit on the preview.`, 'info');
         toast(`⚠ ${sheetPeople.length - 18} name(s) won't fit on ${isPM ? 'PM' : 'AM'} sheet - only 18 slots available`);
       } else {
+        updateLastBuiltLabel();
+        setInlineStatus(`Built ${isPM ? 'PM' : 'AM'} preview for ${sheetPeople.length} visible people.`, 'success');
         toast('Built!');
       }
     } catch (e) {
@@ -1572,15 +1676,21 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       if (previewArea.className !== 'preview-wrap') {
         resetPreview('Build failed. Please review your input and try again.');
       }
+      setInlineStatus(e.message || 'Preview generation failed.', 'error');
       toast('Error: ' + e.message);
     }
   }
 
   async function doExport() {
-    if (!people.length) { toast('No people to export'); return; }
+    if (!people.length) {
+      setInlineStatus('No people available to export yet.', 'info');
+      toast('No people to export');
+      return;
+    }
 
     const validationError = validatePeopleBeforeSubmit();
     if (validationError) {
+      setInlineStatus(validationError, 'error');
       toast('Export failed: ' + validationError);
       return;
     }
@@ -1603,6 +1713,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
         const writable = await handle.createWritable();
         await writable.write(blob);
         await writable.close();
+        setInlineStatus('Export completed successfully.', 'success');
         toast('Exported!');
       } else {
         const url = URL.createObjectURL(blob);
@@ -1611,10 +1722,14 @@ Doe A, 11:00, 11:30, 14:00, 15:30
         a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
+        setInlineStatus('Export completed successfully.', 'success');
         toast('Exported!');
       }
     } catch (e) {
-      if (e.name !== 'AbortError') toast('Export failed: ' + e.message);
+      if (e.name !== 'AbortError') {
+        setInlineStatus(e.message || 'Export generation failed.', 'error');
+        toast('Export failed: ' + e.message);
+      }
     }
   }
 
