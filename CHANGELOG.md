@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.20] - 2026-04-09
+
+### 🐛 Bug Fixes
+
+- Remove 4:45 from manual entry picker
 ## [1.23.19] - 2026-04-09
 
 ### 🐛 Bug Fixes
