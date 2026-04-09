@@ -411,10 +411,11 @@
       overflow: visible;
     }
 
-    .generate-summary {
-      min-height: 1em;
-      margin-top: 6px;
-      font-size: .62rem;
+    .generate-meta {
+      min-height: 1.2em;
+      margin-top: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
       color: var(--mut);
       text-align: center;
     }
@@ -737,15 +738,6 @@
       color: var(--txt);
     }
 
-    .last-built {
-      font-family: 'DM Mono', monospace;
-      font-size: .6rem;
-      color: var(--mut);
-      text-align: center;
-      margin-top: 6px;
-      min-height: 1.2em;
-    }
-
     /* ── Main / Preview area ── */
     .main {
       padding: 16px;
@@ -998,12 +990,10 @@
           <span class="tip" style="position:absolute;top:-2px;right:-2px"><span class="tip-icon">?</span><span class="tip-text">Auto-rebuild preview when names or room data change.</span></span>
         </button>
       </div>
-      <button class="btn btn-export" id="exportBtn" onclick="doExport()">
+      <button class="btn btn-export" id="exportBtn" onclick="doExport()" title="Export both AM and PM sheets to one workbook">
         &#8595; Export Both Sheets (.xlsx)
       </button>
-      <p style="font-size: .6rem; color: var(--mut); text-align: center; margin-top: 4px">Export to print both sheets</p>
-      <div class="generate-summary" id="generateCounts">No names loaded yet</div>
-      <div class="last-built" id="lastBuiltLabel">Last built: not yet</div>
+      <div class="generate-meta" id="generateMeta">No names loaded yet · Not built yet</div>
       <div class="inline-status visible info" id="inlineStatus">Ready. Add names, import data, or build a preview.</div>
     </div>
 
@@ -1097,6 +1087,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   let currentPreviewUrl = null;
   let toastTimeoutId = null;
   let commitChipResetTimeoutId = null;
+  let lastBuiltText = 'Not built yet';
 
   const ROOM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
   const ACCENT_OPTIONS = ['lime', 'blue', 'purple', 'green', 'red', 'cyan', 'orange', 'pink', 'teal'];
@@ -1271,21 +1262,24 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function updateLastBuiltLabel() {
-    const labelEl = document.getElementById('lastBuiltLabel');
     const now = new Date();
-    labelEl.textContent = `Last built: ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    lastBuiltText = `Last built ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    renderGenerateMeta();
   }
 
-  function updateGenerateCounts(total, amCount, pmCount) {
-    const summaryEl = document.getElementById('generateCounts');
-    if (!summaryEl) return;
+  function renderGenerateMeta() {
+    const metaEl = document.getElementById('generateMeta');
+    if (!metaEl) return;
 
-    if (!total) {
-      summaryEl.textContent = 'No names loaded yet';
+    const amCount = countOnSheet(false);
+    const pmCount = countOnSheet(true);
+
+    if (!people.length) {
+      metaEl.textContent = `No names loaded yet · ${lastBuiltText}`;
       return;
     }
 
-    summaryEl.textContent = `${total} total · ${amCount} AM · ${pmCount} PM`;
+    metaEl.textContent = `${people.length} total · ${amCount} AM · ${pmCount} PM · ${lastBuiltText}`;
   }
 
   function renderHeaderStatus() {
@@ -1392,7 +1386,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const pmCount   = countOnSheet(true);
 
     container.classList.toggle('has-names', people.length > 0);
-    updateGenerateCounts(people.length, amCount, pmCount);
+    renderGenerateMeta();
 
     if (people.length) {
       countEl.textContent = `${people.length} total · ${amCount} AM · ${pmCount} PM`;
