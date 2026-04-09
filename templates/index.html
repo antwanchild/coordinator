@@ -255,6 +255,10 @@
       position: relative;
     }
 
+    .modal.modal-compact {
+      width: 380px;
+    }
+
     .modal h2 {
       font-size: .95rem;
       font-weight: 700;
@@ -275,6 +279,10 @@
       font-size: .72rem;
       color: var(--mut);
       line-height: 1.6;
+    }
+
+    .modal-lead {
+      margin-bottom: 10px;
     }
 
     .modal ul {
@@ -322,6 +330,39 @@
     .modal-close:hover {
       border-color: var(--acc);
       color: var(--acc);
+    }
+
+    .modal-footer {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--bdr);
+      font-size: .66rem;
+      color: var(--mut);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .modal-actions .btn {
+      width: auto;
+      min-width: 110px;
+    }
+
+    .btn-danger {
+      background: #e45757;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      opacity: .92;
     }
 
     .kbd {
@@ -888,7 +929,7 @@
         <option value="teal">🫐 Teal</option>
       </select>
     </div>
-    <button class="help-btn" onclick="toggleHelp()" title="Help">?</button>
+    <button class="help-btn" id="helpBtn" onclick="toggleHelp()" title="Help">?</button>
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Switch to light mode">☀️</button>
     <span id="headerStatus">AM Sheet &nbsp;·&nbsp; v{{ version }} &nbsp;·&nbsp; <span class="build-meta"><button class="commit-chip" type="button" onclick="copyCommitSha()" title="Copy full build commit">{{ commit_short }}</button></span></span>
   </div>
@@ -1025,13 +1066,14 @@
 </div>
 
 <!-- Help modal -->
-<div class="modal-overlay" id="helpModal" onclick="if(event.target===this) toggleHelp()">
-  <div class="modal">
-    <button class="modal-close" onclick="toggleHelp()">&times; Close</button>
-    <h2>&#x2B21; V-Coordinator Help</h2>
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this) toggleHelp()" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal" tabindex="-1">
+    <button class="modal-close" id="helpCloseBtn" onclick="toggleHelp()">&times; Close</button>
+    <h2 id="helpTitle">&#x2B21; V-Coordinator Help</h2>
+    <p class="modal-lead">Use this builder to import people and room data, preview each sheet, and export a print-ready workbook.</p>
 
-    <h3>Paste / CSV Format</h3>
-    <p>People and room data can be mixed in the same paste block.</p>
+    <h3>How To Import Data</h3>
+    <p>People and room data can be mixed in the same CSV upload or paste block.</p>
     <pre>Smith J, 11:00, 13:30
 Doe A, 11:00, 11:30, 14:00, 15:30
 
@@ -1040,7 +1082,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 12:00, Williams D, 2, 3
 12:30, Brown E, 5, 2
 13:00, Davis F, 3, 1</pre>
-    <p style="margin-top:6px"><strong>Person:</strong> <code>Name, start, end</code> — multiple time pairs allowed</p>
+    <p style="margin-top:6px"><strong>Person:</strong> <code>Name, start, end</code> or <code>Name, start1, end1, start2, end2</code></p>
     <p style="margin-top:4px"><strong>Room:</strong> <code>time, officiator, brothers, sisters</code></p>
     <ul>
       <li>Room 1 (11:00 AM) officiator is always AM Shift — leave blank</li>
@@ -1048,25 +1090,39 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       <li>Valid times: <code>11:00</code> through <code>16:45</code> in 15-minute increments</li>
     </ul>
 
-    <h3>Sheet Tabs</h3>
-    <p>AM and PM show different rooms. Switch tabs to preview each sheet. Both sheets are always included in the export.</p>
+    <h3>Build And Preview</h3>
+    <p>AM and PM show different rooms. Switch tabs to preview each sheet, then click <strong>Build Schedule</strong> to render the current sheet.</p>
+    <p>Turn on <strong>Auto</strong> if you want the preview to rebuild automatically whenever names or room data change.</p>
 
-    <h3>Build Schedule</h3>
-    <p>Renders a pixel-perfect preview image of the schedule. Enable <strong>Auto</strong> to rebuild automatically whenever names change.</p>
+    <h3>Export</h3>
+    <p>Export downloads one workbook containing both AM and PM sheets, ready for printing on separate pages.</p>
+
+    <h3>Availability Rules</h3>
+    <p>The builder accepts quarter-hour entry times, but the schedule still displays 30-minute room slots.</p>
+    <p>A person must cover the full 30-minute room slot to count as available for that room.</p>
 
     <h3>Keyboard Shortcuts</h3>
     <ul>
       <li><span class="kbd">Ctrl+B</span> / <span class="kbd">⌘B</span> — Build Schedule</li>
+      <li><span class="kbd">Esc</span> — Close this help window</li>
     </ul>
 
-    <h3>Export</h3>
-    <p>Downloads the filled .xlsx file with both AM and PM sheets. Use this to print — each sheet prints on a separate page.</p>
+    <div class="modal-footer">
+      <span>Build version {{ version }} · commit {{ commit_short }}</span>
+      <span>Shift + Tab and Tab stay inside this window while it is open</span>
+    </div>
+  </div>
+</div>
 
-    <h3>Bros Available</h3>
-    <p>The count per room includes the Off row plus any brother whose availability fully covers that room's 30-minute slot.</p>
-
-    <h3>Unavailable Slots</h3>
-    <p>Gray cells indicate a brother is not available for that room's time slot. A person must cover the full 30 minutes to be considered available.</p>
+<!-- Confirmation modal -->
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this) resolveConfirm(false)" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="modal modal-compact" tabindex="-1">
+    <h2 id="confirmTitle">Confirm Action</h2>
+    <p class="modal-lead" id="confirmMessage">Are you sure you want to continue?</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="confirmCancelBtn" type="button" onclick="resolveConfirm(false)">Cancel</button>
+      <button class="btn btn-danger" id="confirmAcceptBtn" type="button" onclick="resolveConfirm(true)">Continue</button>
+    </div>
   </div>
 </div>
 
@@ -1088,6 +1144,9 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   let toastTimeoutId = null;
   let commitChipResetTimeoutId = null;
   let lastBuiltText = 'Not built yet';
+  let lastFocusedElement = null;
+  let confirmResolver = null;
+  let confirmFallbackFocusId = 'helpBtn';
 
   const ROOM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:00', '14:30', '15:00', '15:30', '16:00'];
   const ACCENT_OPTIONS = ['lime', 'blue', 'purple', 'green', 'red', 'cyan', 'orange', 'pink', 'teal'];
@@ -1169,13 +1228,114 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     });
   });
 
-  function toggleHelp() {
-    document.getElementById('helpModal').classList.toggle('show');
+  function getActiveModalOverlay() {
+    const confirmModal = document.getElementById('confirmModal');
+    if (confirmModal.classList.contains('show')) return confirmModal;
+
+    const helpModal = document.getElementById('helpModal');
+    if (helpModal.classList.contains('show')) return helpModal;
+
+    return null;
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.getElementById('helpModal').classList.remove('show');
-  });
+  function getFocusableModalElements(overlay = getActiveModalOverlay()) {
+    const modal = overlay ? overlay.querySelector('.modal') : null;
+    if (!modal) return [];
+    return Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(el => !el.disabled && el.offsetParent !== null);
+  }
+
+  function openModal(overlayId, fallbackFocusId = 'helpBtn') {
+    const overlay = document.getElementById(overlayId);
+    const modalCard = overlay.querySelector('.modal');
+
+    if (!getActiveModalOverlay()) {
+      lastFocusedElement = document.activeElement;
+    }
+
+    confirmFallbackFocusId = fallbackFocusId;
+    overlay.classList.add('show');
+
+    setTimeout(() => {
+      const focusable = getFocusableModalElements(overlay);
+      (focusable[0] || modalCard).focus();
+    }, 0);
+  }
+
+  function closeModal(overlayId, fallbackFocusId = confirmFallbackFocusId) {
+    const overlay = document.getElementById(overlayId);
+    overlay.classList.remove('show');
+
+    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+      lastFocusedElement.focus();
+    } else {
+      const fallback = document.getElementById(fallbackFocusId);
+      if (fallback) fallback.focus();
+    }
+  }
+
+  function handleModalKeydown(e) {
+    const activeModal = getActiveModalOverlay();
+    if (!activeModal) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (activeModal.id === 'confirmModal') {
+        resolveConfirm(false);
+      } else {
+        toggleHelp(false);
+      }
+      return;
+    }
+
+    if (e.key !== 'Tab') return;
+
+    const focusable = getFocusableModalElements(activeModal);
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  function toggleHelp(forceOpen) {
+    const helpModal = document.getElementById('helpModal');
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !helpModal.classList.contains('show');
+
+    if (shouldOpen) {
+      openModal('helpModal', 'helpBtn');
+      return;
+    }
+
+    closeModal('helpModal', 'helpBtn');
+  }
+
+  function askForConfirmation(message, acceptLabel = 'Continue') {
+    const confirmModal = document.getElementById('confirmModal');
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmAcceptBtn').textContent = acceptLabel;
+
+    return new Promise(resolve => {
+      confirmResolver = resolve;
+      openModal('confirmModal');
+    });
+  }
+
+  function resolveConfirm(accepted) {
+    const resolver = confirmResolver;
+    confirmResolver = null;
+    closeModal('confirmModal');
+    if (resolver) resolver(accepted);
+  }
+
+  document.addEventListener('keydown', handleModalKeydown);
 
   function toggleAutoRefresh() {
     autoRefresh = !autoRefresh;
@@ -1435,9 +1595,10 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     maybeRefresh();
   }
 
-  function clearNames() {
+  async function clearNames() {
     if (!hasImportedData()) return;
-    if (!confirm('Clear all names and room data? This cannot be undone.')) return;
+    const confirmed = await askForConfirmation('Clear all names and room data? This cannot be undone.', 'Clear all');
+    if (!confirmed) return;
     people = [];
     resetRoomData();
     renderNameList();
@@ -1525,9 +1686,10 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
       if (hasImportedData()) {
-        if (!confirm('This will replace all existing names and room data. Continue?')) {
+        const confirmed = await askForConfirmation('This will replace all existing names and room data. Continue?', 'Replace data');
+        if (!confirmed) {
           input.value = '';
           return;
         }
@@ -1550,12 +1712,13 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     reader.readAsText(file);
   }
 
-  function importPaste() {
+  async function importPaste() {
     const text = document.getElementById('pasteInput').value;
     if (!text.trim()) return;
 
     if (hasImportedData()) {
-      if (!confirm('This will replace all existing names and room data. Continue?')) return;
+      const confirmed = await askForConfirmation('This will replace all existing names and room data. Continue?', 'Replace data');
+      if (!confirmed) return;
       people = [];
       resetRoomData();
     }
