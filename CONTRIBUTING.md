@@ -1,5 +1,24 @@
 # 🤝 Contributing
 
+## 🧪 Local Workflow
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Open `http://localhost:8080`.
+
+For the current lightweight checks:
+
+```bash
+python -c "import app"
+
+if find tests -maxdepth 1 -name 'test*.py' -print -quit | grep -q .; then
+  python -m unittest discover -s tests
+fi
+```
+
 ## 📝 Commit Message Format
 
 This repo uses [Conventional Commits](https://www.conventionalcommits.org/) to
@@ -51,6 +70,21 @@ git commit -m "just tweaking some stuff"
 3. Commits `VERSION` and `CHANGELOG.md` back to `main` with `[skip ci]`
 4. Creates a git tag (e.g. `v1.0.1`)
 5. Builds and pushes Docker image to `ghcr.io` tagged as `1.0.1`, `latest`, and the short SHA
+
+## 🔄 CI And Release Flow
+
+- `.github/workflows/ci.yml` runs on pull requests and pushes to `main`
+- `CI` installs dependencies, verifies `import app`, and runs committed unit tests when they exist
+- `.github/workflows/docker.yml` runs after `CI` succeeds on `main`
+- Docker publish has concurrency protection so overlapping publish runs do not race each other
+
+If you are changing behavior and expect a version bump, prefer a `fix:` or `feat:` commit instead of a plain commit message.
+
+## 🖥️ UI Contribution Notes
+
+- Prefer inline status/help text over new modal dialogs unless the action is destructive or truly blocking
+- Keep destructive confirmation behavior consistent with the shared app confirmation modal
+- Browser drafts are stored in `localStorage`; changes to draft shape should be backward-tolerant or intentionally versioned
 
 Commits with no recognized prefix (plain messages) still build and push `latest`
 but do not bump the version or update the changelog.

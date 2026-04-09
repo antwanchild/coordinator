@@ -657,6 +657,11 @@
       transition: all .15s;
     }
 
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
     .btn-primary { background: var(--acc); color: #000; }
     .btn-primary:hover { opacity: .9; }
 
@@ -987,9 +992,10 @@
           <div class="name-list" id="nameList">
             <p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>
           </div>
-          <div style="display: flex; gap: 5px; margin-top: 7px">
+          <div style="display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap">
             <button class="btn btn-secondary btn-small" onclick="clearNames()">Clear All</button>
             <button class="btn btn-secondary btn-small" onclick="copyNamesAsCSV()">Copy CSV</button>
+            <button class="btn btn-secondary btn-small" id="clearDraftBtn" onclick="clearDraft()">Clear Draft</button>
           </div>
         </div>
 
@@ -1136,11 +1142,14 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   const TIME_LABELS = ['11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM'];
   const MANUAL_TIME_VALUES = TIME_VALUES.slice(0, -1);
   const MANUAL_TIME_LABELS = TIME_LABELS.slice(0, -1);
+  const DRAFT_STORAGE_KEY = 'v-coordinator-draft-v1';
+  const DRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
   const AM_TIMES = ['11:00', '11:30', '12:00', '12:30', '13:00'];
   const PM_TIMES = ['14:00', '14:30', '15:00', '15:30', '16:00'];
 
   let people = [], isPM = false, sidebarOpen = true, isLightMode = false, autoRefresh = false;
+  let currentInputTab = 'paste';
   let currentAccent = localStorage.getItem('accent') || 'lime';
   let currentPreviewUrl = null;
   let toastTimeoutId = null;
@@ -1194,7 +1203,10 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     document.body.classList.add('accent-' + accent);
     currentAccent = accent;
     document.getElementById('accentSelect').value = accent;
-    if (save) localStorage.setItem('accent', accent);
+    if (save) {
+      localStorage.setItem('accent', accent);
+      saveDraft();
+    }
   }
 
   function toggleSidebar() {
@@ -1205,6 +1217,142 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     btn.title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
     btn.style.left = sidebarOpen ? '287px' : '-13px';
     btn.classList.toggle('collapsed', !sidebarOpen);
+  }
+
+  function formatDraftTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return 'recently';
+    return date.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  function normalizeDraftRoomData(rawRoomData) {
+    const normalized = {};
+    ROOM_TIMES.forEach(time => {
+      const source = rawRoomData && typeof rawRoomData === 'object' ? rawRoomData[time] : null;
+      normalized[time] = {
+        off: time === '11:00' ? '' : String(source && source.off ? source.off : ''),
+        b: String(source && source.b ? source.b : ''),
+        s: String(source && source.s ? source.s : '')
+      };
+    });
+    return normalized;
+  }
+
+  function normalizeDraftPeople(rawPeople) {
+    if (!Array.isArray(rawPeople)) return [];
+
+    return rawPeople
+      .map(person => {
+        const name = person && typeof person.name === 'string' ? person.name.trim() : '';
+        const rawRanges = Array.isArray(person && person.ranges) ? person.ranges : [];
+        const ranges = rawRanges.filter(range =>
+          range &&
+          isValidTime(range.start) &&
+          isValidTime(range.end) &&
+          toMinutes(range.start) < toMinutes(range.end)
+        ).map(range => ({ start: range.start, end: range.end }));
+
+        return { name, ranges };
+      })
+      .filter(person => person.name && person.ranges.length)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  function hasStoredDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) return false;
+
+      const draft = JSON.parse(raw);
+      const savedAt = Number(draft && draft.saved_at);
+      if (!savedAt || (Date.now() - savedAt) > DRAFT_MAX_AGE_MS) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      return false;
+    }
+  }
+
+  function updateDraftButton() {
+    const clearDraftBtn = document.getElementById('clearDraftBtn');
+    if (!clearDraftBtn) return;
+
+    const hasDraft = hasStoredDraft();
+    clearDraftBtn.disabled = !hasDraft;
+    clearDraftBtn.title = hasDraft ? 'Clear the saved browser draft' : 'No saved draft to clear';
+  }
+
+  function saveDraft() {
+    try {
+      if (!hasImportedData()) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        updateDraftButton();
+        return;
+      }
+
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+        saved_at: Date.now(),
+        people,
+        room_data: roomData,
+        is_pm: isPM,
+        accent: currentAccent,
+        input_tab: currentInputTab
+      }));
+      updateDraftButton();
+    } catch (e) {
+      // Ignore storage failures and keep the app usable.
+    }
+  }
+
+  function restoreDraft() {
+    let draft = null;
+
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) {
+        updateDraftButton();
+        return;
+      }
+      draft = JSON.parse(raw);
+    } catch (e) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      updateDraftButton();
+      return;
+    }
+
+    const savedAt = Number(draft && draft.saved_at);
+    if (!savedAt || (Date.now() - savedAt) > DRAFT_MAX_AGE_MS) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      updateDraftButton();
+      return;
+    }
+
+    people = normalizeDraftPeople(draft.people);
+    roomData = normalizeDraftRoomData(draft.room_data);
+    isPM = !!draft.is_pm;
+    currentInputTab = ['manual', 'csv', 'paste'].includes(draft.input_tab) ? draft.input_tab : 'paste';
+
+    if (draft.accent) {
+      setAccent(draft.accent);
+    }
+
+    renderNameList();
+    switchTab(currentInputTab);
+    renderHeaderStatus();
+    renderGenerateMeta();
+    setInlineStatus(`Draft restored from ${formatDraftTimestamp(savedAt)}.`, 'info');
+    toast('Draft restored');
+    updateDraftButton();
   }
 
   const tipPopup = document.getElementById('tip-popup');
@@ -1356,6 +1504,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       document.getElementById('tab-sheet-' + x).classList.toggle('active', pm ? (x === 'PM') : (x === 'AM'))
     );
     renderHeaderStatus();
+    saveDraft();
     if (document.getElementById('previewArea').className !== 'preview-empty') build();
   }
 
@@ -1496,6 +1645,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   function switchTab(tab) {
+    currentInputTab = tab;
     ['manual', 'csv', 'paste'].forEach(x => {
       document.getElementById('tab-' + x).classList.toggle('active', x === tab);
       document.getElementById('panel-' + x).style.display = x === tab ? 'block' : 'none';
@@ -1509,6 +1659,8 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     } else if (tab === 'paste') {
       document.getElementById('pasteInput').focus();
     }
+
+    saveDraft();
   }
 
   function addName() {
@@ -1549,6 +1701,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 
     container.classList.toggle('has-names', people.length > 0);
     renderGenerateMeta();
+    saveDraft();
 
     if (people.length) {
       countEl.textContent = `${people.length} total · ${amCount} AM · ${pmCount} PM`;
@@ -1603,10 +1756,29 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     if (!confirmed) return;
     people = [];
     resetRoomData();
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    updateDraftButton();
     renderNameList();
     resetPreview('Add names, paste data, or import CSV, then click Build Schedule.');
-    setInlineStatus('Cleared all names and room data.', 'info');
+    setInlineStatus('Cleared all names and room data. Saved draft removed.', 'info');
     toast('Cleared');
+  }
+
+  async function clearDraft() {
+    if (!hasStoredDraft()) {
+      updateDraftButton();
+      setInlineStatus('No saved draft to clear.', 'info');
+      toast('No saved draft');
+      return;
+    }
+
+    const confirmed = await askForConfirmation('Clear the saved browser draft? Your current page will stay as-is until you make another change.', 'Clear draft');
+    if (!confirmed) return;
+
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    updateDraftButton();
+    setInlineStatus('Saved draft cleared for this browser.', 'info');
+    toast('Draft cleared');
   }
 
   function copyNamesAsCSV() {
@@ -1935,6 +2107,9 @@ Doe A, 11:00, 11:30, 14:00, 15:30
   }
 
   renderHeaderStatus();
+  renderGenerateMeta();
+  updateDraftButton();
+  restoreDraft();
 </script>
 
 </body>

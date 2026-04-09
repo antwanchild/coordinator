@@ -73,10 +73,25 @@ The app exposes `/health` returning `{"status": "ok", "version": "x.x.x", "commi
    - Person: `Name, start, end` (multiple time pairs allowed)
    - Room: `time, officiator, brothers, sisters`
    - Or use Manual tab for individual name entry
+   - Manual dropdowns stop at `4:30 PM`; pasted or imported data can still use quarter-hour times through `4:45 PM`
    - Re-importing prompts to confirm before replacing existing data
 3. **Build Schedule** — renders a pixel-perfect preview (`Ctrl+B` / `Cmd+B`)
    - Enable **Auto** to rebuild automatically when names change
 4. **Export Both Sheets** — downloads the filled xlsx with AM, PM, and a **Source Data** tab containing all people and room data in paste-ready format — use the print tabs to print, and Source Data to re-import later
+
+## 💾 Saved Drafts
+
+The app automatically saves a browser-local draft containing:
+
+- people and their time ranges
+- room data
+- selected AM/PM sheet
+- active input tab
+- accent preference
+
+Drafts restore automatically on page load when they are still fresh. Drafts expire after 14 days and can also be removed manually with the **Clear Draft** button in the manual-entry panel.
+
+Draft storage uses browser `localStorage`, so it is convenient but not private or encrypted storage.
 
 ## 🎨 Themes
 
@@ -84,7 +99,7 @@ Use the dropdown in the header to choose an accent color (Lime, Blue, Purple, Gr
 
 ## ❓ Help
 
-Click the `?` button in the header for a built-in help modal covering paste format, keyboard shortcuts, and feature explanations. Inline tooltip hints `?` are also available on section labels and the Auto button.
+Click the `?` button in the header for a built-in help modal covering import format, preview/export behavior, keyboard shortcuts, and availability rules. Inline tooltip hints `?` are also available on section labels and the Auto button.
 
 ## 📋 Paste / CSV Format
 
@@ -111,7 +126,9 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 **Room line:** `time, officiator, estimated brothers, estimated sisters`
 - Room 1 (11:00 AM) officiator is always AM Shift — leave blank
 - Lines starting with `#` are ignored
-- Valid times: `11:00` through `16:30`
+- Valid times: `11:00` through `16:45` in 15-minute increments
+
+Manual entry intentionally stops at `4:30 PM` because the shift ends at `4:30 PM`, even though imported data may still include quarter-hour end times.
 
 ## 🔢 Veil Recommendation
 
@@ -152,3 +169,11 @@ Versions are bumped automatically from commit messages and the changelog is gene
 | plain message | Not in changelog | None |
 
 `VERSION` is treated as workflow-managed release metadata. In normal development, prefer using the commit message convention above and let GitHub Actions bump the version, changelog, and tags during the Docker publish workflow.
+
+## 🔎 Build Verification
+
+To confirm which build is live:
+
+- check the version and short commit chip in the app header
+- click the short commit chip to copy the full build SHA
+- query `/health` to see the current version and commit returned by the running container
