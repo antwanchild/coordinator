@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.18] - 2026-04-09
+
+### 🐛 Bug Fixes
+
+- Simplify generate section layout
 ## [1.23.17] - 2026-04-09
 
 ### 🐛 Bug Fixes
