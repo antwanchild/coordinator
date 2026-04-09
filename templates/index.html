@@ -411,6 +411,14 @@
       overflow: visible;
     }
 
+    .generate-summary {
+      min-height: 1em;
+      margin-top: 6px;
+      font-size: .62rem;
+      color: var(--mut);
+      text-align: center;
+    }
+
     .card {
       background: var(--card);
       border: 1px solid var(--bdr);
@@ -994,6 +1002,7 @@
         &#8595; Export Both Sheets (.xlsx)
       </button>
       <p style="font-size: .6rem; color: var(--mut); text-align: center; margin-top: 4px">Export to print both sheets</p>
+      <div class="generate-summary" id="generateCounts">No names loaded yet</div>
       <div class="last-built" id="lastBuiltLabel">Last built: not yet</div>
       <div class="inline-status visible info" id="inlineStatus">Ready. Add names, import data, or build a preview.</div>
     </div>
@@ -1016,7 +1025,7 @@
     <div id="spinner" class="spinner"><div class="spinner-ring"></div></div>
     <div id="previewArea" class="preview-empty">
       <div class="icon">&#128203;</div>
-      <p>Add names then click Build Schedule.</p>
+      <p>Add names, paste data, or import CSV, then click Build Schedule.</p>
     </div>
     <div style="margin-top: auto; padding-top: 24px; text-align: center; font-size: .6rem; color: var(--mut)">
       &copy; {{ now.year }} &nbsp;·&nbsp; Original spreadsheet by Taylor Cox &nbsp;·&nbsp; Modified by Anthony Child &nbsp;·&nbsp; App by Anthony Child
@@ -1267,6 +1276,18 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     labelEl.textContent = `Last built: ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
   }
 
+  function updateGenerateCounts(total, amCount, pmCount) {
+    const summaryEl = document.getElementById('generateCounts');
+    if (!summaryEl) return;
+
+    if (!total) {
+      summaryEl.textContent = 'No names loaded yet';
+      return;
+    }
+
+    summaryEl.textContent = `${total} total · ${amCount} AM · ${pmCount} PM`;
+  }
+
   function renderHeaderStatus() {
     document.getElementById('headerStatus').innerHTML = (isPM ? 'PM Sheet' : 'AM Sheet') + '&nbsp;&middot;&nbsp; v{{ version }} &nbsp;&middot;&nbsp; <span class="build-meta"><button class="commit-chip" id="commitChip" type="button" onclick="copyCommitSha()" title="Copy full build commit">{{ commit_short }}</button></span>';
     document.getElementById('previewTitle').textContent = (isPM ? 'P.M.' : 'A.M.') + ' - ' + (isPM ? 'PM' : 'AM');
@@ -1323,6 +1344,15 @@ Doe A, 11:00, 11:30, 14:00, 15:30
       document.getElementById('tab-' + x).classList.toggle('active', x === tab);
       document.getElementById('panel-' + x).style.display = x === tab ? 'block' : 'none';
     });
+
+    showSkippedWarning('skipped-csv', []);
+    showSkippedWarning('skipped-paste', []);
+
+    if (tab === 'manual') {
+      document.getElementById('nameInput').focus();
+    } else if (tab === 'paste') {
+      document.getElementById('pasteInput').focus();
+    }
   }
 
   function addName() {
@@ -1362,6 +1392,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     const pmCount   = countOnSheet(true);
 
     container.classList.toggle('has-names', people.length > 0);
+    updateGenerateCounts(people.length, amCount, pmCount);
 
     if (people.length) {
       countEl.textContent = `${people.length} total · ${amCount} AM · ${pmCount} PM`;
@@ -1416,7 +1447,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
     people = [];
     resetRoomData();
     renderNameList();
-    resetPreview('Add names then click Build Schedule.');
+    resetPreview('Add names, paste data, or import CSV, then click Build Schedule.');
     setInlineStatus('Cleared all names and room data.', 'info');
     toast('Cleared');
   }
@@ -1625,7 +1656,7 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 
     if (!people.length) {
       const sheetName = isPM ? 'PM' : 'AM';
-      resetPreview(`No people on ${sheetName} sheet.`);
+      resetPreview(`No one currently overlaps the ${sheetName} sheet. Adjust times, import more data, or switch sheets.`);
       setInlineStatus(`No people available to build on the ${sheetName} sheet yet.`, 'info');
       return;
     }
