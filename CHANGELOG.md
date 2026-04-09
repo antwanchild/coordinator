@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.23.16] - 2026-04-09
+
+### 🐛 Bug Fixes
+
+- Add inline build feedback in sidebar
 ## [1.23.15] - 2026-04-08
 
 ### 🐛 Bug Fixes
