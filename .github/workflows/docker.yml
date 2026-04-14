@@ -262,6 +262,7 @@ jobs:
             --arg repo "${{ github.repository }}" \
             --arg run_url "${{ steps.meta.outputs.run_url }}" \
             --arg footer "${DISPLAY_NAME} v${{ steps.meta.outputs.version }} • ${{ github.repository }}" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --argjson color "${{ steps.meta.outputs.color }}" \
             '{
               embeds: [
@@ -269,14 +270,15 @@ jobs:
                   title: $title,
                   url: $url,
                   color: $color,
+                  timestamp: $timestamp,
                   fields: [
-                    {name: "Version", value: $version, inline: true},
-                    {name: "Triggered by", value: $triggered_by, inline: true},
-                    {name: "Branch", value: $branch, inline: true},
-                    {name: "Commit", value: $commit, inline: false},
-                    {name: "Duration", value: $duration, inline: true},
-                    {name: "Run", value: ("[View run](" + $run_url + ")"), inline: true},
-                    {name: "SHA", value: $short_sha, inline: true}
+                    {name: "🏷️ Version", value: $version, inline: true},
+                    {name: "👤 Triggered by", value: $triggered_by, inline: true},
+                    {name: "🌿 Branch", value: $branch, inline: true},
+                    {name: "💬 Commit", value: $commit, inline: false},
+                    {name: "⏱️ Duration", value: $duration, inline: true},
+                    {name: "🔗 Run", value: ("[View run](" + $run_url + ")"), inline: true},
+                    {name: "🔖 SHA", value: $short_sha, inline: true}
                   ],
                   footer: {text: $footer}
                 }
