@@ -166,3 +166,122 @@ jobs:
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+
+  notify-discord:
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    needs:
+      - bump-version
+      - build-and-push
+    permissions:
+      actions: read
+      contents: read
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      BUILD_VERSION: ${{ needs.bump-version.outputs.version }}
+      BUMP_RESULT: ${{ needs.bump-version.result }}
+      BUILD_RESULT: ${{ needs.build-and-push.result }}
+    steps:
+      - name: Checkout
+        if: env.DISCORD_WEBHOOK_URL != ''
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Collect notification metadata
+        if: env.DISCORD_WEBHOOK_URL != ''
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$BUMP_RESULT" = "success" ] && [ "$BUILD_RESULT" = "success" ]; then
+            STATUS="Build Succeeded"
+            ICON="✅"
+            COLOR=3066993
+          else
+            STATUS="Build Failed"
+            ICON="❌"
+            COLOR=15158332
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TRIGGERED_BY="${{ github.actor }}"
+            BRANCH="${{ github.ref_name }}"
+          else
+            TRIGGERED_BY="${{ github.event.workflow_run.actor.login }}"
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+          fi
+
+          COMMIT_MSG=$(git log -1 --pretty=%s | tr '\n' ' ')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          VERSION_VALUE="$BUILD_VERSION"
+
+          if [ -z "$VERSION_VALUE" ] && [ -f VERSION ]; then
+            VERSION_VALUE=$(tr -d '[:space:]' < VERSION)
+          fi
+
+          if [ -z "$VERSION_VALUE" ]; then
+            VERSION_VALUE="unknown"
+          fi
+
+          readarray -t RUN_TIMES < <(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.run_started_at, .updated_at')
+          STARTED_AT="${RUN_TIMES[0]}"
+          UPDATED_AT="${RUN_TIMES[1]}"
+          DURATION_SECONDS=$(( $(date -d "$UPDATED_AT" +%s) - $(date -d "$STARTED_AT" +%s) ))
+          DURATION_MINUTES=$(( DURATION_SECONDS / 60 ))
+          DURATION_REMAINDER=$(( DURATION_SECONDS % 60 ))
+          DURATION="${DURATION_MINUTES}m ${DURATION_REMAINDER}s"
+
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "icon=$ICON" >> "$GITHUB_OUTPUT"
+          echo "color=$COLOR" >> "$GITHUB_OUTPUT"
+          echo "triggered_by=$TRIGGERED_BY" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION_VALUE" >> "$GITHUB_OUTPUT"
+          echo "commit_msg=$COMMIT_MSG" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          echo "duration=$DURATION" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Discord
+        if: env.DISCORD_WEBHOOK_URL != ''
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}"
+          DISPLAY_NAME=$(printf '%s' "$REPO_NAME" | sed 's/[-_]/ /g; s/\b./\u&/g')
+
+          payload=$(jq -n \
+            --arg title "${{ steps.meta.outputs.icon }} ${DISPLAY_NAME} — ${{ steps.meta.outputs.status }}" \
+            --arg url "${{ steps.meta.outputs.run_url }}" \
+            --arg version "${{ steps.meta.outputs.version }}" \
+            --arg triggered_by "${{ steps.meta.outputs.triggered_by }}" \
+            --arg branch "${{ steps.meta.outputs.branch }}" \
+            --arg commit "${{ steps.meta.outputs.commit_msg }}" \
+            --arg duration "${{ steps.meta.outputs.duration }}" \
+            --arg short_sha "${{ steps.meta.outputs.short_sha }}" \
+            --arg repo "${{ github.repository }}" \
+            --arg run_url "${{ steps.meta.outputs.run_url }}" \
+            --arg footer "${DISPLAY_NAME} v${{ steps.meta.outputs.version }} • ${{ github.repository }}" \
+            --argjson color "${{ steps.meta.outputs.color }}" \
+            '{
+              embeds: [
+                {
+                  title: $title,
+                  url: $url,
+                  color: $color,
+                  fields: [
+                    {name: "Version", value: $version, inline: true},
+                    {name: "Triggered by", value: $triggered_by, inline: true},
+                    {name: "Branch", value: $branch, inline: true},
+                    {name: "Commit", value: $commit, inline: false},
+                    {name: "Duration", value: $duration, inline: true},
+                    {name: "Run", value: ("[View run](" + $run_url + ")"), inline: true},
+                    {name: "SHA", value: $short_sha, inline: true}
+                  ],
+                  footer: {text: $footer}
+                }
+              ]
+            }')
+          curl -sS -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$payload"
