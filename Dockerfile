@@ -23,6 +23,10 @@ COPY templates/ templates/
 
 RUN chmod +x entrypoint.sh
 
+# Default runtime user inside the image; entrypoint can still switch to a mapped user.
+RUN useradd --system --create-home --home-dir /app --shell /usr/sbin/nologin coordinator && \
+    chown -R coordinator:coordinator /app
+
 # Version build arg — passed in by GitHub Actions
 ARG APP_VERSION=dev
 ENV APP_VERSION=${APP_VERSION}

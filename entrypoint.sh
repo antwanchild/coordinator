@@ -4,6 +4,8 @@ set -e
 # ── PUID / PGID support ───────────────────────────────────────────────────────
 PUID=${PUID:-0}
 PGID=${PGID:-0}
+RUNTIME_USER=coordinator
+RUNTIME_GROUP=coordinator
 
 log() {
     echo "$(TZ=${TZ:-UTC} date '+%Y-%m-%d %H:%M:%S %Z') [INFO] $1"
@@ -12,14 +14,19 @@ log() {
 if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
     log "Entrypoint | PUID=${PUID} PGID=${PGID}"
 
-    # Create group if it doesn't exist
-    if ! getent group coordinator > /dev/null 2>&1; then
-        groupadd -g "$PGID" coordinator
+    # Create a mapped runtime group/user if the requested IDs are available.
+    if ! getent group "$PGID" > /dev/null 2>&1; then
+        groupadd -g "$PGID" coordinator-runtime
+        RUNTIME_GROUP=coordinator-runtime
+    else
+        RUNTIME_GROUP="$(getent group "$PGID" | cut -d: -f1)"
     fi
 
-    # Create user if it doesn't exist
-    if ! getent passwd coordinator > /dev/null 2>&1; then
-        useradd -u "$PUID" -g "$PGID" -d /app -s /sbin/nologin coordinator
+    if ! getent passwd "$PUID" > /dev/null 2>&1; then
+        useradd -u "$PUID" -g "$RUNTIME_GROUP" -d /app -s /sbin/nologin coordinator-runtime
+        RUNTIME_USER=coordinator-runtime
+    else
+        RUNTIME_USER="$(getent passwd "$PUID" | cut -d: -f1)"
     fi
 
     # Ensure /config is writable by the new user if mounted
@@ -31,9 +38,9 @@ if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
     fi
 
     log "Starting app as PUID=${PUID} PGID=${PGID}"
-    exec gosu coordinator python app.py
+    exec gosu "$RUNTIME_USER" gunicorn --bind 0.0.0.0:8080 --access-logfile - --error-logfile - --workers "${WEB_CONCURRENCY:-2}" --threads "${GUNICORN_THREADS:-4}" app:app
 else
     log "Entrypoint | running as root (no PUID/PGID set)"
-    log "Starting app as root"
-    exec python app.py
+    log "Starting app as coordinator"
+    exec gosu coordinator gunicorn --bind 0.0.0.0:8080 --access-logfile - --error-logfile - --workers "${WEB_CONCURRENCY:-2}" --threads "${GUNICORN_THREADS:-4}" app:app
 fi

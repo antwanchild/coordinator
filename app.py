@@ -30,8 +30,29 @@ def set_security_headers(response):
         "script-src 'self' 'unsafe-inline'; "
         "base-uri 'self'; "
         "form-action 'self'; "
+        "frame-ancestors 'none'; "
         "object-src 'none';"
     )
+    response.headers['Permissions-Policy'] = (
+        'accelerometer=(), '
+        'autoplay=(), '
+        'camera=(), '
+        'display-capture=(), '
+        'encrypted-media=(), '
+        'geolocation=(), '
+        'gyroscope=(), '
+        'magnetometer=(), '
+        'microphone=(), '
+        'midi=(), '
+        'payment=(), '
+        'picture-in-picture=(), '
+        'usb=()'
+    )
+    if os.environ.get('ENABLE_HSTS') == '1':
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    if request.endpoint in {'index', 'health', 'preview', 'export'}:
+        response.headers['Cache-Control'] = 'no-store, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
     return response
 
 # ── Logging ───────────────────────────────────────────────────────────────────
