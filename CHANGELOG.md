@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.24.1] - 2026-06-17
+
+### 🐛 Bug Fixes
+
+- Harden public deployment
 ## [1.24.0] - 2026-04-09
 
 ### ✨ Features
