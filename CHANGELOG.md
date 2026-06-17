@@ -3,6 +3,12 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### 🐛 Bug Fixes
+
+- Harden public deployment with stronger security headers, Gunicorn startup, and safer cache behavior
+
 ## [1.24.0] - 2026-04-09
 
 ### ✨ Features
