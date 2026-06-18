@@ -1,5 +1,7 @@
 import io
 
+from typing import Optional
+
 from PIL import Image, ImageDraw, ImageFont
 
 from constants import (
@@ -13,10 +15,13 @@ from schedule import covers_slot, person_on_sheet, count_brothers_in_room, recom
 
 # ── Colour helper ─────────────────────────────────────────────────────────────
 
-def hex_to_rgb(hex_color):
+def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     """Convert a hex color string like '#RRGGBB' to an (R, G, B) tuple."""
     hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+    red = int(hex_color[0:2], 16)
+    green = int(hex_color[2:4], 16)
+    blue = int(hex_color[4:6], 16)
+    return red, green, blue
 
 # ── Preview renderer ──────────────────────────────────────────────────────────
 
@@ -101,7 +106,7 @@ def render_preview(people, is_pm, room_data=None):
         x2 -= 1
         y2 -= 1
 
-        def border_style(style):
+        def border_style(style) -> Optional[tuple[tuple[int, int, int], int]]:
             if style in ('double', 'medium'):
                 return hex_to_rgb('#595959'), 2
             if style == 'thin':
@@ -109,17 +114,25 @@ def render_preview(people, is_pm, room_data=None):
             return None
 
         if left:
-            color, width = border_style(left)
-            draw.line([(x1, y1), (x1, y2)], fill=color, width=width)
+            style = border_style(left)
+            if style is not None:
+                color, width = style
+                draw.line([(x1, y1), (x1, y2)], fill=color, width=width)
         if right:
-            color, width = border_style(right)
-            draw.line([(x2, y1), (x2, y2)], fill=color, width=width)
+            style = border_style(right)
+            if style is not None:
+                color, width = style
+                draw.line([(x2, y1), (x2, y2)], fill=color, width=width)
         if top:
-            color, width = border_style(top)
-            draw.line([(x1, y1), (x2, y1)], fill=color, width=width)
+            style = border_style(top)
+            if style is not None:
+                color, width = style
+                draw.line([(x1, y1), (x2, y1)], fill=color, width=width)
         if bottom:
-            color, width = border_style(bottom)
-            draw.line([(x1, y2), (x2, y2)], fill=color, width=width)
+            style = border_style(bottom)
+            if style is not None:
+                color, width = style
+                draw.line([(x1, y2), (x2, y2)], fill=color, width=width)
 
     # ── Header rows 1–5 ───────────────────────────────────────────────────────
 

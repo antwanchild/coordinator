@@ -1,9 +1,30 @@
+# Git
+.git/
+.gitignore
+
+# GitHub Actions
+.github/
+
+# Docs
+README.md
+CONTRIBUTING.md
+CHANGELOG.md
+
+# Project config / tooling
+cliff.toml
+VERSION
+
+# Legacy
+OLDschedule-builder.html
+
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.pdb
+.mypy_cache/
+.ruff_cache/
 *.egg
 *.egg-info/
 dist/

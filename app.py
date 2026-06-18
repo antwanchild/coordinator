@@ -1,12 +1,13 @@
 import os
 import re
-import time
-import platform
 import logging
+import platform
+import time
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
+from typing import TypedDict
 
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, g, request, jsonify, send_file, render_template
 from werkzeug.exceptions import MethodNotAllowed
 
 from constants import APP_VERSION, APP_COMMIT_SHA, APP_COMMIT_SHORT, AM_ROOMS, PM_ROOMS, ALL_TIMES
@@ -16,6 +17,28 @@ from renderer import render_preview
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max request size
 TIME_PATTERN = re.compile(r'^\d{2}:\d{2}$')
+
+
+class TimeRange(TypedDict):
+    start: str
+    end: str
+
+
+class Person(TypedDict):
+    name: str
+    ranges: list[TimeRange]
+
+
+class RoomData(TypedDict, total=False):
+    off: str
+    b: str
+    s: str
+
+
+class RequestPayload(TypedDict):
+    people: list[Person]
+    room_data: dict[str, RoomData]
+    is_pm: bool
 
 @app.after_request
 def set_security_headers(response):
@@ -68,18 +91,19 @@ logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
 
 LOG_DIR = '/config/logs' if os.path.isdir('/config') else None
 
-if LOG_DIR:
-    os.makedirs(LOG_DIR, exist_ok=True)
+if LOG_DIR is not None:
+    log_dir = LOG_DIR
+    os.makedirs(log_dir, exist_ok=True)
 
     class WeeklyLogHandler(TimedRotatingFileHandler):
         """Rotate logs weekly, keeping .log extension on rotated files."""
         def rotation_filename(self, default_name):
-            base   = os.path.join(LOG_DIR, 'coordinator')
+            base   = os.path.join(log_dir, 'coordinator')
             suffix = default_name.split('.')[-1]
             return f"{base}.{suffix}.log"
 
     file_handler = WeeklyLogHandler(
-        os.path.join(LOG_DIR, 'coordinator.log'),
+        os.path.join(log_dir, 'coordinator.log'),
         when='W0', interval=1, backupCount=4, utc=False
     )
     file_handler.setFormatter(log_formatter)
@@ -102,22 +126,22 @@ ROUTE_LABELS = {
 ROOM_TIME_SET = {room['time'] for room in AM_ROOMS + PM_ROOMS}
 
 
-def to_minutes(time_str):
+def to_minutes(time_str: str) -> int:
     hours, minutes = time_str.split(':')
     return int(hours) * 60 + int(minutes)
 
 
-def is_valid_time_value(value):
+def is_valid_time_value(value: object) -> bool:
     if not isinstance(value, str) or not TIME_PATTERN.match(value):
         return False
     return value in ALL_TIMES
 
 
-def validate_people(people):
+def validate_people(people: object) -> tuple[list[Person] | None, str | None]:
     if not isinstance(people, list):
         return None, 'people must be a list'
 
-    validated_people = []
+    validated_people: list[Person] = []
     for index, person in enumerate(people):
         if not isinstance(person, dict):
             return None, f'people[{index}] must be an object'
@@ -129,13 +153,15 @@ def validate_people(people):
         if not isinstance(ranges, list) or not ranges:
             return None, f'people[{index}].ranges must be a non-empty list'
 
-        validated_ranges = []
+        validated_ranges: list[TimeRange] = []
         for range_index, time_range in enumerate(ranges):
             if not isinstance(time_range, dict):
                 return None, f'people[{index}].ranges[{range_index}] must be an object'
 
             start = time_range.get('start')
             end = time_range.get('end')
+            if not isinstance(start, str) or not isinstance(end, str):
+                return None, f'people[{index}].ranges[{range_index}] must use 15-minute times between 11:00 and 16:45'
             if not is_valid_time_value(start) or not is_valid_time_value(end):
                 return None, f'people[{index}].ranges[{range_index}] must use 15-minute times between 11:00 and 16:45'
             if to_minutes(start) >= to_minutes(end):
@@ -148,13 +174,13 @@ def validate_people(people):
     return validated_people, None
 
 
-def validate_room_data(room_data):
+def validate_room_data(room_data: object) -> tuple[dict[str, RoomData] | None, str | None]:
     if room_data is None:
         return {}, None
     if not isinstance(room_data, dict):
         return None, 'room_data must be an object'
 
-    validated_room_data = {}
+    validated_room_data: dict[str, RoomData] = {}
     for room_time, raw_room in room_data.items():
         if room_time not in ROOM_TIME_SET:
             return None, f'room_data contains unsupported time "{room_time}"'
@@ -187,7 +213,7 @@ def validate_room_data(room_data):
     return validated_room_data, None
 
 
-def validate_request_payload(data, require_is_pm=False):
+def validate_request_payload(data: object, require_is_pm: bool = False) -> tuple[RequestPayload | None, str | None]:
     if not data or not isinstance(data, dict):
         return None, 'Invalid request body'
 
@@ -206,15 +232,18 @@ def validate_request_payload(data, require_is_pm=False):
     else:
         is_pm = bool(is_pm)
 
-    return {'people': people, 'room_data': room_data, 'is_pm': is_pm}, None
+    assert people is not None
+    assert room_data is not None
+    payload: RequestPayload = {'people': people, 'room_data': room_data, 'is_pm': is_pm}
+    return payload, None
 
 @app.before_request
 def before_request():
-    request.start_time = time.monotonic()
+    g.start_time = time.monotonic()
 
 @app.after_request
 def after_request(response):
-    start_time = getattr(request, 'start_time', time.monotonic())
+    start_time = getattr(g, 'start_time', time.monotonic())
     duration_ms = int((time.monotonic() - start_time) * 1000)
     label       = ROUTE_LABELS.get(request.path, request.path)
     logger.info(f"{label} | method={request.method} | {response.status_code} ({duration_ms}ms)")
@@ -257,7 +286,7 @@ def health():
 def preview():
     data = request.get_json(silent=True)
     payload, error_message = validate_request_payload(data, require_is_pm=True)
-    if error_message:
+    if payload is None or error_message is not None:
         logger.warning(f"Preview request | validation failed | error={error_message}")
         return jsonify({'error': error_message}), 400
 
@@ -286,7 +315,7 @@ def preview():
 def export():
     data = request.get_json(silent=True)
     payload, error_message = validate_request_payload(data)
-    if error_message:
+    if payload is None or error_message is not None:
         logger.warning(f"Export request | validation failed | error={error_message}")
         return jsonify({'error': error_message}), 400
 

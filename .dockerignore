@@ -1,9 +1,9 @@
 # Git
-.git
+.git/
 .gitignore
 
 # GitHub Actions
-.github
+.github/
 
 # Docs
 README.md
@@ -22,8 +22,51 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.env
+*.pdb
+.mypy_cache/
+.ruff_cache/
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Dev
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# Environment variables
+.env.local
+.env.*.local
+*.env
+
+# Docker
+.docker/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+*.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Logs
 *.log
-.DS_Store
+logs/
+
+# Test output
+/tmp/
+*.tmp
+
+# Secrets
+*.pem
+*.key
+*.cert

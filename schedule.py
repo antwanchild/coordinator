@@ -1,5 +1,6 @@
 import io
 import os
+from typing import Any, cast
 
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font
@@ -48,6 +49,11 @@ def safe_excel_value(value):
     if isinstance(value, (int, float)):
         return value
     return safe_cell_value(value)
+
+
+def set_cell_value(worksheet, row, column, value):
+    """Assign a value through an Any-cast cell to avoid MergedCell type noise."""
+    cast(Any, worksheet.cell(row=row, column=column)).value = value
 
 def count_brothers_in_room(sorted_people, room_time):
     """Count brothers assigned to a room slot, including the Off row.
@@ -133,8 +139,8 @@ def build_xlsx(people, room_data=None):
             person     = None if is_off_row else (sorted_people[row_index - 1] if row_index - 1 < len(sorted_people) else None)
             sheet_row  = 6 + row_index
 
-            worksheet.cell(row=sheet_row, column=2).value = row_index + 1
-            worksheet.cell(row=sheet_row, column=3).value = 'Off.' if is_off_row else (safe_cell_value(person['name']) if person else '')
+            set_cell_value(worksheet, sheet_row, 2, row_index + 1)
+            set_cell_value(worksheet, sheet_row, 3, 'Off.' if is_off_row else (safe_cell_value(person['name']) if person else ''))
 
             if person:
                 for room_index, room in enumerate(rooms):
@@ -149,7 +155,7 @@ def build_xlsx(people, room_data=None):
         for room_index, room in enumerate(rooms):
             start_col = ROOM_START_COLS[room_index]
             count     = count_brothers_in_room(sorted_people, room['time'])
-            worksheet.cell(row=26, column=start_col).value = count
+            set_cell_value(worksheet, 26, start_col, count)
 
         # Write officiator, B:, S: into header cells for each room
         for room_index, room in enumerate(rooms):
@@ -157,21 +163,21 @@ def build_xlsx(people, room_data=None):
             rd        = room_data.get(room['time'], {})
             if rd.get('off'):
                 off_cell       = worksheet.cell(row=4, column=start_col + 3)
-                off_cell.value = safe_cell_value(rd['off'])
+                set_cell_value(worksheet, 4, start_col + 3, safe_cell_value(rd['off']))
                 off_cell.font  = Font(bold=True, color='335593')
             b_val   = rd.get('b', '')
             s_val   = rd.get('s', '')
             workers = count_brothers_in_room(sorted_people, room['time'])
             if b_val:
-                worksheet.cell(row=3, column=start_col + 2).value = safe_excel_value(b_val)
+                set_cell_value(worksheet, 3, start_col + 2, safe_excel_value(b_val))
             if s_val:
-                worksheet.cell(row=3, column=start_col + 8).value = safe_excel_value(s_val)
+                set_cell_value(worksheet, 3, start_col + 8, safe_excel_value(s_val))
             if b_val or s_val:
                 bv, sv = recommend_veils(b_val, s_val, workers)
                 if bv is not None:
-                    worksheet.cell(row=3, column=start_col + 4).value = f"{bv}B"
+                    set_cell_value(worksheet, 3, start_col + 4, f"{bv}B")
                 if sv is not None:
-                    worksheet.cell(row=3, column=start_col + 10).value = f"{sv}S"
+                    set_cell_value(worksheet, 3, start_col + 10, f"{sv}S")
 
     # ── Source data sheet ─────────────────────────────────────────────────────
     # Each row is a single paste-ready line matching the paste box format:
@@ -182,7 +188,7 @@ def build_xlsx(people, room_data=None):
     row = 1
     for person in sorted(people, key=lambda p: p['name']):
         parts = [safe_cell_value(person['name'])] + [safe_cell_value(t) for r in person['ranges'] for t in (r['start'], r['end'])]
-        src.cell(row=row, column=1).value = ', '.join(parts)
+        set_cell_value(src, row, 1, ', '.join(parts))
         row += 1
 
     row += 1  # blank separator
@@ -198,7 +204,7 @@ def build_xlsx(people, room_data=None):
             safe_cell_value(rd.get('b', '')),
             safe_cell_value(rd.get('s', '')),
         ]
-        src.cell(row=row, column=1).value = ', '.join(parts)
+        set_cell_value(src, row, 1, ', '.join(parts))
         row += 1
 
     max_len = max((len(str(c.value)) for c in src['A'] if c.value), default=20)
