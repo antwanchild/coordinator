@@ -3,6 +3,19 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.0] - 2026-06-19
+
+### ✨ Features
+
+- Add per-version build suffix to release images
+
+### 📖 Documentation
+
+- Add security hardening note
+- Add tests directory guide
+- Align workflow names in docs
+- Mirror workflow names in templates
+- Refine issue template guidance
 ## [1.24.1] - 2026-06-17
 
 ### 🐛 Bug Fixes
