@@ -263,6 +263,8 @@ jobs:
       contents: read
     env:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      BASE_VERSION: ${{ needs.publish-image.outputs.base_version }}
+      BUILD_NUMBER: ${{ needs.publish-image.outputs.build_number }}
       BUILD_VERSION: ${{ needs.publish-image.outputs.app_version }}
       BUMP_RESULT: ${{ needs.prepare-release.result }}
       BUILD_RESULT: ${{ needs.publish-image.result }}
@@ -300,14 +302,24 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%s | tr '\n' ' ')
           SHORT_SHA=$(git rev-parse --short HEAD)
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          VERSION_VALUE="$BUILD_VERSION"
+          BASE_VERSION_VALUE="$BASE_VERSION"
+          BUILD_NUMBER_VALUE="$BUILD_NUMBER"
+          FULL_VERSION_VALUE="$BUILD_VERSION"
 
-          if [ -z "$VERSION_VALUE" ] && [ -f VERSION ]; then
-            VERSION_VALUE=$(tr -d '[:space:]' < VERSION)
+          if [ -z "$BASE_VERSION_VALUE" ] && [ -f VERSION ]; then
+            BASE_VERSION_VALUE=$(tr -d '[:space:]' < VERSION)
           fi
 
-          if [ -z "$VERSION_VALUE" ]; then
-            VERSION_VALUE="unknown"
+          if [ -z "$BASE_VERSION_VALUE" ]; then
+            BASE_VERSION_VALUE="unknown"
+          fi
+
+          if [ -z "$BUILD_NUMBER_VALUE" ]; then
+            BUILD_NUMBER_VALUE="unknown"
+          fi
+
+          if [ -z "$FULL_VERSION_VALUE" ]; then
+            FULL_VERSION_VALUE="$BASE_VERSION_VALUE"
           fi
 
           readarray -t RUN_TIMES < <(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.run_started_at, .updated_at')
@@ -323,7 +335,9 @@ jobs:
           echo "color=$COLOR" >> "$GITHUB_OUTPUT"
           echo "triggered_by=$TRIGGERED_BY" >> "$GITHUB_OUTPUT"
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION_VALUE" >> "$GITHUB_OUTPUT"
+          echo "base_version=$BASE_VERSION_VALUE" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER_VALUE" >> "$GITHUB_OUTPUT"
+          echo "version=$FULL_VERSION_VALUE" >> "$GITHUB_OUTPUT"
           echo "commit_msg=$COMMIT_MSG" >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
           echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
@@ -338,6 +352,8 @@ jobs:
           payload=$(jq -n \
             --arg title "${{ steps.meta.outputs.icon }} ${DISPLAY_NAME} — ${{ steps.meta.outputs.status }}" \
             --arg url "${{ steps.meta.outputs.run_url }}" \
+            --arg base_version "${{ steps.meta.outputs.base_version }}" \
+            --arg build_number "${{ steps.meta.outputs.build_number }}" \
             --arg version "${{ steps.meta.outputs.version }}" \
             --arg triggered_by "${{ steps.meta.outputs.triggered_by }}" \
             --arg branch "${{ steps.meta.outputs.branch }}" \
@@ -357,7 +373,8 @@ jobs:
                   color: $color,
                   timestamp: $timestamp,
                   fields: [
-                    {name: "🏷️ Version", value: $version, inline: true},
+                    {name: "🏷️ Version", value: $base_version, inline: true},
+                    {name: "🔢 Build", value: ("build" + $build_number), inline: true},
                     {name: "👤 Triggered by", value: $triggered_by, inline: true},
                     {name: "🌿 Branch", value: $branch, inline: true},
                     {name: "💬 Commit", value: $commit, inline: false},
