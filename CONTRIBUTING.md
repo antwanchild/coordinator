@@ -69,7 +69,7 @@ git commit -m "just tweaking some stuff"
 2. Generates `CHANGELOG.md` using [git-cliff](https://git-cliff.org/) from `cliff.toml`
 3. Commits `VERSION` and `CHANGELOG.md` back to `main` with `[skip ci]`
 4. Creates a git tag (e.g. `v1.0.1`)
-5. Builds and pushes Docker image to `ghcr.io` tagged as `1.0.1`, `latest`, and the short SHA
+5. Builds and pushes Docker image to `ghcr.io` tagged as `1.0.1`, `1.0.1-build0`, `latest`, and the short SHA
 
 ## 🔄 CI And Release Flow
 
