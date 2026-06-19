@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.2] - 2026-06-19
+
+### 🐛 Bug Fixes
+
+- Separate version and build in discord release notice
 ## [1.25.1] - 2026-06-19
 
 ### 🐛 Bug Fixes
