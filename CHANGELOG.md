@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.3] - 2026-06-19
+
+### 🐛 Bug Fixes
+
+- Detect package api scope for build counter
+
+### 📖 Documentation
+
+- Clarify release version and build notices
 ## [1.25.2] - 2026-06-19
 
 ### 🐛 Bug Fixes
