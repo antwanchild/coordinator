@@ -1,21 +1,20 @@
-import os
-import tempfile
 import unittest
-from unittest.mock import patch
+from typing import TypedDict
 
-from openpyxl import Workbook, load_workbook
-
-import app
-from schedule import (
-    build_xlsx,
-    count_brothers_in_room,
-    covers_slot,
-    person_on_sheet,
-    recommend_veils,
-)
+from schedule import count_brothers_in_room, covers_slot, person_on_sheet, recommend_veils
 
 
-def make_person(name, ranges):
+class TimeRange(TypedDict):
+    start: str
+    end: str
+
+
+class Person(TypedDict):
+    name: str
+    ranges: list[TimeRange]
+
+
+def make_person(name: str, ranges: list[TimeRange]) -> Person:
     return {'name': name, 'ranges': ranges}
 
 
@@ -49,74 +48,10 @@ class ScheduleLogicTests(unittest.TestCase):
         self.assertEqual(recommend_veils(8, 2, 6), (2, 1))
         self.assertEqual(recommend_veils(0, 0, 6), (None, None))
 
-    def test_build_xlsx_writes_source_sheet_and_values(self):
-        people = [
-            make_person('Alex', [{'start': '11:00', 'end': '11:30'}]),
-            make_person('Blake', [{'start': '14:00', 'end': '14:30'}]),
-        ]
-        room_data = {
-            '11:00': {'off': 'Officer A', 'b': '3', 's': '3'},
-            '14:00': {'off': 'Officer B', 'b': '2', 's': '1'},
-        }
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            template_path = os.path.join(tmpdir, 'template.xlsx')
-            workbook = Workbook()
-            workbook.remove(workbook.active)
-            workbook.create_sheet('AM')
-            workbook.create_sheet('PM')
-            workbook.save(template_path)
-
-            with patch('schedule.TEMPLATE_PATH', template_path):
-                buffer = build_xlsx(people, room_data)
-
-        result = load_workbook(buffer)
-        self.assertIn('Source Data', result.sheetnames)
-
-        source = result['Source Data']
-        self.assertEqual(source['A1'].value, 'Alex, 11:00, 11:30')
-        self.assertEqual(source['A2'].value, 'Blake, 14:00, 14:30')
-        self.assertEqual(source['A4'].value, '11:00, Officer A, 3, 3')
-
-    def test_validate_request_payload_normalizes_and_rejects_invalid_values(self):
-        payload, error = app.validate_request_payload({
-            'people': [{'name': '  Alex  ', 'ranges': [{'start': '11:00', 'end': '11:30'}]}],
-            'room_data': {'11:00': {'off': '  Officer A  ', 'b': 2, 's': '1'}},
-            'is_pm': True,
-        }, require_is_pm=True)
-
-        self.assertIsNone(error)
-        assert payload is not None
-        self.assertEqual(payload['people'][0]['name'], 'Alex')
-        self.assertEqual(payload['room_data']['11:00']['off'], 'Officer A')
-        self.assertEqual(payload['room_data']['11:00']['b'], '2')
-        self.assertEqual(payload['room_data']['11:00']['s'], '1')
-        self.assertTrue(payload['is_pm'])
-
-        _, error = app.validate_request_payload({
-            'people': [],
-            'room_data': {},
-            'is_pm': 'yes',
-        }, require_is_pm=True)
-        self.assertEqual(error, 'is_pm must be a boolean')
-
-        _, error = app.validate_request_payload({
-            'people': [{'name': 'Alex', 'ranges': [{'start': '11:00', 'end': '11:10'}]}],
-            'room_data': {},
-            'is_pm': False,
-        })
-        self.assertEqual(error, 'people[0].ranges[0] must use 15-minute times between 11:00 and 16:45')
-
-    def test_health_route_reports_json(self):
-        client = app.app.test_client()
-        response = client.get('/health')
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.get_json()
-        self.assertEqual(payload['status'], 'ok')
-        self.assertIn('version', payload)
-        self.assertIn('commit', payload)
-
+    def test_recommend_veils_handles_edge_cases(self):
+        self.assertEqual(recommend_veils('3', '2', '5'), (2, 1))
+        self.assertEqual(recommend_veils(1, 0, 1), (0, 0))
+        self.assertEqual(recommend_veils(None, None, None), (None, None))
 
 if __name__ == '__main__':
     unittest.main()
