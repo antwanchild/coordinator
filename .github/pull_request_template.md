@@ -10,6 +10,7 @@
 - [ ] Refactor / cleanup (`refactor:`)
 - [ ] Documentation (`docs:`)
 - [ ] Chore (`chore:`)
+- [ ] Release-impacting change
 
 ## Test plan
 
@@ -19,3 +20,5 @@
 - [ ] Preview renders correctly
 - [ ] Export produces correct xlsx output
 - [ ] No regressions on AM/PM sheets
+- [ ] `checks` workflow should pass
+- [ ] If release-impacting, note the expected version bump

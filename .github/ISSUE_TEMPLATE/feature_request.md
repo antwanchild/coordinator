@@ -12,6 +12,10 @@ labels: enhancement
 
 <!-- Describe what you'd like to see. -->
 
+## Release impact
+
+<!-- If this should affect versioning or release notes, say so here. -->
+
 ## Alternatives considered
 
 <!-- Any other approaches you thought of? -->

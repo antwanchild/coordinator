@@ -18,6 +18,10 @@ labels: bug
 
 <!-- What should have happened? -->
 
+## Release impact
+
+<!-- If this bug fix should trigger a release, mention that here. -->
+
 ## Actual behavior
 
 <!-- What actually happened? -->
