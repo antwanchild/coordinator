@@ -171,6 +171,7 @@ Versions are bumped automatically from commit messages and the changelog is gene
 `VERSION` is workflow-managed release metadata and stays on the semantic base release, like `1.24.1`.
 The `Release Publish` workflow adds a per-version build suffix at publish time, so the running app and image metadata look like `1.24.1-build0`, `1.24.1-build1`, and so on.
 The build counter resets to `build0` whenever `VERSION` changes. In normal development, prefer using the commit message convention above and let GitHub Actions bump the version, changelog, tags, and build metadata during release.
+Discord release notifications show the semantic version and build counter separately, while keeping the combined version in the footer.
 
 ## 🔎 Build Verification
 
