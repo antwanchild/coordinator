@@ -57,6 +57,19 @@ class RouteTests(unittest.TestCase):
         payload = response.get_json()
         self.assertEqual(payload['error'], 'is_pm must be a boolean')
 
+    def test_preview_route_rejects_malformed_json_body(self):
+        client = app.app.test_client()
+
+        response = client.post(
+            '/preview',
+            data='not-json',
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.get_json()
+        self.assertEqual(payload['error'], 'Invalid request body')
+
     def test_export_route_rejects_invalid_room_data(self):
         client = app.app.test_client()
 
@@ -69,6 +82,15 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         payload = response.get_json()
         self.assertEqual(payload['error'], 'room_data contains unsupported time "10:00"')
+
+    def test_export_route_rejects_empty_body(self):
+        client = app.app.test_client()
+
+        response = client.post('/export', data='', content_type='application/json')
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.get_json()
+        self.assertEqual(payload['error'], 'Invalid request body')
 
     def test_export_route_returns_xlsx_for_valid_payload(self):
         client = app.app.test_client()
