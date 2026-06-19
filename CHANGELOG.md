@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.1] - 2026-06-19
+
+### 🐛 Bug Fixes
+
+- Expose build suffix in image version label
 ## [1.25.0] - 2026-06-19
 
 ### ✨ Features
