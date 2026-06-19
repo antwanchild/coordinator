@@ -65,7 +65,7 @@ git commit -m "just tweaking some stuff"
 
 ## ⚙️ What happens on push
 
-1. Workflow reads your commit message and bumps `VERSION` if applicable
+1. Workflow reads your commit message range and bumps `VERSION` if applicable
 2. Generates `CHANGELOG.md` using [git-cliff](https://git-cliff.org/) from `cliff.toml`
 3. Commits `VERSION` and `CHANGELOG.md` back to `main` with `[skip ci]`
 4. Creates a git tag (e.g. `v1.0.1`)
@@ -78,13 +78,13 @@ git commit -m "just tweaking some stuff"
 - `.github/workflows/docker.yml` runs after `CI` succeeds on `main`
 - Docker publish has concurrency protection so overlapping publish runs do not race each other
 
-If you are changing behavior and expect a version bump, prefer a `fix:` or `feat:` commit instead of a plain commit message.
-
 ## 🖥️ UI Contribution Notes
 
 - Prefer inline status/help text over new modal dialogs unless the action is destructive or truly blocking
 - Keep destructive confirmation behavior consistent with the shared app confirmation modal
 - Browser drafts are stored in `localStorage`; changes to draft shape should be backward-tolerant or intentionally versioned
+
+If you are changing behavior and expect a version bump, prefer a `fix:` or `feat:` commit instead of a plain commit message.
 
 Commits with no recognized prefix (plain messages) still build and push `latest`
 but do not bump the version or update the changelog.
