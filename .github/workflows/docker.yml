@@ -1,4 +1,4 @@
-name: Build & Push Docker Image
+name: Release Publish
 
 on:
   workflow_run:
@@ -19,7 +19,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  bump-version:
+  prepare-release:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -138,10 +138,10 @@ jobs:
             exit 1
           }
 
-  build-and-push:
+  publish-image:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    needs: bump-version
+    needs: prepare-release
     permissions:
       contents: read
       packages: write
@@ -200,20 +200,20 @@ jobs:
           vuln-type: os,library
           severity: CRITICAL,HIGH
 
-  notify-discord:
+  notify-release:
     if: always() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     needs:
-      - bump-version
-      - build-and-push
+      - prepare-release
+      - publish-image
     permissions:
       actions: read
       contents: read
     env:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-      BUILD_VERSION: ${{ needs.bump-version.outputs.version }}
-      BUMP_RESULT: ${{ needs.bump-version.result }}
-      BUILD_RESULT: ${{ needs.build-and-push.result }}
+      BUILD_VERSION: ${{ needs.prepare-release.outputs.version }}
+      BUMP_RESULT: ${{ needs.prepare-release.result }}
+      BUILD_RESULT: ${{ needs.publish-image.result }}
     steps:
       - name: Checkout
         if: env.DISCORD_WEBHOOK_URL != ''

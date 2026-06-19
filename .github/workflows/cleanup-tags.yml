@@ -1,4 +1,4 @@
-name: Cleanup Old Tags
+name: Tag Retention
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - 'v*'
 
 jobs:
-  cleanup-tags:
+  prune-tags:
     runs-on: ubuntu-latest
     permissions:
       contents: write
