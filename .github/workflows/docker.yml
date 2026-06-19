@@ -233,7 +233,11 @@ jobs:
           push: true
           no-cache: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.version=${{ steps.build.outputs.app_version }}
+            org.opencontainers.image.base.version=${{ steps.version.outputs.value }}
+            org.opencontainers.image.revision=${{ github.sha }}
           build-args: |
             APP_VERSION=${{ steps.build.outputs.app_version }}
             APP_COMMIT_SHA=${{ github.sha }}
