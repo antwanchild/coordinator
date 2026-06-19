@@ -180,4 +180,4 @@ To confirm which build is live:
 - check the version and short commit chip in the app header
 - click the short commit chip to copy the full build SHA
 - query `/health` to see the current version and commit returned by the running container
-- the Discord release notice should show the same semantic version with the next build number for that release
+- the Discord release notice should show the same semantic version with the next build number for that release cycle
