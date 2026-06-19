@@ -2,4 +2,4 @@ blank_issues_enabled: false
 contact_links:
   - name: Help & Usage Questions
     url: https://github.com/antwanchild/coordinator/blob/main/README.md
-    about: Check the README before opening an issue — paste format, veil logic, and Docker setup are all covered there.
+    about: Check the README and tests guide before opening an issue — paste format, veil logic, Docker setup, and testing conventions are covered there.
