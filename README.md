@@ -168,7 +168,7 @@ Versions are bumped automatically from commit messages and the changelog is gene
 | `chore:` | 🔧 Chores | None |
 | plain message | Not in changelog | None |
 
-`VERSION` is workflow-managed release metadata. In normal development, prefer using the commit message convention above and let GitHub Actions bump the version, changelog, and tags during the Docker publish workflow.
+`VERSION` is workflow-managed release metadata. In normal development, prefer using the commit message convention above and let GitHub Actions bump the version, changelog, and tags during the `Release Publish` workflow.
 
 ## 🔎 Build Verification
 

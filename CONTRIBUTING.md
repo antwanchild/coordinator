@@ -73,9 +73,11 @@ git commit -m "just tweaking some stuff"
 
 ## 🔄 CI And Release Flow
 
-- `.github/workflows/ci.yml` runs on pull requests and pushes to `main`
-- `CI` installs dependencies, verifies `import app`, and runs committed unit tests when they exist
-- `.github/workflows/docker.yml` runs after `CI` succeeds on `main`
+- `.github/workflows/ci.yml` runs the `checks` job on pull requests and pushes to `main`
+- The `checks` job installs dependencies, verifies `import app`, and runs committed unit tests when they exist
+- `.github/workflows/docker.yml` is the `Release Publish` workflow and runs after `CI` succeeds on `main`
+- Its `prepare-release`, `publish-image`, and `notify-release` jobs handle version bumps, image builds, and Discord notifications
+- `.github/workflows/cleanup-tags.yml` is the `Tag Retention` workflow
 - Docker publish has concurrency protection so overlapping publish runs do not race each other
 
 ## 🖥️ UI Contribution Notes
