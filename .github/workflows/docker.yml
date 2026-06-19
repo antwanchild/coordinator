@@ -166,6 +166,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BASE_VERSION="${{ steps.version.outputs.value }}"
+          OWNER_SCOPE="users"
+
+          if [ "${{ github.event.repository.owner.type }}" = "Organization" ]; then
+            OWNER_SCOPE="orgs"
+          fi
 
           if ! echo "$BASE_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "ERROR: VERSION file contains invalid version: $BASE_VERSION" >&2
@@ -173,7 +178,7 @@ jobs:
           fi
 
           TAG_PREFIX="${BASE_VERSION}-build"
-          TAGS=$(gh api --paginate "orgs/${{ github.repository_owner }}/packages/container/${{ github.event.repository.name }}/versions" --jq '.[]?.metadata.container.tags[]?' 2>/dev/null || true)
+          TAGS=$(gh api --paginate "${OWNER_SCOPE}/${{ github.repository_owner }}/packages/container/${{ github.event.repository.name }}/versions" --jq '.[]?.metadata.container.tags[]?' 2>/dev/null || true)
           MAX_BUILD=$(printf '%s\n' "$TAGS" | awk -v prefix="$TAG_PREFIX" '
             index($0, prefix) == 1 {
               suffix = substr($0, length(prefix) + 1)
