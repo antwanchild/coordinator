@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.4] - 2026-06-19
+
+### 🐛 Bug Fixes
+
+- Count release builds from version bump commit
+
+### 📖 Documentation
+
+- Clarify build verification wording
 ## [1.25.3] - 2026-06-19
 
 ### 🐛 Bug Fixes
