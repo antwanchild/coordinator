@@ -2,9 +2,6 @@
 .git/
 .gitignore
 
-# GitHub Actions
-.github/
-
 # Docs
 README.md
 CONTRIBUTING.md
