@@ -148,9 +148,16 @@ The recommendation maximizes total veils while minimizing the difference in rota
 ## 🐍 Run locally (without Docker)
 
 ```bash
-pip install flask openpyxl Pillow
+pip install -r requirements-dev.txt
+pre-commit install
 python app.py
 # Open http://localhost:8080
+```
+
+To run the formatting and type checks manually:
+
+```bash
+pre-commit run --all-files
 ```
 
 ## 🔖 Versioning

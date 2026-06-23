@@ -3,15 +3,17 @@
 ## 🧪 Local Workflow
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pre-commit install
 python app.py
 ```
 
 Open `http://localhost:8080`.
 
-For the current lightweight checks:
+For local checks:
 
 ```bash
+pre-commit run --all-files
 python -c "import app"
 
 if find tests -maxdepth 1 -name 'test*.py' -print -quit | grep -q .; then
@@ -108,7 +110,7 @@ Install it by searching `vivaxy.vscode-conventional-commits` in the Extensions p
 ## 🐍 Running locally
 
 ```bash
-pip install flask openpyxl Pillow
+pip install -r requirements-dev.txt
 python app.py
 # Open http://localhost:8080
 ```
