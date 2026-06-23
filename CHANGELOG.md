@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.5] - 2026-06-23
+
+### 🐛 Bug Fixes
+
+- Track github actions workflows
+
+### 📖 Documentation
+
+- Polish build verification wording
 ## [1.25.4] - 2026-06-19
 
 ### 🐛 Bug Fixes
