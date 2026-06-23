@@ -15,5 +15,5 @@ class ConstantsTests(unittest.TestCase):
         self.assertEqual(points_to_pixels(18), 24)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
