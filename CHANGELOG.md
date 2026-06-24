@@ -3,6 +3,16 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.6] - 2026-06-24
+
+### ♻️ Refactoring
+
+- Extract shared schedule helpers
+- Reuse python ci setup
+
+### 🐛 Bug Fixes
+
+- Trigger tag retention after releases
 ## [1.25.5] - 2026-06-23
 
 ### 🐛 Bug Fixes
