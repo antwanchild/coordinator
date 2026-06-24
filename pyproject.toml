@@ -10,7 +10,7 @@ exclude = [
   "**/__pycache__",
   ".git",
   ".ruff_cache",
-  ".venv",
+  ".venv", "**/node_modules", "**/.*",
 ]
 reportMissingTypeStubs = false
 
