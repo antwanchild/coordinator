@@ -16,6 +16,7 @@ from constants import (
 from room_utils import get_room_header_state
 from time_utils import covers_slot, person_on_sheet, count_brothers_in_room
 
+
 def safe_cell_value(value):
     """Prevent Excel formula injection by prefixing formula characters with a single quote."""
     s = str(value)
@@ -146,9 +147,7 @@ def build_xlsx(people, room_data=None):
         # Write officiator, B:, S: into header cells for each room
         for room_index, room in enumerate(rooms):
             start_col = ROOM_START_COLS[room_index]
-            rd, b_val, s_val, bv, sv = get_room_header_state(
-                sorted_people, room, room_data
-            )
+            rd, b_val, s_val, bv, sv = get_room_header_state(sorted_people, room, room_data)
             if rd.get("off"):
                 off_cell = worksheet.cell(row=4, column=start_col + 3)
                 set_cell_value(worksheet, 4, start_col + 3, safe_cell_value(rd["off"]))

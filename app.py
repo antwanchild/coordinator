@@ -55,12 +55,14 @@ def set_security_headers(response):
         response.headers["Pragma"] = "no-cache"
     return response
 
+
 ROUTE_LABELS = {
     "/": "App loaded",
     "/preview": "Preview requested",
     "/export": "Export requested",
     "/health": "Health check",
 }
+
 
 @app.before_request
 def before_request():
