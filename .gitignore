@@ -47,7 +47,10 @@ venv/
 
 # VS Code
 .vscode/
+!.vscode/
 *.code-workspace
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # macOS
 *.DS_Store
