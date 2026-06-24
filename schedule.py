@@ -9,45 +9,12 @@ from constants import (
     TEMPLATE_PATH,
     AM_ROOMS,
     PM_ROOMS,
-    AM_SHEET_TIMES,
-    PM_SHEET_TIMES,
     SLOTS,
     ROWS,
     ROOM_START_COLS,
 )
-
-# ── Time helpers ──────────────────────────────────────────────────────────────
-
-
-def to_minutes(time_str):
-    """Convert a 'HH:MM' string to total minutes since midnight."""
-    if not time_str:
-        return 0
-    hours, minutes = time_str.split(":")
-    return int(hours) * 60 + int(minutes)
-
-
-def covers_slot(time_ranges, room_time):
-    """Return True if any of the person's time ranges covers the entire 30-minute slot."""
-    room_minutes = to_minutes(room_time)
-    return any(
-        to_minutes(time_range["start"]) <= room_minutes
-        and to_minutes(time_range["end"]) >= room_minutes + 30
-        for time_range in time_ranges
-    )
-
-
-def person_on_sheet(person, is_pm):
-    """Return True if the person has any availability overlapping the given sheet's time domain."""
-    domain_times = PM_SHEET_TIMES if is_pm else AM_SHEET_TIMES
-    domain_start = to_minutes(domain_times[0])
-    domain_end = to_minutes(domain_times[-1]) + 30
-    return any(
-        to_minutes(time_range["start"]) < domain_end
-        and to_minutes(time_range["end"]) > domain_start
-        for time_range in person["ranges"]
-    )
-
+from room_utils import get_room_header_state
+from time_utils import covers_slot, person_on_sheet, count_brothers_in_room
 
 def safe_cell_value(value):
     """Prevent Excel formula injection by prefixing formula characters with a single quote."""
@@ -67,18 +34,6 @@ def safe_excel_value(value):
 def set_cell_value(worksheet, row, column, value):
     """Assign a value through an Any-cast cell to avoid MergedCell type noise."""
     cast(Any, worksheet.cell(row=row, column=column)).value = value
-
-
-def count_brothers_in_room(sorted_people, room_time):
-    """Count brothers assigned to a room slot, including the Off row.
-
-    A brother counts if they fully cover the room's 30-minute slot.
-    The Off row always counts as 1.
-    """
-    brothers_from_people = sum(
-        1 for person in sorted_people if covers_slot(person["ranges"], room_time)
-    )
-    return brothers_from_people + 1  # +1 for the Off row
 
 
 # ── Veil recommendation ───────────────────────────────────────────────────────
@@ -191,24 +146,21 @@ def build_xlsx(people, room_data=None):
         # Write officiator, B:, S: into header cells for each room
         for room_index, room in enumerate(rooms):
             start_col = ROOM_START_COLS[room_index]
-            rd = room_data.get(room["time"], {})
+            rd, b_val, s_val, bv, sv = get_room_header_state(
+                sorted_people, room, room_data
+            )
             if rd.get("off"):
                 off_cell = worksheet.cell(row=4, column=start_col + 3)
                 set_cell_value(worksheet, 4, start_col + 3, safe_cell_value(rd["off"]))
                 off_cell.font = Font(bold=True, color="335593")
-            b_val = rd.get("b", "")
-            s_val = rd.get("s", "")
-            workers = count_brothers_in_room(sorted_people, room["time"])
             if b_val:
                 set_cell_value(worksheet, 3, start_col + 2, safe_excel_value(b_val))
             if s_val:
                 set_cell_value(worksheet, 3, start_col + 8, safe_excel_value(s_val))
-            if b_val or s_val:
-                bv, sv = recommend_veils(b_val, s_val, workers)
-                if bv is not None:
-                    set_cell_value(worksheet, 3, start_col + 4, f"{bv}B")
-                if sv is not None:
-                    set_cell_value(worksheet, 3, start_col + 10, f"{sv}S")
+            if bv is not None:
+                set_cell_value(worksheet, 3, start_col + 4, f"{bv}B")
+            if sv is not None:
+                set_cell_value(worksheet, 3, start_col + 10, f"{sv}S")
 
     # ── Source data sheet ─────────────────────────────────────────────────────
     # Each row is a single paste-ready line matching the paste box format:

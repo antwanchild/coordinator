@@ -1,7 +1,7 @@
 import unittest
 from typing import TypedDict, cast
 
-import app
+import validation
 
 
 class TimeRange(TypedDict):
@@ -22,7 +22,7 @@ class NormalizedRoomData(TypedDict):
 
 class ValidationTests(unittest.TestCase):
     def test_validate_people_normalizes_and_rejects_invalid_values(self):
-        people, error = app.validate_people(
+        people, error = validation.validate_people(
             [
                 {"name": "  Alex  ", "ranges": [{"start": "11:00", "end": "11:30"}]},
             ]
@@ -35,10 +35,10 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(validated_people[0]["ranges"][0]["start"], "11:00")
         self.assertEqual(validated_people[0]["ranges"][0]["end"], "11:30")
 
-        _, error = app.validate_people("not-a-list")
+        _, error = validation.validate_people("not-a-list")
         self.assertEqual(error, "people must be a list")
 
-        _, error = app.validate_people(
+        _, error = validation.validate_people(
             [
                 {"name": "Alex", "ranges": [{"start": "11:30", "end": "11:15"}]},
             ]
@@ -46,7 +46,7 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(error, "people[0].ranges[0] end must be after start")
 
     def test_validate_room_data_normalizes_and_rejects_invalid_values(self):
-        room_data, error = app.validate_room_data(
+        room_data, error = validation.validate_room_data(
             {
                 "11:00": {"off": "  Officer A  ", "b": 2, "s": "1"},
             }
@@ -60,14 +60,14 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(room["b"], "2")
         self.assertEqual(room["s"], "1")
 
-        _, error = app.validate_room_data({"10:00": {"off": "Officer A"}})
+        _, error = validation.validate_room_data({"10:00": {"off": "Officer A"}})
         self.assertEqual(error, 'room_data contains unsupported time "10:00"')
 
-        _, error = app.validate_room_data({"11:00": {"off": 123}})
+        _, error = validation.validate_room_data({"11:00": {"off": 123}})
         self.assertEqual(error, 'room_data["11:00"].off must be a string')
 
     def test_validate_request_payload_normalizes_and_rejects_invalid_values(self):
-        payload, error = app.validate_request_payload(
+        payload, error = validation.validate_request_payload(
             {
                 "people": [{"name": "  Alex  ", "ranges": [{"start": "11:00", "end": "11:30"}]}],
                 "room_data": {"11:00": {"off": "  Officer A  ", "b": 2, "s": "1"}},
@@ -78,7 +78,7 @@ class ValidationTests(unittest.TestCase):
 
         self.assertIsNone(error)
         self.assertIsNotNone(payload)
-        payload = cast(app.RequestPayload, payload)
+        payload = cast(validation.RequestPayload, payload)
         self.assertEqual(payload["people"][0]["name"], "Alex")
         room = cast(NormalizedRoomData, payload["room_data"]["11:00"])
         self.assertEqual(room["off"], "Officer A")
@@ -86,7 +86,7 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(room["s"], "1")
         self.assertTrue(payload["is_pm"])
 
-        _, error = app.validate_request_payload(
+        _, error = validation.validate_request_payload(
             {
                 "people": [],
                 "room_data": {},
@@ -96,7 +96,7 @@ class ValidationTests(unittest.TestCase):
         )
         self.assertEqual(error, "is_pm must be a boolean")
 
-        _, error = app.validate_request_payload(
+        _, error = validation.validate_request_payload(
             {
                 "people": [{"name": "Alex", "ranges": [{"start": "11:00", "end": "11:10"}]}],
                 "room_data": {},

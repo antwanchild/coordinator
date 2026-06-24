@@ -18,7 +18,8 @@ from constants import (
     chars_to_pixels,
     points_to_pixels,
 )
-from schedule import covers_slot, person_on_sheet, count_brothers_in_room, recommend_veils
+from room_utils import get_room_header_state
+from time_utils import covers_slot, count_brothers_in_room, person_on_sheet
 
 # ── Colour helper ─────────────────────────────────────────────────────────────
 
@@ -201,23 +202,18 @@ def render_preview(people, is_pm, room_data=None):
         )
 
         # Row 3: B: cols 0-1, count cols 2-3, rec cols 4-5, S: cols 6-7, count cols 8-9, rec cols 10-11
-        rd = room_data.get(room["time"], {})
-        b_val = rd.get("b", "")
-        s_val = rd.get("s", "")
-        workers = count_brothers_in_room(sorted_people, room["time"])
+        rd, b_val, s_val, bv, sv = get_room_header_state(sorted_people, room, room_data)
         fill_cell(start_col, 3, "#FFFFFF", colspan=SLOTS)
         draw_text(start_col, 3, "B:", font_bold, "#000000", "right", 2)
         draw_text(start_col + 6, 3, "S:", font_bold, "#000000", "right", 2)
-        if b_val or s_val:
-            bv, sv = recommend_veils(b_val, s_val, workers)
-            if b_val:
-                draw_text(start_col + 2, 3, str(b_val), font_bold, "#000000", "center", 2)
-            if s_val:
-                draw_text(start_col + 8, 3, str(s_val), font_bold, "#000000", "center", 2)
-            if bv is not None:
-                draw_text(start_col + 4, 3, f"{bv}B", font_bold, "#000000", "center", 2)
-            if sv is not None:
-                draw_text(start_col + 10, 3, f"{sv}S", font_bold, "#000000", "center", 2)
+        if b_val:
+            draw_text(start_col + 2, 3, str(b_val), font_bold, "#000000", "center", 2)
+        if s_val:
+            draw_text(start_col + 8, 3, str(s_val), font_bold, "#000000", "center", 2)
+        if bv is not None:
+            draw_text(start_col + 4, 3, f"{bv}B", font_bold, "#000000", "center", 2)
+        if sv is not None:
+            draw_text(start_col + 10, 3, f"{sv}S", font_bold, "#000000", "center", 2)
         draw_border(
             start_col,
             3,
@@ -229,7 +225,6 @@ def render_preview(people, is_pm, room_data=None):
         )
 
         # Row 4: "Off:" centered in cols 0-2, officiator name blue in cols 3-11
-        rd = room_data.get(room["time"], {})
         fill_cell(start_col, 4, "#FFFFFF", colspan=3)
         draw_text(start_col, 4, "Off:", font_bold, "#000000", "center", 3)
         draw_border(start_col, 4, colspan=3, left="medium", top="thin", bottom="double")
