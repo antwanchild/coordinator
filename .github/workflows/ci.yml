@@ -19,15 +19,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up Python Dev Environment
+        uses: ./.github/actions/setup-python-dev
         with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          python-version: "3.12"
 
       - name: Verify application imports
         run: python -c "import app"
@@ -39,9 +34,4 @@ jobs:
         run: pyright --project pyproject.toml
 
       - name: Run unit tests
-        run: |
-          if find tests -maxdepth 1 -name 'test*.py' -print -quit | grep -q .; then
-            python -m unittest discover -s tests
-          else
-            echo "No committed unit tests found; skipping discovery."
-          fi
+        run: python -m unittest discover -s tests
