@@ -38,9 +38,9 @@ if [ "$PUID" != "0" ] || [ "$PGID" != "0" ]; then
     fi
 
     log "Starting app as PUID=${PUID} PGID=${PGID}"
-    exec gosu "$RUNTIME_USER" gunicorn --bind 0.0.0.0:8080 --access-logfile - --error-logfile - --workers "${WEB_CONCURRENCY:-2}" --threads "${GUNICORN_THREADS:-4}" app:app
+    exec gosu "$RUNTIME_USER" gunicorn --bind 0.0.0.0:8080 --access-logfile - --error-logfile - --worker-tmp-dir /tmp --workers "${WEB_CONCURRENCY:-2}" --threads "${GUNICORN_THREADS:-4}" app:app
 else
     log "Entrypoint | running as root (no PUID/PGID set)"
     log "Starting app as coordinator"
-    exec gosu coordinator gunicorn --bind 0.0.0.0:8080 --access-logfile - --error-logfile - --workers "${WEB_CONCURRENCY:-2}" --threads "${GUNICORN_THREADS:-4}" app:app
+    exec gosu coordinator gunicorn --bind 0.0.0.0:8080 --access-logfile - --error-logfile - --worker-tmp-dir /tmp --workers "${WEB_CONCURRENCY:-2}" --threads "${GUNICORN_THREADS:-4}" app:app
 fi

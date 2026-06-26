@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy app
-COPY app.py constants.py schedule.py renderer.py ./
+COPY app.py constants.py logging_utils.py room_utils.py schedule.py renderer.py time_utils.py validation.py ./
 COPY entrypoint.sh .
 COPY V-COORDINATE--Scheduled.xlsx .
 COPY templates/ templates/

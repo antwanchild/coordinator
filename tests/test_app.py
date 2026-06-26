@@ -1,4 +1,7 @@
 import unittest
+import subprocess
+import sys
+import textwrap
 from unittest.mock import patch
 
 import app
@@ -29,6 +32,34 @@ class AppTests(unittest.TestCase):
         self.assertEqual(payload["path"], "/health")
         self.assertEqual(payload["method"], "PUT")
         self.assertIn("GET", payload["allowed_methods"])
+
+    def test_logging_falls_back_when_config_is_not_writable(self):
+        script = textwrap.dedent(
+            """
+            import os
+            os.path.isdir = lambda path: True
+
+            def deny(*args, **kwargs):
+                raise PermissionError("read-only")
+
+            os.makedirs = deny
+
+            import logging_utils
+
+            assert logging_utils.LOG_DIR is None
+            assert [type(handler).__name__ for handler in logging_utils.logger.handlers] == ["StreamHandler"]
+            """
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd="/Volumes/docker/github/coordinate",
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
 
 
 if __name__ == "__main__":
