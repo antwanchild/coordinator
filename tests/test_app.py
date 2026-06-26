@@ -2,6 +2,7 @@ import unittest
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 from unittest.mock import patch
 
 import app
@@ -53,7 +54,7 @@ class AppTests(unittest.TestCase):
 
         result = subprocess.run(
             [sys.executable, "-c", script],
-            cwd="/Volumes/docker/github/coordinate",
+            cwd=Path(__file__).resolve().parents[1],
             capture_output=True,
             text=True,
             check=False,
