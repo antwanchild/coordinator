@@ -16,10 +16,17 @@ For local checks:
 pre-commit run --all-files
 python -c "import app"
 
-if find tests -maxdepth 1 -name 'test*.py' -print -quit | grep -q .; then
-  python -m unittest discover -s tests
-fi
+python -m unittest discover -s tests -t .
 ```
+
+Browser tests live in `tests/browser/` and run with Playwright. Install Chromium once, then opt in locally:
+
+```bash
+python -m playwright install chromium
+RUN_BROWSER_TESTS=1 python -m unittest discover -s tests/browser -t .
+```
+
+The browser suite exercises the running Flask app; unit tests are in `tests/unit/` and route, workbook, and renderer tests are in `tests/integration/`.
 
 ## 📝 Commit Message Format
 
@@ -77,7 +84,7 @@ git commit -m "just tweaking some stuff"
 ## 🔄 CI And Release Flow
 
 - `.github/workflows/ci.yml` runs the `checks` job on pull requests and pushes to `main`
-- The `checks` job installs dependencies, verifies `import app`, and runs committed unit tests when they exist
+- The `checks` job installs dependencies, verifies `import app`, and runs the unit and integration suites on Python 3.12 and 3.14; it also installs Chromium and runs Playwright browser tests on Python 3.12
 - `.github/workflows/docker.yml` is the `Release Publish` workflow and runs after `CI` succeeds on `main`
 - Its `prepare-release`, `publish-image`, and `notify-release` jobs handle version bumps, image builds, and Discord notifications
 - `.github/workflows/cleanup-tags.yml` is the `Tag Retention` workflow

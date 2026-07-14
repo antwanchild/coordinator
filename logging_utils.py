@@ -2,7 +2,6 @@ import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
 
-
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 LOG_DIR = "/config/logs" if os.path.isdir("/config") else None
 

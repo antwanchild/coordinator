@@ -20,6 +20,7 @@ COPY app.py constants.py logging_utils.py room_utils.py schedule.py renderer.py 
 COPY entrypoint.sh .
 COPY V-COORDINATE--Scheduled.xlsx .
 COPY templates/ templates/
+COPY static/ static/
 
 RUN chmod +x entrypoint.sh
 

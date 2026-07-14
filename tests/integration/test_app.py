@@ -18,10 +18,21 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
         self.assertEqual(response.headers["X-Frame-Options"], "DENY")
         self.assertEqual(response.headers["Referrer-Policy"], "same-origin")
-        self.assertIn("default-src", response.headers["Content-Security-Policy"])
+        csp = response.headers["Content-Security-Policy"]
+        self.assertIn("default-src", csp)
+        self.assertIn("script-src 'self'", csp)
+        self.assertNotIn("script-src 'self' 'unsafe-inline'", csp)
         self.assertIn("max-age=31536000", response.headers["Strict-Transport-Security"])
         self.assertEqual(response.headers["Cache-Control"], "no-store, max-age=0")
         self.assertEqual(response.headers["Pragma"], "no-cache")
+
+    def test_index_loads_external_script(self):
+        client = app.app.test_client()
+        response = client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'<link rel="stylesheet" href="/static/app.css">', response.data)
+        self.assertIn(b'<script src="/static/app.js" defer></script>', response.data)
 
     def test_method_not_allowed_returns_json_payload(self):
         client = app.app.test_client()
@@ -35,8 +46,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("GET", payload["allowed_methods"])
 
     def test_logging_falls_back_when_config_is_not_writable(self):
-        script = textwrap.dedent(
-            """
+        script = textwrap.dedent("""
             import os
             os.path.isdir = lambda path: True
 
@@ -49,12 +59,11 @@ class AppTests(unittest.TestCase):
 
             assert logging_utils.LOG_DIR is None
             assert [type(handler).__name__ for handler in logging_utils.logger.handlers] == ["StreamHandler"]
-            """
-        )
+            """)
 
         result = subprocess.run(
             [sys.executable, "-c", script],
-            cwd=Path(__file__).resolve().parents[1],
+            cwd=Path(__file__).resolve().parents[2],
             capture_output=True,
             text=True,
             check=False,

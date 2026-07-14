@@ -14,6 +14,9 @@ jobs:
   checks:
     if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.14"]
 
     steps:
       - name: Checkout
@@ -22,7 +25,7 @@ jobs:
       - name: Set up Python Dev Environment
         uses: ./.github/actions/setup-python-dev
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Verify application imports
         run: python -c "import app"
@@ -33,5 +36,11 @@ jobs:
       - name: Run Pyright
         run: pyright --project pyproject.toml
 
-      - name: Run unit tests
-        run: python -m unittest discover -s tests
+      - name: Install Playwright Chromium
+        if: matrix.python-version == '3.12'
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run tests
+        env:
+          RUN_BROWSER_TESTS: ${{ matrix.python-version == '3.12' && '1' || '0' }}
+        run: python -m unittest discover -s tests -t .
