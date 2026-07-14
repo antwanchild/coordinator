@@ -202,23 +202,48 @@
 
     .tip-text {
       display: none;
-    }
-
-    #tip-popup {
-      display: none;
-      position: fixed;
-      background: var(--card);
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      width: 260px;
+      padding: 6px 9px;
       border: 1px solid var(--bdr);
       border-radius: 6px;
-      padding: 6px 9px;
-      font-size: .65rem;
+      background: var(--card);
       color: var(--txt);
-      white-space: normal;
-      width: 260px;
+      font-size: .65rem;
       z-index: 9999;
-      box-shadow: 0 4px 12px rgba(0,0,0,.5);
-      pointer-events: none;
     }
+    .tip:hover .tip-text, .tip:focus-within .tip-text { display: block; }
+    .tip-corner { position: absolute; top: -2px; right: -2px; }
+    .tip-corner .tip-text { left: auto; right: 0; }
+
+    .header-brand { display: flex; flex-direction: column; gap: 2px; }
+    .header-tagline { font-size: .5rem; color: var(--mut); letter-spacing: .1em; text-align: center; }
+    .sheet-help { font-size: .68rem; color: var(--mut); }
+    .is-hidden { display: none; }
+    .name-actions, .generate-actions { display: flex; gap: 5px; align-items: center; }
+    .name-actions { margin-top: 7px; flex-wrap: wrap; }
+    .empty-name-list { font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0; }
+    .csv-help { font-size: .6rem; margin-top: 1px; }
+    .csv-help-first { margin-top: 2px; }
+    .csv-example { font-size: .6rem; color: #aaa; line-height: 1.9; }
+    .paste-help { font-size: .6rem; color: var(--mut); margin-bottom: 4px; }
+    .paste-help code { font-size: .6rem; background: var(--card); padding: 1px 3px; border-radius: 3px; color: var(--acc); }
+    .import-paste-btn { margin-top: 6px; }
+    .generate-section { margin-top: auto; }
+    .generate-actions { gap: 6px; }
+    .build-btn { flex: 1; }
+    .auto-refresh-btn { width: 60px; position: relative; }
+    .unavailable-swatch { background: #EDEDED; border-color: #aaa; }
+    .app-footer { margin-top: auto; padding-top: 24px; text-align: center; font-size: .6rem; color: var(--mut); }
+    .help-spacing-first { margin-top: 6px; }
+    .help-spacing { margin-top: 4px; }
+    .toggle-btn { left: 287px; }
+    .toggle-btn.collapsed { left: -13px; }
+    .preview-hidden { display: none; }
+    .clipboard-fallback { position: absolute; left: -9999px; }
+    .skipped-line { font-family: monospace; margin-top: 2px; }
 
     /* ── Help modal ── */
     .modal-overlay {

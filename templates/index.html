@@ -55,7 +55,7 @@
             <span class="tab-badge" id="badge-PM"></span>
           </button>
         </div>
-        <p style="font-size: .68rem; color: var(--mut)">Select AM or PM sheet to preview.</p>
+        <p class="sheet-help">Select AM or PM sheet to preview.</p>
       </div>
     </div>
 
@@ -72,7 +72,7 @@
         </div>
 
         <!-- Manual panel -->
-        <div id="panel-manual" style="display: none">
+        <div id="panel-manual" class="input-panel is-hidden">
           <div class="add-row">
             <input type="text" id="nameInput" placeholder="Last First  or  Last First, 11:00, 12:30">
             <button id="addNameBtn" type="button">+</button>
@@ -84,9 +84,9 @@
           </div>
           <div class="people-count" id="peopleCount"></div>
           <div class="name-list" id="nameList">
-            <p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>
+            <p class="empty-name-list">No names yet</p>
           </div>
-          <div style="display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap">
+          <div class="name-actions">
             <button class="btn btn-secondary btn-small" id="clearNamesBtn" type="button">Clear All</button>
             <button class="btn btn-secondary btn-small" id="copyCsvBtn" type="button">Copy CSV</button>
             <button class="btn btn-secondary btn-small" id="clearDraftBtn" type="button">Clear Draft</button>
@@ -94,14 +94,14 @@
         </div>
 
         <!-- CSV panel -->
-        <div id="panel-csv" style="display: none">
+        <div id="panel-csv" class="input-panel is-hidden">
           <div class="csv-drop">
             <input type="file" id="csvInput" accept=".csv">
             <p>&#128194; Upload CSV</p>
-            <p style="font-size: .6rem; margin-top: 2px">Person: Name, start1, end1, start2, end2, &hellip;</p>
-            <p style="font-size: .6rem; margin-top: 1px">Room: time, officiator, b, s</p>
+            <p class="csv-help csv-help-first">Person: Name, start1, end1, start2, end2, &hellip;</p>
+            <p class="csv-help">Room: time, officiator, b, s</p>
           </div>
-          <code style="font-size: .6rem; color: #aaa; line-height: 1.9">
+          <code class="csv-example">
             Smith J, 11:00, 11:30, 14:00, 15:00<br>
             Doe A, 11:00, 13:00<br>
             11:00, Jones B, 3, 2
@@ -111,24 +111,24 @@
 
         <!-- Paste panel -->
         <div id="panel-paste">
-          <p style="font-size:.6rem;color:var(--mut);margin-bottom:4px">
-            Person: <code style="font-size:.6rem;background:var(--card);padding:1px 3px;border-radius:3px;color:var(--acc)">Name, start, end</code><br>
-            Room: <code style="font-size:.6rem;background:var(--card);padding:1px 3px;border-radius:3px;color:var(--acc)">time, officiator, b, s</code>
+          <p class="paste-help">
+            Person: <code>Name, start, end</code><br>
+            Room: <code>time, officiator, b, s</code>
           </p>
           <textarea id="pasteInput" placeholder="Smith J, 11:00, 12:30&#10;Doe A, 11:00, 11:30, 14:00, 15:00&#10;&#10;11:00, Jones B, 3, 2&#10;11:30, Taylor C, 4, 1"></textarea>
-          <button class="btn btn-primary" id="importPasteBtn" type="button" style="margin-top: 6px">Import</button>
+          <button class="btn btn-primary import-paste-btn" id="importPasteBtn" type="button">Import</button>
           <div class="skipped-warning" id="skipped-paste"></div>
         </div>
       </div>
     </div>
 
     <!-- 03 Generate -->
-    <div style="margin-top: auto">
+    <div class="generate-section">
       <div class="section-label">03 &mdash; Generate</div>
-      <div style="display: flex; gap: 6px; align-items: center;">
-        <button class="btn btn-primary" id="buildBtn" type="button" style="flex: 1">&#9889; Build Schedule</button>
-        <button class="btn btn-secondary" id="autoRefreshBtn" type="button" style="width: 60px" title="Auto-refresh preview when names change">Auto
-          <span class="tip" style="position:absolute;top:-2px;right:-2px"><span class="tip-icon">?</span><span class="tip-text">Auto-rebuild preview when names or room data change.</span></span>
+      <div class="generate-actions">
+        <button class="btn btn-primary build-btn" id="buildBtn" type="button">&#9889; Build Schedule</button>
+        <button class="btn btn-secondary auto-refresh-btn" id="autoRefreshBtn" type="button" title="Auto-refresh preview when names change">Auto
+          <span class="tip tip-corner"><span class="tip-icon">?</span><span class="tip-text">Auto-rebuild preview when names or room data change.</span></span>
         </button>
       </div>
       <button class="btn btn-export" id="exportBtn" type="button" title="Export both AM and PM sheets to one workbook">
@@ -150,7 +150,7 @@
     <div class="preview-header">
       <h2 id="previewTitle">Schedule Preview</h2>
       <div class="legend">
-        <div class="legend-item"><div class="legend-swatch" style="background: #EDEDED; border-color: #aaa"></div>Unavailable</div>
+        <div class="legend-item"><div class="legend-swatch unavailable-swatch"></div>Unavailable</div>
       </div>
     </div>
     <div id="spinner" class="spinner"><div class="spinner-ring"></div></div>
@@ -158,7 +158,7 @@
       <div class="icon">&#128203;</div>
       <p>Add names, paste data, or import CSV, then click Build Schedule.</p>
     </div>
-    <div style="margin-top: auto; padding-top: 24px; text-align: center; font-size: .6rem; color: var(--mut)">
+    <div class="app-footer">
       &copy; {{ now.year }} &nbsp;·&nbsp; Original spreadsheet by Taylor Cox &nbsp;·&nbsp; Modified by Anthony Child &nbsp;·&nbsp; App by Anthony Child
     </div>
   </div>
@@ -182,8 +182,8 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 12:00, Williams D, 2, 3
 12:30, Brown E, 5, 2
 13:00, Davis F, 3, 1</pre>
-    <p style="margin-top:6px"><strong>Person:</strong> <code>Name, start, end</code> or <code>Name, start1, end1, start2, end2</code></p>
-    <p style="margin-top:4px"><strong>Room:</strong> <code>time, officiator, brothers, sisters</code></p>
+    <p class="help-spacing-first"><strong>Person:</strong> <code>Name, start, end</code> or <code>Name, start1, end1, start2, end2</code></p>
+    <p class="help-spacing"><strong>Room:</strong> <code>time, officiator, brothers, sisters</code></p>
     <ul>
       <li>Room 1 (11:00 AM) officiator is always AM Shift — leave blank</li>
       <li>Lines starting with <code>#</code> are ignored</li>
@@ -227,8 +227,6 @@ Doe A, 11:00, 11:30, 14:00, 15:30
 </div>
 
 <!-- Tooltip popup -->
-<div id="tip-popup"></div>
-
 <div class="toast" id="toast"></div>
 
 <script src="{{ url_for('static', filename='app.js') }}" defer></script>

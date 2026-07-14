@@ -76,7 +76,6 @@
     document.getElementById('app').classList.toggle('collapsed', !sidebarOpen);
     btn.innerHTML = sidebarOpen ? '&#8249;' : '&#8250;';
     btn.title = sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar';
-    btn.style.left = sidebarOpen ? '287px' : '-13px';
     btn.classList.toggle('collapsed', !sidebarOpen);
   }
 
@@ -215,29 +214,6 @@
     toast('Draft restored');
     updateDraftButton();
   }
-
-  const tipPopup = document.getElementById('tip-popup');
-
-  document.querySelectorAll('.tip-icon').forEach(icon => {
-    const nextElement = icon.nextElementSibling;
-    const text = nextElement ? nextElement.textContent : '';
-    if (!text) return;
-
-    icon.addEventListener('mouseenter', () => {
-      tipPopup.textContent = text;
-      tipPopup.style.display = 'block';
-      const rect = icon.getBoundingClientRect();
-      let left = rect.left;
-      let top  = rect.bottom + 6;
-      if (left + 260 > window.innerWidth - 10) left = window.innerWidth - 270;
-      tipPopup.style.left = left + 'px';
-      tipPopup.style.top  = top + 'px';
-    });
-
-    icon.addEventListener('mouseleave', () => {
-      tipPopup.style.display = 'none';
-    });
-  });
 
   function getActiveModalOverlay() {
     const confirmModal = document.getElementById('confirmModal');
@@ -422,7 +398,7 @@
   function resetPreview(message) {
     releasePreviewUrl();
     const previewArea = document.getElementById('previewArea');
-    previewArea.style.display = '';
+    previewArea.classList.remove('preview-hidden');
     previewArea.className = 'preview-empty';
     previewArea.innerHTML = `<div class="icon">&#128203;</div><p>${message}</p>`;
   }
@@ -487,8 +463,7 @@
         const tempInput = document.createElement('textarea');
         tempInput.value = commitSha;
         tempInput.setAttribute('readonly', '');
-        tempInput.style.position = 'absolute';
-        tempInput.style.left = '-9999px';
+        tempInput.className = 'clipboard-fallback';
         document.body.appendChild(tempInput);
         tempInput.select();
         tempInput.setSelectionRange(0, tempInput.value.length);
@@ -509,7 +484,7 @@
     currentInputTab = tab;
     ['manual', 'csv', 'paste'].forEach(x => {
       document.getElementById('tab-' + x).classList.toggle('active', x === tab);
-      document.getElementById('panel-' + x).style.display = x === tab ? 'block' : 'none';
+      document.getElementById('panel-' + x).classList.toggle('is-hidden', x !== tab);
     });
 
     showSkippedWarning('skipped-csv', []);
@@ -578,7 +553,7 @@
     pmBadge.classList.toggle('visible', pmCount > 0);
 
     if (!people.length) {
-      container.innerHTML = '<p style="font-size: .7rem; color: var(--mut); text-align: center; padding: 8px 0">No names yet</p>';
+      container.innerHTML = '<p class="empty-name-list">No names yet</p>';
       return;
     }
 
@@ -779,7 +754,7 @@
       return;
     }
     warningEl.innerHTML = `<strong>⚠ ${skippedLines.length} line(s) skipped:</strong>` +
-      skippedLines.map(l => `<div style="font-family:monospace;margin-top:2px">${escapeHTML(l)}</div>`).join('');
+      skippedLines.map(l => `<div class="skipped-line">${escapeHTML(l)}</div>`).join('');
     warningEl.classList.add('visible');
   }
 
@@ -862,7 +837,7 @@
     }
 
     spinner.className = 'spinner show';
-    previewArea.style.display = 'none';
+    previewArea.classList.add('preview-hidden');
 
     try {
       const res = await fetch('/preview', {
@@ -875,7 +850,7 @@
       releasePreviewUrl();
       currentPreviewUrl = URL.createObjectURL(blob);
       spinner.className = 'spinner';
-      previewArea.style.display = '';
+      previewArea.classList.remove('preview-hidden');
       previewArea.className = 'preview-wrap';
       previewArea.innerHTML = `<img src="${currentPreviewUrl}" alt="Schedule Preview">`;
       const sheetPeople = people.filter(p => {
@@ -895,7 +870,7 @@
       }
     } catch (e) {
       spinner.className = 'spinner';
-      previewArea.style.display = '';
+      previewArea.classList.remove('preview-hidden');
       if (previewArea.className !== 'preview-wrap') {
         resetPreview('Build failed. Please review your input and try again.');
       }

@@ -22,6 +22,8 @@ class AppTests(unittest.TestCase):
         self.assertIn("default-src", csp)
         self.assertIn("script-src 'self'", csp)
         self.assertNotIn("script-src 'self' 'unsafe-inline'", csp)
+        self.assertIn("style-src 'self' https://fonts.googleapis.com", csp)
+        self.assertNotIn("style-src 'self' 'unsafe-inline'", csp)
         self.assertIn("max-age=31536000", response.headers["Strict-Transport-Security"])
         self.assertEqual(response.headers["Cache-Control"], "no-store, max-age=0")
         self.assertEqual(response.headers["Pragma"], "no-cache")
