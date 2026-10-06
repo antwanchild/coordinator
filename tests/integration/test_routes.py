@@ -1,13 +1,11 @@
 import io
-import os
-import tempfile
 import unittest
 from unittest.mock import patch
 
-from openpyxl import Workbook, load_workbook
+from openpyxl import load_workbook
 
 import app
-import schedule
+from tests.helpers import temporary_workbook_template
 
 
 class RouteTests(unittest.TestCase):
@@ -104,27 +102,15 @@ class RouteTests(unittest.TestCase):
     def test_export_route_returns_xlsx_for_valid_payload(self):
         client = app.app.test_client()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            template_path = os.path.join(tmpdir, "template.xlsx")
-            workbook = Workbook()
-            active_sheet = workbook.active
-            if active_sheet is not None:
-                workbook.remove(active_sheet)
-            workbook.create_sheet("AM")
-            workbook.create_sheet("PM")
-            workbook.save(template_path)
-
-            with patch.object(schedule, "TEMPLATE_PATH", template_path):
-                response = client.post(
-                    "/export",
-                    json={
-                        "people": [
-                            {"name": "Alex", "ranges": [{"start": "11:00", "end": "11:30"}]}
-                        ],
-                        "room_data": {"11:00": {"off": "Officer A", "b": "2", "s": "1"}},
-                        "is_pm": False,
-                    },
-                )
+        with temporary_workbook_template():
+            response = client.post(
+                "/export",
+                json={
+                    "people": [{"name": "Alex", "ranges": [{"start": "11:00", "end": "11:30"}]}],
+                    "room_data": {"11:00": {"off": "Officer A", "b": "2", "s": "1"}},
+                    "is_pm": False,
+                },
+            )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(
