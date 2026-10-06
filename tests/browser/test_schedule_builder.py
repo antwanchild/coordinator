@@ -24,27 +24,23 @@ class ScheduleBuilderBrowserTests(unittest.TestCase):
     def setUpClass(cls):
         assert sync_playwright is not None
         cls.server = make_server("127.0.0.1", 0, app)
+        cls.addClassCleanup(cls.server.server_close)
         cls.server_thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.server_thread.start()
+        cls.addClassCleanup(cls.server_thread.join)
+        cls.addClassCleanup(cls.server.shutdown)
         cls.base_url = f"http://127.0.0.1:{cls.server.server_port}"
         cls.playwright = sync_playwright().start()
+        cls.addClassCleanup(cls.playwright.stop)
         cls.browser = cls.playwright.chromium.launch()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.browser.close()
-        cls.playwright.stop()
-        cls.server.shutdown()
-        cls.server_thread.join()
+        cls.addClassCleanup(cls.browser.close)
 
     def setUp(self):
         self.context = self.browser.new_context()
+        self.addCleanup(self.context.close)
         self.page = self.context.new_page()
         self.page_errors: list[str] = []
         self.page.on("pageerror", lambda error: self.page_errors.append(str(error)))
-
-    def tearDown(self):
-        self.context.close()
 
     def test_add_person_and_build_preview(self):
         self.page.goto(self.base_url, wait_until="domcontentloaded")
@@ -56,6 +52,16 @@ class ScheduleBuilderBrowserTests(unittest.TestCase):
 
         self.page.locator("#buildBtn").click()
         self.page.locator("#previewArea img").wait_for(state="visible")
+        self.page.wait_for_function("""() => {
+                const image = document.querySelector('#previewArea img');
+                return image && image.complete;
+            }""")
+        self.assertTrue(
+            self.page.locator("#previewArea img").evaluate(
+                "image => image.naturalWidth > 0 && image.naturalHeight > 0"
+            ),
+            "Preview image failed to load",
+        )
         self.assertEqual(self.page_errors, [])
 
     def test_switching_sheets_uses_external_script(self):

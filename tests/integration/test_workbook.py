@@ -1,13 +1,12 @@
-import os
-import tempfile
 import unittest
 from typing import TypedDict
 from unittest.mock import patch
 
-from openpyxl import Workbook, load_workbook
+from openpyxl import load_workbook
 
 import schedule
 from schedule import build_xlsx
+from tests.helpers import temporary_workbook_template
 
 
 class TimeRange(TypedDict):
@@ -35,18 +34,8 @@ class WorkbookTests(unittest.TestCase):
             "14:00": {"off": "Officer B", "b": "2", "s": "1"},
         }
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            template_path = os.path.join(tmpdir, "template.xlsx")
-            workbook = Workbook()
-            active_sheet = workbook.active
-            if active_sheet is not None:
-                workbook.remove(active_sheet)
-            workbook.create_sheet("AM")
-            workbook.create_sheet("PM")
-            workbook.save(template_path)
-
-            with patch.object(schedule, "TEMPLATE_PATH", template_path):
-                buffer = build_xlsx(people, room_data)
+        with temporary_workbook_template():
+            buffer = build_xlsx(people, room_data)
 
         result = load_workbook(buffer)
         self.assertIn("Source Data", result.sheetnames)
@@ -63,18 +52,8 @@ class WorkbookTests(unittest.TestCase):
             {"name": "=cmd|' /C calc'!A0", "ranges": [{"start": "11:00", "end": "11:30"}]},
         ]
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            template_path = os.path.join(tmpdir, "template.xlsx")
-            workbook = Workbook()
-            active_sheet = workbook.active
-            if active_sheet is not None:
-                workbook.remove(active_sheet)
-            workbook.create_sheet("AM")
-            workbook.create_sheet("PM")
-            workbook.save(template_path)
-
-            with patch.object(schedule, "TEMPLATE_PATH", template_path):
-                buffer = build_xlsx(people, {})
+        with temporary_workbook_template():
+            buffer = build_xlsx(people, {})
 
         exported = load_workbook(buffer)
         self.assertEqual(exported["Source Data"]["A1"].value, "'=cmd|' /C calc'!A0, 11:00, 11:30")
