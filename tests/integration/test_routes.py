@@ -31,12 +31,14 @@ class RouteTests(unittest.TestCase):
     def test_preview_route_returns_png_for_valid_payload(self):
         client = app.app.test_client()
 
-        with patch.object(app, "render_preview", return_value=io.BytesIO(b"fake-png")):
+        with patch.object(app, "render_preview", return_value=io.BytesIO(b"fake-png")) as render:
             response = client.post(
                 "/preview",
                 json={
-                    "people": [{"name": "Alex", "ranges": [{"start": "11:00", "end": "11:30"}]}],
-                    "room_data": {},
+                    "people": [
+                        {"name": "  Alex  ", "ranges": [{"start": "14:00", "end": "14:30"}]}
+                    ],
+                    "room_data": {"14:00": {"off": " Officer A ", "b": 2}},
                     "is_pm": True,
                 },
             )
@@ -44,6 +46,11 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.mimetype, "image/png")
         self.assertEqual(response.data, b"fake-png")
+        render.assert_called_once_with(
+            [{"name": "Alex", "ranges": [{"start": "14:00", "end": "14:30"}]}],
+            True,
+            {"14:00": {"off": "Officer A", "b": "2", "s": ""}},
+        )
 
     def test_preview_route_rejects_non_boolean_is_pm(self):
         client = app.app.test_client()
@@ -120,8 +127,25 @@ class RouteTests(unittest.TestCase):
         self.assertIn("schedule-output.xlsx", response.headers["Content-Disposition"])
 
         exported = load_workbook(io.BytesIO(response.data))
+        self.addCleanup(exported.close)
         self.assertIn("Source Data", exported.sheetnames)
         self.assertEqual(exported["Source Data"]["A1"].value, "Alex, 11:00, 11:30")
+
+    def test_generation_failures_return_safe_json_errors(self):
+        client = app.app.test_client()
+        for route, target, failure_message in [
+            ("/preview", "render_preview", "Preview generation failed"),
+            ("/export", "build_xlsx", "Export generation failed"),
+        ]:
+            for exception, expected in [
+                (FileNotFoundError("private path"), "Template file not found"),
+                (RuntimeError("private details"), failure_message),
+            ]:
+                with self.subTest(route=route, exception=type(exception).__name__):
+                    with patch.object(app, target, side_effect=exception):
+                        response = client.post(route, json={"people": [], "is_pm": False})
+                    self.assertEqual(response.status_code, 500)
+                    self.assertEqual(response.get_json(), {"error": expected})
 
 
 if __name__ == "__main__":

@@ -1,23 +1,7 @@
 import unittest
-from typing import TypedDict, cast
+from typing import cast
 
 import validation
-
-
-class TimeRange(TypedDict):
-    start: str
-    end: str
-
-
-class ValidatedPerson(TypedDict):
-    name: str
-    ranges: list[TimeRange]
-
-
-class NormalizedRoomData(TypedDict):
-    off: str
-    b: str
-    s: str
 
 
 class ValidationTests(unittest.TestCase):
@@ -30,7 +14,7 @@ class ValidationTests(unittest.TestCase):
 
         self.assertIsNone(error)
         self.assertIsNotNone(people)
-        validated_people = cast(list[ValidatedPerson], people)
+        validated_people = cast(list[validation.Person], people)
         self.assertEqual(validated_people[0]["name"], "Alex")
         self.assertEqual(validated_people[0]["ranges"][0]["start"], "11:00")
         self.assertEqual(validated_people[0]["ranges"][0]["end"], "11:30")
@@ -56,11 +40,9 @@ class ValidationTests(unittest.TestCase):
 
         self.assertIsNone(error)
         self.assertIsNotNone(room_data)
-        validated_room_data = cast(dict[str, NormalizedRoomData], room_data)
+        validated_room_data = cast(dict[str, validation.RoomData], room_data)
         room = validated_room_data["11:00"]
-        self.assertEqual(room["off"], "Officer A")
-        self.assertEqual(room["b"], "2")
-        self.assertEqual(room["s"], "1")
+        self.assertEqual(room, {"off": "Officer A", "b": "2", "s": "1"})
 
     def test_validate_room_data_rejects_unsupported_time(self):
         _, error = validation.validate_room_data({"10:00": {"off": "Officer A"}})
@@ -84,10 +66,8 @@ class ValidationTests(unittest.TestCase):
         self.assertIsNotNone(payload)
         payload = cast(validation.RequestPayload, payload)
         self.assertEqual(payload["people"][0]["name"], "Alex")
-        room = cast(NormalizedRoomData, payload["room_data"]["11:00"])
-        self.assertEqual(room["off"], "Officer A")
-        self.assertEqual(room["b"], "2")
-        self.assertEqual(room["s"], "1")
+        room = cast(validation.RoomData, payload["room_data"]["11:00"])
+        self.assertEqual(room, {"off": "Officer A", "b": "2", "s": "1"})
         self.assertTrue(payload["is_pm"])
 
     def test_validate_request_payload_rejects_non_boolean_is_pm(self):
@@ -111,6 +91,59 @@ class ValidationTests(unittest.TestCase):
         )
         self.assertEqual(
             error, "people[0].ranges[0] must use 15-minute times between 11:00 and 16:45"
+        )
+
+    def test_rejects_malformed_people_and_ranges(self):
+        for person, expected in [
+            (None, "people[0] must be an object"),
+            ({"name": " ", "ranges": []}, "people[0].name must be a non-empty string"),
+            ({"name": "Alex", "ranges": []}, "people[0].ranges must be a non-empty list"),
+            ({"name": "Alex", "ranges": "invalid"}, "people[0].ranges must be a non-empty list"),
+            ({"name": "Alex", "ranges": [None]}, "people[0].ranges[0] must be an object"),
+        ]:
+            with self.subTest(person=person):
+                people, error = validation.validate_people([person])
+                self.assertIsNone(people)
+                self.assertEqual(error, expected)
+        for start, end in [
+            (None, "11:30"),
+            ("11:00", 12),
+            ("10:45", "11:30"),
+            ("11:00", "17:00"),
+            ("11:00", "11:00"),
+        ]:
+            with self.subTest(start=start, end=end):
+                people, error = validation.validate_people(
+                    [{"name": "Alex", "ranges": [{"start": start, "end": end}]}]
+                )
+                self.assertIsNone(people)
+                self.assertIsNotNone(error)
+
+    def test_room_counts_reject_invalid_values(self):
+        for field in ("b", "s"):
+            for value in (True, False, -1, "-1", 1.5, "1.5", "abc", [], {}):
+                with self.subTest(field=field, value=value):
+                    rooms, error = validation.validate_room_data({"11:00": {field: value}})
+                    self.assertIsNone(rooms)
+                    self.assertEqual(
+                        error, f'room_data["11:00"].{field} must be a non-negative integer or empty'
+                    )
+
+    def test_room_counts_normalize_zero_empty_and_leading_zeros(self):
+        for value, expected in [(0, "0"), ("0002", "2"), (None, ""), ("", "")]:
+            with self.subTest(value=value):
+                rooms, error = validation.validate_room_data(
+                    {"11:00": {"off": None, "b": value, "s": value}}
+                )
+                self.assertIsNone(error)
+                self.assertEqual(rooms, {"11:00": {"off": "", "b": expected, "s": expected}})
+
+    def test_room_data_requires_objects(self):
+        self.assertEqual(validation.validate_room_data(None), ({}, None))
+        self.assertEqual(validation.validate_room_data([]), (None, "room_data must be an object"))
+        self.assertEqual(
+            validation.validate_room_data({"11:00": None}),
+            (None, 'room_data["11:00"] must be an object'),
         )
 
 

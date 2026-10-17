@@ -6,6 +6,11 @@ from unittest.mock import patch
 from openpyxl import Workbook
 
 import schedule
+from validation import Person, TimeRange
+
+
+def make_person(name: str, ranges: list[TimeRange]) -> Person:
+    return {"name": name, "ranges": ranges}
 
 
 @contextmanager
