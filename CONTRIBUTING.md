@@ -26,7 +26,10 @@ python -m playwright install chromium
 RUN_BROWSER_TESTS=1 python -m unittest discover -s tests/browser -t .
 ```
 
-The browser suite exercises the running Flask app; unit tests are in `tests/unit/` and route, workbook, and renderer tests are in `tests/integration/`.
+When explicitly enabled, missing Playwright or Chromium fails the run instead of skipping it.
+The browser suite starts its own local Flask server and uses an isolated workbook template; unit tests are in `tests/unit/` and route, workbook, and renderer tests are in `tests/integration/`.
+The workbook suite also checks the shipped Excel template. Browser checks cover preview generation,
+paste/CSV imports, draft restoration, export downloads, and request failures.
 
 ## 📝 Commit Message Format
 
