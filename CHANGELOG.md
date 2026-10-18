@@ -3,6 +3,18 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.7] - 2026-10-18
+
+### ♻️ Refactoring
+
+- Extract frontend assets and browser tests
+- Remove inline frontend styles
+- Clean up test setup and validation cases
+- Strengthen test coverage and consolidate helpers
+
+### 🐛 Bug Fixes
+
+- Update vulnerable Python packages
 ## [1.25.6] - 2026-06-24
 
 ### ♻️ Refactoring
