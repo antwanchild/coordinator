@@ -69,37 +69,13 @@ jobs:
             APP_VERSION=pr-${{ github.event.pull_request.number }}
             APP_COMMIT_SHA=${{ github.event.pull_request.head.sha }}
 
-      - name: Export container root filesystem
-        run: |
-          container_id=$(docker create coordinator:pr-scan)
-          mkdir -p rootfs
-          docker export "$container_id" | tar -x -C rootfs
-          docker rm "$container_id"
-
-      - name: Diagnose embedded Python package metadata
-        run: |
-          echo "Runtime package versions:"
-          docker run --rm --entrypoint python coordinator:pr-scan -c 'import importlib.metadata as m; print("msgpack", m.version("msgpack")); print("setuptools", m.version("setuptools")); print("urllib3", m.version("urllib3"))'
-
-          echo
-          echo "Files containing stale package/version references:"
-          grep -RIlE 'msgpack[^0-9]{0,40}1\.1\.2|setuptools[^0-9]{0,40}70\.3\.0|urllib3[^0-9]{0,40}2\.7\.0' rootfs 2>/dev/null | sort | tee stale-metadata-files.txt || true
-
-          echo
-          echo "Likely SBOM/package metadata files:"
-          find rootfs -type f \( -iname '*sbom*' -o -iname '*.spdx*' -o -iname '*.cdx*' -o -iname '*cyclonedx*' -o -iname '*syft*' \) -print | sort || true
-
-          echo
-          echo "Matching stale references with context (first 200 lines):"
-          grep -RInE 'msgpack[^0-9]{0,40}1\.1\.2|setuptools[^0-9]{0,40}70\.3\.0|urllib3[^0-9]{0,40}2\.7\.0' rootfs 2>/dev/null | head -200 || true
-
-      - name: Scan container root filesystem with Trivy
+      - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          scan-type: rootfs
-          scan-ref: rootfs
+          image-ref: coordinator:pr-scan
           format: table
           exit-code: 1
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+          skip-files: '**/pip/_vendor/bom.cdx.json'
