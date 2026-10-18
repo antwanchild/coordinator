@@ -10,9 +10,14 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python deps
+# Install Python deps and ensure packages flagged by the image security scan
+# are at versions containing their upstream vulnerability fixes.
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
+RUN pip install --no-cache-dir --upgrade \
+        pip \
+        "setuptools>=78.1.1" \
+        "urllib3>=2.8.0" \
+        "msgpack>=1.2.1" && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy app
