@@ -62,6 +62,8 @@ jobs:
           context: .
           push: false
           load: true
+          provenance: false
+          sbom: false
           tags: coordinator:pr-scan
           build-args: |
             APP_VERSION=pr-${{ github.event.pull_request.number }}
