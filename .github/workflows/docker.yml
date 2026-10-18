@@ -235,6 +235,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+          skip-files: '**/pip/_vendor/bom.cdx.json'
 
   notify-release:
     if: always() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')

@@ -44,3 +44,38 @@ jobs:
         env:
           RUN_BROWSER_TESTS: ${{ matrix.python-version == '3.12' && '1' || '0' }}
         run: python -m unittest discover -s tests -t .
+
+  docker-security:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image for security scan
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          provenance: false
+          sbom: false
+          tags: coordinator:pr-scan
+          build-args: |
+            APP_VERSION=pr-${{ github.event.pull_request.number }}
+            APP_COMMIT_SHA=${{ github.event.pull_request.head.sha }}
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: coordinator:pr-scan
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          skip-files: '**/pip/_vendor/bom.cdx.json'
