@@ -10,15 +10,18 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python deps and ensure packages flagged by the image security scan
-# are at versions containing their upstream vulnerability fixes.
+# Remove vulnerable copies shipped in the Python base image before installing
+# the application dependencies. Installing newer copies alongside the base
+# packages can leave old dist-info metadata behind for scanners to detect.
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade \
-        pip \
+RUN python -m pip uninstall -y setuptools urllib3 msgpack || true && \
+    python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r requirements.txt && \
+    python -m pip install --no-cache-dir --upgrade \
         "setuptools>=78.1.1" \
         "urllib3>=2.8.0" \
         "msgpack>=1.2.1" && \
-    pip install --no-cache-dir -r requirements.txt
+    python -m pip check
 
 # Copy app
 COPY app.py constants.py logging_utils.py room_utils.py schedule.py renderer.py time_utils.py validation.py ./
