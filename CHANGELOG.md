@@ -3,6 +3,11 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.8] - 2026-10-18
+
+### 🐛 Bug Fixes
+
+- Remove vulnerable base Python packages before install
 ## [1.25.7] - 2026-10-18
 
 ### ♻️ Refactoring
