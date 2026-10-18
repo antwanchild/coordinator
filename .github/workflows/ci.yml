@@ -69,10 +69,18 @@ jobs:
             APP_VERSION=pr-${{ github.event.pull_request.number }}
             APP_COMMIT_SHA=${{ github.event.pull_request.head.sha }}
 
-      - name: Scan image with Trivy
+      - name: Export container root filesystem
+        run: |
+          container_id=$(docker create coordinator:pr-scan)
+          mkdir -p rootfs
+          docker export "$container_id" | tar -x -C rootfs
+          docker rm "$container_id"
+
+      - name: Scan container root filesystem with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: coordinator:pr-scan
+          scan-type: rootfs
+          scan-ref: rootfs
           format: table
           exit-code: 1
           ignore-unfixed: true
