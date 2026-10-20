@@ -1,5 +1,5 @@
 -r requirements.txt
 black==26.10.1
-pre-commit==4.6.2
+pre-commit==4.7.0
 pyright==1.1.414
 playwright==1.63.0
