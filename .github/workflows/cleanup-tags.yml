@@ -41,7 +41,8 @@ jobs:
 
           echo "Total tags: $TOTAL | Keeping 10 | Deleting $((TOTAL - 10))"
 
-          for TAG in $TO_DELETE; do
+          while IFS= read -r TAG; do
+            [ -z "$TAG" ] && continue
             echo "Deleting $TAG"
-            gh api repos/${REPO}/git/refs/tags/${TAG} -X DELETE
-          done
+            gh api "repos/${REPO}/git/refs/tags/${TAG}" -X DELETE
+          done <<< "$TO_DELETE"
