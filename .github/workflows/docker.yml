@@ -84,7 +84,7 @@ jobs:
             elif echo "$NORMALIZED" | grep -qE '^fix(\([^)]+\))?:'; then
               FOUND_PATCH=true
             fi
-          done < <(git log --format=%s $RANGE)
+          done < <(git log --format=%s "$RANGE")
 
           if [ "$FOUND_MAJOR" = true ]; then
             MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
@@ -100,8 +100,10 @@ jobs:
           fi
 
           NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "bumped=$BUMPED" >> $GITHUB_OUTPUT
+          {
+            echo "version=$NEW_VERSION"
+            echo "bumped=$BUMPED"
+          } >> "$GITHUB_OUTPUT"
           echo "Range: $RANGE"
           echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
 
@@ -160,7 +162,7 @@ jobs:
 
       - name: Read base version
         id: version
-        run: echo "value=$(tr -d '[:space:]' < VERSION)" >> $GITHUB_OUTPUT
+        run: echo "value=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
       - name: Compute build suffix
         id: build
         run: |
@@ -180,9 +182,11 @@ jobs:
           BUILD_NUMBER=$(git rev-list --count --first-parent "${VERSION_BUMP_COMMIT}..HEAD")
 
           APP_VERSION="${BASE_VERSION}-build${BUILD_NUMBER}"
-          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "base_version=$BASE_VERSION"
+            echo "build_number=$BUILD_NUMBER"
+            echo "app_version=$APP_VERSION"
+          } >> "$GITHUB_OUTPUT"
           echo "Base version: $BASE_VERSION"
           echo "Version bump commit: $VERSION_BUMP_COMMIT"
           echo "Build number: $BUILD_NUMBER"
@@ -315,18 +319,20 @@ jobs:
           DURATION_REMAINDER=$(( DURATION_SECONDS % 60 ))
           DURATION="${DURATION_MINUTES}m ${DURATION_REMAINDER}s"
 
-          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
-          echo "icon=$ICON" >> "$GITHUB_OUTPUT"
-          echo "color=$COLOR" >> "$GITHUB_OUTPUT"
-          echo "triggered_by=$TRIGGERED_BY" >> "$GITHUB_OUTPUT"
-          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
-          echo "base_version=$BASE_VERSION_VALUE" >> "$GITHUB_OUTPUT"
-          echo "build_number=$BUILD_NUMBER_VALUE" >> "$GITHUB_OUTPUT"
-          echo "version=$FULL_VERSION_VALUE" >> "$GITHUB_OUTPUT"
-          echo "commit_msg=$COMMIT_MSG" >> "$GITHUB_OUTPUT"
-          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
-          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
-          echo "duration=$DURATION" >> "$GITHUB_OUTPUT"
+          {
+            echo "status=$STATUS"
+            echo "icon=$ICON"
+            echo "color=$COLOR"
+            echo "triggered_by=$TRIGGERED_BY"
+            echo "branch=$BRANCH"
+            echo "base_version=$BASE_VERSION_VALUE"
+            echo "build_number=$BUILD_NUMBER_VALUE"
+            echo "version=$FULL_VERSION_VALUE"
+            echo "commit_msg=$COMMIT_MSG"
+            echo "short_sha=$SHORT_SHA"
+            echo "run_url=$RUN_URL"
+            echo "duration=$DURATION"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Notify Discord
         if: env.DISCORD_WEBHOOK_URL != ''
