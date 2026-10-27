@@ -34,14 +34,16 @@ jobs:
 
       - name: Notify Discord when PR is not eligible for auto-merge
         if: env.DISCORD_WEBHOOK_URL != '' && (github.event.action == 'opened' || github.event.action == 'reopened') && steps.meta.outputs.update-type != 'version-update:semver-minor' && steps.meta.outputs.update-type != 'version-update:semver-patch'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           payload=$(jq -n \
             --arg repo "${{ github.repository }}" \
-            --arg title "${{ github.event.pull_request.title }}" \
+            --arg title "$PR_TITLE" \
             --arg url "${{ github.event.pull_request.html_url }}" \
             --arg dep "${{ steps.meta.outputs.dependency-names }}" \
             --arg update_type "${{ steps.meta.outputs.update-type }}" \
-            '{content: ("Dependabot PR requires review in \($repo): **\($title)**\nDependency: \($dep)\nReason: not eligible for auto-merge (\($update_type))\n\($url)")}') 
+            '{content: ("Dependabot PR requires review in \($repo): **\($title)**\nDependency: \($dep)\nReason: not eligible for auto-merge (\($update_type))\n\($url)")}')
           curl -sS -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$payload"
@@ -53,10 +55,12 @@ jobs:
     steps:
       - name: Notify Discord when auto-merge completes
         if: env.DISCORD_WEBHOOK_URL != '' && github.event.pull_request.merged_by.login == 'github-actions[bot]'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           payload=$(jq -n \
             --arg repo "${{ github.repository }}" \
-            --arg title "${{ github.event.pull_request.title }}" \
+            --arg title "$PR_TITLE" \
             --arg url "${{ github.event.pull_request.html_url }}" \
             --arg merged_by "${{ github.event.pull_request.merged_by.login }}" \
             '{content: ("Dependabot PR auto-merged in \($repo): **\($title)**\nMerged by: \($merged_by)\n\($url)")}')
@@ -66,10 +70,12 @@ jobs:
 
       - name: Notify Discord when Dependabot PR is merged manually
         if: env.DISCORD_WEBHOOK_URL != '' && github.event.pull_request.merged_by.login != 'github-actions[bot]'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           payload=$(jq -n \
             --arg repo "${{ github.repository }}" \
-            --arg title "${{ github.event.pull_request.title }}" \
+            --arg title "$PR_TITLE" \
             --arg url "${{ github.event.pull_request.html_url }}" \
             --arg merged_by "${{ github.event.pull_request.merged_by.login }}" \
             '{content: ("Dependabot PR merged manually in \($repo): **\($title)**\nMerged by: \($merged_by)\n\($url)")}')
