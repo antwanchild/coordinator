@@ -3,6 +3,12 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.9] - 2026-11-07
+
+### 🐛 Bug Fixes
+
+- Publish the intended release commit only after scanning
+- Restrict release notifications to trusted main pushes
 ## [1.25.8] - 2026-10-18
 
 ### 🐛 Bug Fixes
