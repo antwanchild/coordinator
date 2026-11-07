@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: docker-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io
@@ -20,20 +20,31 @@ env:
 
 jobs:
   prepare-release:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
       version: ${{ steps.bump.outputs.version }}
       bumped: ${{ steps.bump.outputs.bumped }}
+      release_sha: ${{ steps.release.outputs.sha }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify the validated commit is still main
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "Main has moved since this run was validated. Publish from the newer CI run instead." >&2
+            exit 1
+          fi
 
       - name: Bump version from commit range
         id: bump
@@ -140,6 +151,10 @@ jobs:
             exit 1
           }
 
+      - name: Record release commit
+        id: release
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
   publish-image:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -157,8 +172,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ needs.prepare-release.outputs.release_sha || github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
+
+      - name: Record image source
+        id: source
+        run: echo "short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
       - name: Read base version
         id: version
@@ -207,31 +229,36 @@ jobs:
           tags: |
             type=raw,value=${{ steps.version.outputs.value }}
             type=raw,value=${{ steps.build.outputs.app_version }}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=sha-,format=short
+            type=raw,value=latest
+            type=raw,value=sha-${{ steps.source.outputs.short }}
           labels: |
             org.opencontainers.image.title=V-Coordinator Schedule Builder
             org.opencontainers.image.description=Browser-based schedule builder with Excel export
             org.opencontainers.image.vendor=antwanchild
 
-      - name: Build and push
+      - name: Build image for scanning
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
-          no-cache: true
+          push: false
+          load: true
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: |
             ${{ steps.meta.outputs.labels }}
             org.opencontainers.image.version=${{ steps.build.outputs.app_version }}
             org.opencontainers.image.base.version=${{ steps.version.outputs.value }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ needs.prepare-release.outputs.release_sha }}
           build-args: |
             APP_VERSION=${{ steps.build.outputs.app_version }}
-            APP_COMMIT_SHA=${{ github.sha }}
+            APP_COMMIT_SHA=${{ needs.prepare-release.outputs.release_sha }}
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: docker
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.app_version }}
           format: table
@@ -240,6 +267,15 @@ jobs:
           vuln-type: os,library
           severity: CRITICAL,HIGH
           skip-files: '**/pip/_vendor/bom.cdx.json'
+
+      - name: Publish scanned image
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            docker push "$tag"
+          done <<< "$IMAGE_TAGS"
 
   notify-release:
     if: always() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
@@ -262,7 +298,7 @@ jobs:
         if: env.DISCORD_WEBHOOK_URL != ''
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ needs.prepare-release.outputs.release_sha || github.event.workflow_run.head_sha || github.sha }}
 
       - name: Collect notification metadata
         if: env.DISCORD_WEBHOOK_URL != ''
