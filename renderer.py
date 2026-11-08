@@ -19,7 +19,7 @@ from constants import (
     points_to_pixels,
 )
 from room_utils import get_room_header_state
-from time_utils import covers_slot, count_brothers_in_room, person_on_sheet
+from time_utils import person_on_sheet, room_coverage_by_person
 
 # ── Colour helper ─────────────────────────────────────────────────────────────
 
@@ -43,6 +43,9 @@ def render_preview(people, is_pm, room_data=None):
     rooms = PM_ROOMS if is_pm else AM_ROOMS
     visible_people = [person for person in people if person_on_sheet(person, is_pm)]
     sorted_people = sorted(visible_people, key=lambda person: person["name"])
+    availability, room_counts = room_coverage_by_person(
+        sorted_people, [room["time"] for room in rooms]
+    )
 
     # Build cumulative x positions for each column
     x_positions = {}
@@ -202,7 +205,9 @@ def render_preview(people, is_pm, room_data=None):
         )
 
         # Row 3: B: cols 0-1, count cols 2-3, rec cols 4-5, S: cols 6-7, count cols 8-9, rec cols 10-11
-        rd, b_val, s_val, bv, sv = get_room_header_state(sorted_people, room, room_data)
+        rd, b_val, s_val, bv, sv = get_room_header_state(
+            sorted_people, room, room_data, workers=room_counts[room_index]
+        )
         fill_cell(start_col, 3, "#FFFFFF", colspan=SLOTS)
         draw_text(start_col, 3, "B:", font_bold, "#000000", "right", 2)
         draw_text(start_col + 6, 3, "S:", font_bold, "#000000", "right", 2)
@@ -302,7 +307,7 @@ def render_preview(people, is_pm, room_data=None):
         for room_index, room in enumerate(rooms):
             start_col = ROOM_START_COLS[room_index]
             is_last_room = room_index == len(rooms) - 1
-            is_available = person and covers_slot(person["ranges"], room["time"])
+            is_available = person and availability[row_index - 1][room_index]
 
             for slot_index in range(SLOTS):
                 col = start_col + slot_index
@@ -388,7 +393,7 @@ def render_preview(people, is_pm, room_data=None):
                 )
 
             elif footer_index == 1:
-                room_count = count_brothers_in_room(sorted_people, room["time"])
+                room_count = room_counts[room_index]
                 fill_cell(start_col, sheet_row, "#FFFFFF", colspan=2)
                 draw_text(start_col, sheet_row, str(room_count), font_bold, "#000000", "center", 2)
                 draw_border(start_col, sheet_row, left="medium", top="thin", bottom="thin")

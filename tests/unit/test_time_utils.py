@@ -1,6 +1,12 @@
 import unittest
 
-from time_utils import covers_slot, person_on_sheet, count_brothers_in_room, to_minutes
+from time_utils import (
+    count_brothers_in_room,
+    covers_slot,
+    person_on_sheet,
+    room_coverage_by_person,
+    to_minutes,
+)
 from tests.helpers import make_person
 
 
@@ -28,6 +34,31 @@ class TimeUtilsTests(unittest.TestCase):
         self.assertEqual(count_brothers_in_room(people, "11:00"), 2)
         self.assertEqual(count_brothers_in_room(people, "11:30"), 2)
         self.assertEqual(count_brothers_in_room(people, "12:00"), 2)
+
+    def test_room_coverage_reuses_person_availability_and_counts_each_person_once(self):
+        people = [
+            make_person(
+                "Alex",
+                [
+                    {"start": "11:00", "end": "11:30"},
+                    {"start": "11:00", "end": "12:00"},
+                ],
+            ),
+            make_person("Blake", [{"start": "11:15", "end": "11:45"}]),
+            make_person("Casey", [{"start": "11:30", "end": "12:00"}]),
+        ]
+
+        availability, counts = room_coverage_by_person(people, ["11:00", "11:30", "12:00"])
+
+        self.assertEqual(
+            availability,
+            [
+                [True, True, False],
+                [False, False, False],
+                [False, True, False],
+            ],
+        )
+        self.assertEqual(counts, [2, 3, 1])
 
     def test_sheet_boundaries_and_multiple_ranges(self):
         for start, end, am, pm in [

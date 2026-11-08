@@ -37,7 +37,29 @@ def count_brothers_in_room(sorted_people, room_time):
     A brother counts if they fully cover the room's 30-minute slot.
     The Off row always counts as 1.
     """
-    brothers_from_people = sum(
-        1 for person in sorted_people if covers_slot(person["ranges"], room_time)
-    )
-    return brothers_from_people + 1  # +1 for the Off row
+    _, room_counts = room_coverage_by_person(sorted_people, [room_time])
+    return room_counts[0]
+
+
+def room_coverage_by_person(people, room_times):
+    """Return each person's room availability and room counts, including the Off row."""
+    room_starts = [to_minutes(room_time) for room_time in room_times]
+    availability = []
+    room_counts = [1] * len(room_times)
+
+    for person in people:
+        person_availability = [False] * len(room_times)
+        for time_range in person["ranges"]:
+            start = to_minutes(time_range["start"])
+            end = to_minutes(time_range["end"])
+            for room_index, room_start in enumerate(room_starts):
+                if (
+                    not person_availability[room_index]
+                    and start <= room_start
+                    and end >= room_start + 30
+                ):
+                    person_availability[room_index] = True
+                    room_counts[room_index] += 1
+        availability.append(person_availability)
+
+    return availability, room_counts

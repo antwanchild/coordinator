@@ -10,7 +10,7 @@ from constants import APP_VERSION, APP_COMMIT_SHA, APP_COMMIT_SHORT, AM_ROOMS, P
 from schedule import build_xlsx
 from renderer import render_preview
 from logging_utils import LOG_DIR, LOG_LEVEL, logger
-from time_utils import count_brothers_in_room, person_on_sheet
+from time_utils import person_on_sheet, room_coverage_by_person
 from validation import validate_request_payload
 
 app = Flask(__name__)
@@ -135,7 +135,7 @@ def preview():
         rooms = PM_ROOMS if is_pm else AM_ROOMS
         visible = [p for p in people if person_on_sheet(p, is_pm)]
         sorted_people = sorted(visible, key=lambda p: p["name"])
-        brothers = [count_brothers_in_room(sorted_people, room["time"]) for room in rooms]
+        _, brothers = room_coverage_by_person(sorted_people, [room["time"] for room in rooms])
         logger.info(
             f"Preview generated | sheet={sheet_name}, people={len(visible)}, brothers={brothers}"
         )
@@ -167,8 +167,8 @@ def export():
         pm_visible = sorted(
             [p for p in people if person_on_sheet(p, True)], key=lambda p: p["name"]
         )
-        am_brothers = [count_brothers_in_room(am_visible, room["time"]) for room in AM_ROOMS]
-        pm_brothers = [count_brothers_in_room(pm_visible, room["time"]) for room in PM_ROOMS]
+        _, am_brothers = room_coverage_by_person(am_visible, [room["time"] for room in AM_ROOMS])
+        _, pm_brothers = room_coverage_by_person(pm_visible, [room["time"] for room in PM_ROOMS])
         logger.info(
             f"Export generated | people={len(people)}, brothers=AM:{am_brothers} PM:{pm_brothers}"
         )
