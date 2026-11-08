@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     tzdata \
     gosu \
     curl \
+    zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 # Remove vulnerable copies shipped in the Python base image before installing
