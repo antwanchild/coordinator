@@ -3,6 +3,15 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.25.10] - 2026-11-08
+
+### ⚡ Performance
+
+- Reuse room availability calculations
+
+### 🐛 Bug Fixes
+
+- Upgrade vulnerable zlib in image
 ## [1.25.9] - 2026-11-07
 
 ### 🐛 Bug Fixes
