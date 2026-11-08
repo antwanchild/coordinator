@@ -14,7 +14,9 @@ from constants import (
     ROOM_START_COLS,
 )
 from room_utils import get_room_header_state
-from time_utils import covers_slot, person_on_sheet, count_brothers_in_room
+from time_utils import person_on_sheet, room_coverage_by_person
+
+UNAVAILABLE_FILL = PatternFill(patternType="solid", fgColor="EDEDED")
 
 
 def safe_cell_value(value):
@@ -108,6 +110,9 @@ def build_xlsx(people, room_data=None):
         rooms = PM_ROOMS if is_pm else AM_ROOMS
         visible_people = [person for person in people if person_on_sheet(person, is_pm)]
         sorted_people = sorted(visible_people, key=lambda person: person["name"])
+        availability, room_counts = room_coverage_by_person(
+            sorted_people, [room["time"] for room in rooms]
+        )
 
         # Write people data into rows 6-24
         for row_index in range(ROWS):
@@ -128,26 +133,26 @@ def build_xlsx(people, room_data=None):
             )
 
             if person:
-                for room_index, room in enumerate(rooms):
-                    is_available = covers_slot(person["ranges"], room["time"])
+                person_availability = availability[row_index - 1]
+                for room_index, is_available in enumerate(person_availability):
                     if not is_available:
                         start_col = ROOM_START_COLS[room_index]
-                        gray_fill = PatternFill(patternType="solid", fgColor="EDEDED")
                         for slot_index in range(SLOTS):
                             worksheet.cell(row=sheet_row, column=start_col + slot_index).fill = (
-                                gray_fill
+                                UNAVAILABLE_FILL
                             )
 
         # Write brothers count into row 26 for each room
-        for room_index, room in enumerate(rooms):
+        for room_index, room_count in enumerate(room_counts):
             start_col = ROOM_START_COLS[room_index]
-            count = count_brothers_in_room(sorted_people, room["time"])
-            set_cell_value(worksheet, 26, start_col, count)
+            set_cell_value(worksheet, 26, start_col, room_count)
 
         # Write officiator, B:, S: into header cells for each room
         for room_index, room in enumerate(rooms):
             start_col = ROOM_START_COLS[room_index]
-            rd, b_val, s_val, bv, sv = get_room_header_state(sorted_people, room, room_data)
+            rd, b_val, s_val, bv, sv = get_room_header_state(
+                sorted_people, room, room_data, workers=room_counts[room_index]
+            )
             if rd.get("off"):
                 off_cell = worksheet.cell(row=4, column=start_col + 3)
                 set_cell_value(worksheet, 4, start_col + 3, safe_cell_value(rd["off"]))
