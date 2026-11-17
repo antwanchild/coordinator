@@ -303,3 +303,32 @@ jobs:
           changes-sha: ${{ github.event.workflow_run.head_sha || github.sha }}
           changelog-version: ${{ needs.prepare-release.outputs.bumped == 'true' && needs.prepare-release.outputs.version || '' }}
           image: ghcr.io/${{ github.repository }}:${{ needs.publish-image.outputs.app_version }}
+
+  notify-blocked-release:
+    name: Notify Discord of failed main CI
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Send Discord result
+        uses: ./.github/actions/discord-result
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          project: Coordinator
+          event: Main CI
+          result: failure
+          sha: ${{ github.event.workflow_run.head_sha }}
+          run-id: ${{ github.event.workflow_run.id }}
+          run-attempt: ${{ github.event.workflow_run.run_attempt }}
+          details: Main CI failed before the release could start.
