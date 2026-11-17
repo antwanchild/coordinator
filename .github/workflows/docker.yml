@@ -300,3 +300,6 @@ jobs:
           result: ${{ contains(needs.*.result, 'failure') && 'failure' || contains(needs.*.result, 'cancelled') && 'cancelled' || (needs.publish-image.result == 'success' && 'success') || 'skipped' }}
           sha: ${{ needs.prepare-release.outputs.release_sha || github.event.workflow_run.head_sha || github.sha }}
           version: ${{ needs.publish-image.outputs.app_version }}
+          changes-sha: ${{ github.event.workflow_run.head_sha || github.sha }}
+          changelog-version: ${{ needs.prepare-release.outputs.bumped == 'true' && needs.prepare-release.outputs.version || '' }}
+          image: ghcr.io/${{ github.repository }}:${{ needs.publish-image.outputs.app_version }}
