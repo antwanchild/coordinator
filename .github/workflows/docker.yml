@@ -27,7 +27,6 @@ jobs:
     outputs:
       version: ${{ steps.bump.outputs.version }}
       bumped: ${{ steps.bump.outputs.bumped }}
-      bumped: ${{ steps.bump.outputs.bumped }}
       release_sha: ${{ steps.release.outputs.sha }}
 
     steps:
