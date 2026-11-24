@@ -3,6 +3,7 @@
 This directory is split by concern so the suite stays easy to extend:
 
 - `unit/test_constants.py` covers small conversion helpers in `constants.py`.
+- `unit/test_changelog.py` covers curated release-note promotion and history preservation.
 - `unit/test_room_utils.py` covers room header values and veil recommendations.
 - `unit/test_schedule.py` covers scheduling logic like slot coverage and veil recommendations.
 - `unit/test_security.py` covers formula-injection safety helpers.

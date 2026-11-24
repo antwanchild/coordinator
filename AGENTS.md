@@ -29,7 +29,9 @@ them here.
   documented in the README.
 - Follow CONTRIBUTING.md for UI feedback, destructive confirmations, and saved
   draft compatibility.
-- Leave release version bumps and changelog generation to the release workflow
+- Add user-facing change notes under `CHANGELOG.md` → `Unreleased`, following
+  CONTRIBUTING.md. Internal-only changes may omit an entry with a reason in the PR.
+- Leave version bumps, release headings, dates, and tags to the release workflow
   unless explicitly asked to change release metadata.
 
 ## Verification

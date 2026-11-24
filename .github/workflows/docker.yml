@@ -118,12 +118,17 @@ jobs:
           echo "Range: $RANGE"
           echo "Version: $CURRENT -> $NEW_VERSION (bumped: $BUMPED)"
 
-      - name: Generate CHANGELOG with git-cliff
+      - name: Set up Python for release notes
         if: steps.bump.outputs.bumped == 'true'
-        uses: orhun/git-cliff-action@v4
+        uses: actions/setup-python@v6
         with:
-          config: cliff.toml
-          args: --unreleased --tag ${{ steps.bump.outputs.version }} --prepend CHANGELOG.md
+          python-version: "3.12"
+
+      - name: Promote curated release notes
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: python scripts/promote_changelog.py "$NEW_VERSION"
 
       - name: Commit VERSION and CHANGELOG
         if: steps.bump.outputs.bumped == 'true'

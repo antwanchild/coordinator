@@ -34,7 +34,8 @@ paste/CSV imports, draft restoration, export downloads, and request failures.
 ## 📝 Commit Message Format
 
 This repo uses [Conventional Commits](https://www.conventionalcommits.org/) to
-automatically bump the version, tag releases, and generate the changelog on every push to `main`.
+automatically bump the version and tag releases when qualifying commits reach `main`.
+Changelog entries are written in pull requests, independently of commit subjects.
 
 ```
 <type>: <short description>
@@ -42,16 +43,12 @@ automatically bump the version, tag releases, and generate the changelog on ever
 
 ### Types and what they do
 
-| Commit prefix | Changelog group | Version bump |
-|---|---|---|
-| `feat!:` or any `!` | 🚨 Breaking Changes | Major `1.0.0→2.0.0` |
-| `feat:` | ✨ Features | Minor `1.0.0→1.1.0` |
-| `fix:` | 🐛 Bug Fixes | Patch `1.0.0→1.0.1` |
-| `perf:` | ⚡ Performance | None |
-| `refactor:` | ♻️ Refactoring | None |
-| `docs:` | 📖 Documentation | None |
-| `chore:` | 🔧 Chores | None |
-| plain message | Not in changelog | None |
+| Commit prefix | Version bump |
+|---|---|
+| `feat!:` or any conventional `!:` | Major |
+| `feat:` | Minor |
+| `fix:` | Patch |
+| `perf:`, `refactor:`, `docs:`, `chore:`, or plain messages | None |
 
 ### 💡 Examples
 
@@ -65,20 +62,39 @@ git commit -m "feat: support paste import from Excel clipboard"
 # 🚨 Breaking change → major bump 1.0.0 to 2.0.0
 git commit -m "feat!: replace Pillow preview with server-side HTML render"
 
-# No version bump — still appears in changelog
+# No version bump — add a curated changelog entry if useful to users
 git commit -m "perf: speed up preview image rendering"
 git commit -m "refactor: split render_preview into smaller functions"
 git commit -m "docs: add usage screenshots to README"
 git commit -m "chore: update dependencies"
 
-# No version bump — does NOT appear in changelog
+# No version bump — changelog inclusion is independent of commit wording
 git commit -m "just tweaking some stuff"
 ```
+
+## Changelog entries
+
+For user-facing changes, add a concise bullet under `## [Unreleased]` in
+`CHANGELOG.md` in the same PR. Use `Added`, `Changed`, `Fixed`, `Removed`,
+`Security`, or `Docs` headings as needed; omit empty headings. Explain the
+observable behavior and its benefit or impact, including migration steps for
+breaking changes. Link related issues or PRs when useful.
+
+Internal refactors, CI maintenance, and contributor-only documentation can omit
+an entry; explain why in the PR's Changelog section. Commit types determine
+version bumps, not changelog categories or text.
+
+Do not rewrite published history or manually change `VERSION`, release headings,
+or release dates. When a version bump occurs, the workflow moves all accumulated
+notes into that release and resets `Unreleased`. Changes without a version bump
+leave their notes pending for the next release. If there are no notes at release
+time, the release section records that there are no user-facing changes.
 
 ## ⚙️ What happens on push
 
 1. Workflow reads your commit message range and bumps `VERSION` if applicable
-2. Generates `CHANGELOG.md` using [git-cliff](https://git-cliff.org/) from `cliff.toml`
+2. When the version changes, promotes `Unreleased` notes in `CHANGELOG.md` into a
+   dated release section and leaves a fresh `Unreleased` section
 3. Commits `VERSION` and `CHANGELOG.md` back to `main` with `[skip ci]`
 4. Creates a git tag (e.g. `v1.0.1`)
 5. Builds and pushes Docker image to `ghcr.io` tagged as `1.0.1`, `1.0.1-build0`, `latest`, and the short SHA
@@ -102,7 +118,7 @@ git commit -m "just tweaking some stuff"
 If you are changing behavior and expect a version bump, prefer a `fix:` or `feat:` commit instead of a plain commit message.
 
 Commits with no recognized prefix (plain messages) still build and push `latest`
-but do not bump the version or update the changelog.
+but do not bump the version or promote `Unreleased` notes.
 
 ## 💻 VS Code
 

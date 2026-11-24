@@ -3,6 +3,12 @@
 All notable changes are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Changed
+
+- Maintain curated release notes with each relevant pull request instead of generating entries from commit subjects.
+
 ## [1.25.10] - 2026-11-08
 
 ### ⚡ Performance

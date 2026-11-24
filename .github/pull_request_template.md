@@ -12,6 +12,12 @@
 - [ ] Chore (`chore:`)
 - [ ] Release-impacting change
 
+## Changelog
+
+- [ ] Added a user-facing entry under `CHANGELOG.md` → `Unreleased`, or explained below why none is needed
+
+<!-- Use Added, Changed, Fixed, Removed, Security, or Docs. Internal-only changes may omit an entry. -->
+
 ## Test plan
 
 <!-- How did you verify this works? -->
