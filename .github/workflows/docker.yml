@@ -273,6 +273,30 @@ jobs:
           severity: CRITICAL,HIGH
           skip-files: '**/pip/_vendor/bom.cdx.json'
 
+      - name: Smoke test release image
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.build.outputs.app_version }}
+          EXPECTED_VERSION: ${{ steps.build.outputs.app_version }}
+          EXPECTED_COMMIT: ${{ needs.prepare-release.outputs.release_sha }}
+        run: |
+          container=$(docker run --detach --publish 127.0.0.1::8080 "$IMAGE")
+          trap 'docker rm -f "$container" >/dev/null' EXIT
+
+          address=$(docker port "$container" 8080/tcp)
+          if ! response=$(curl --fail --silent --show-error --retry 15 --retry-delay 2 \
+            --retry-connrefused --retry-max-time 35 --max-time 5 "http://${address}/health"); then
+            echo "::error::Coordinator did not respond successfully at /health."
+            docker logs "$container"
+            exit 1
+          fi
+
+          if ! jq -e --arg version "$EXPECTED_VERSION" --arg commit "$EXPECTED_COMMIT" \
+            '.status == "ok" and .version == $version and .commit == $commit' <<< "$response" >/dev/null; then
+            echo "::error::Expected /health to report status ok, version $EXPECTED_VERSION, and commit $EXPECTED_COMMIT."
+            printf 'Health response: %s\n' "$response"
+            exit 1
+          fi
+
       - name: Publish scanned image
         env:
           IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
