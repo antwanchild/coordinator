@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     tzdata \
     gosu \
     curl \
+    libzstd1 \
     zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
